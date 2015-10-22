@@ -1,0 +1,9 @@
+// Copyright (C) king.com Ltd 2015
+// https://github.com/king/king-http-client
+// Author: Magnus Gustafsson
+// License: Apache 2.0, https://raw.github.com/king/king-http-client/LICENSE-APACHE
+
+include 'client'
+include 'integration-tests'
+
+rootProject.name = 'king-http-client'

@@ -1,0 +1,18 @@
+*.class
+
+hs_err_pid*
+
+# Gradle
+.gradle
+build
+build/*
+
+# Idea
+.idea
+*.iml
+
+# Eclipse things
+bin
+.project
+.classpath
+.settings

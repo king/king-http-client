@@ -1,0 +1,19 @@
+// Copyright (C) king.com Ltd 2015
+// https://github.com/king/king-http-client
+// Author: Magnus Gustafsson
+// License: Apache 2.0, https://raw.github.com/king/king-http-client/LICENSE-APACHE
+
+dependencies {
+	compile project(":client")
+	compile 'org.slf4j:slf4j-api:1.7.7'
+	compile 'ch.qos.logback:logback-classic:1.+'
+
+	compile 'org.eclipse.jetty:jetty-server:9.2.10.v20150310'
+	compile 'org.eclipse.jetty:jetty-servlet:9.2.10.v20150310'
+	compile 'org.eclipse.jetty:jetty-servlets:9.2.10.v20150310'
+
+
+	testCompile 'junit:junit:4.11'
+	testCompile 'se.mockachino:mockachino:0.6.1'
+}
+
