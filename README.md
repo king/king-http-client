@@ -86,8 +86,8 @@ httpClient.createGet("http://some.url").build().execute(new HttpCallback<Void>()
 
 ## Thread model
 
-The methods on HttpCallback is called by HttpCallbackExecutor, they can therefore be long running jobs in the callbacks.
-The methods on NioCallback is called by the internal nio threads, they should therefore not be blocking or long running. The same goes for the ResponseBodyConsumer and MetricCallback interfaces.
+The methods on HttpCallback are called by HttpCallbackExecutor, they can therefore be long running jobs in the callbacks.
+The methods on NioCallback are called by the internal nio threads, they should therefore not be blocking or long running. The same goes for the ResponseBodyConsumer and MetricCallback interfaces.
 
 
 ## Limitations
