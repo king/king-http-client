@@ -3,7 +3,7 @@
 
 ## Api
 
-First of the HttpClient needs to be created and started.
+First of all, the HttpClient needs to be created and started.
 To make it easier, use the NettyHttpClientBuilder.
 Use the different set methods on the NettyHttpClientBuilder to tweak how HttpClient works.
 
