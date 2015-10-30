@@ -3,7 +3,7 @@
 
 ## Api
 
-First of the HttpClient needs to be created and started.
+First off the HttpClient needs to be created and started.
 To make it easier, use the NettyHttpClientBuilder.
 Use the different set methods on the NettyHttpClientBuilder to tweak how HttpClient works.
 
@@ -86,7 +86,7 @@ httpClient.createGet("http://some.url").build().execute(new HttpCallback<Void>()
 
 ## Thread model
 
-The methods on HttpCallback are called by HttpCallbackExecutor, they can therefore be long running jobs in the callbacks.
+The methods on HttpCallback are called by HttpCallbackExecutor, there can therefore be long running jobs in the callbacks.
 The methods on NioCallback are called by the internal nio threads, they should therefore not be blocking or long running. The same goes for the ResponseBodyConsumer and MetricCallback interfaces.
 
 
