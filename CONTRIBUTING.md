@@ -10,7 +10,7 @@ Contributor License Agreement
 
 Contributions to any King project must be accompanied by a Contributor
 License Agreement. This is not a copyright _assignment_; it simply gives
-Google permission to use and redistribute your contributions as part of the
+King permission to use and redistribute your contributions as part of the
 project.
 
   - If you are an individual writing original source code and you're sure you
