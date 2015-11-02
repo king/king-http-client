@@ -9,7 +9,7 @@ Use the different set methods on the NettyHttpClientBuilder to tweak how HttpCli
 
 ```java
 NettyHttpClientBuilder nettyHttpClientBuilder = new NettyHttpClientBuilder();
-NettyHttpClint httpClient = nettyHttpClientBuilder.createHttpClient();
+NettyHttpClient httpClient = nettyHttpClientBuilder.createHttpClient();
 httpClient.start();
 ```
 
