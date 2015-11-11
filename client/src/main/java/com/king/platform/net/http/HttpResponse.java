@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 public class HttpResponse<T> {
-	private List<HeaderParameter> headers = new ArrayList<>();
+	private final List<HeaderParameter> headers = new ArrayList<>();
 	private final int statusCode;
 	private final ResponseBodyConsumer<T> responseBodyConsumer;
 
@@ -65,8 +65,8 @@ public class HttpResponse<T> {
 
 
 	private static class HeaderParameter {
-		private String name;
-		private String value;
+		private final String name;
+		private final String value;
 
 		public HeaderParameter(String name, String value) {
 			this.name = name;

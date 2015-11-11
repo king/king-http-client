@@ -50,10 +50,10 @@ public class NettyHttpClient implements HttpClient {
 	private final ThreadFactory nioThreadFactory;
 	private final RootEventBus rootEventBus;
 	private final ChannelPool channelPool;
+	private final BackPressure executionBackPressure;
 
 	private NioEventLoopGroup group;
 	private ChannelManager channelManager;
-	private BackPressure executionBackPressure;
 	private Boolean executeOnCallingThread;
 
 

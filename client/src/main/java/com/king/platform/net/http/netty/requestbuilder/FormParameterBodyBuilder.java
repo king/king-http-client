@@ -17,7 +17,7 @@ import java.util.Map;
 class FormParameterBodyBuilder implements RequestBodyBuilder {
 	private static final ParameterEncoder parameterEncoder = new ParameterEncoder();
 
-	private List<Param> parameters = new ArrayList<>();
+	private final List<Param> parameters = new ArrayList<>();
 
 	public FormParameterBodyBuilder() {
 	}

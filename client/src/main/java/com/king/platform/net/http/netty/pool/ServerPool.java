@@ -73,11 +73,7 @@ public class ServerPool {
 			return false;
 		}
 
-		if (channel.isActive() && channel.isOpen()) {
-			return true;
-		}
-
-		return false;
+		return channel.isActive() && channel.isOpen();
 	}
 
 	public void offer(Channel channel) {
@@ -171,10 +167,11 @@ public class ServerPool {
 
 
 	private static class PooledChannel {
-		private int id;
-		private long creationTimeStamp;
+		private final int id;
+		private final long creationTimeStamp;
+		private final Channel channel;
+
 		private long lastUsedTimeStamp;
-		private Channel channel;
 
 		public PooledChannel(int id, long creationTimeStamp, Channel channel) {
 			this.id = id;

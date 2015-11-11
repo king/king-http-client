@@ -10,11 +10,11 @@ import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
 
 public abstract class ChannelHttpCallback implements HttpCallback<WritableByteChannel> {
-	private WritableByteChannel channel;
-	private ProgressCallback progressCallback;
+	private final WritableByteChannel channel;
+	private final ProgressCallback progressCallback;
 
 	public ChannelHttpCallback(WritableByteChannel channel) {
-		this.channel = channel;
+		this(channel, null);
 	}
 
 	public ChannelHttpCallback(WritableByteChannel channel, ProgressCallback progressCallback) {
@@ -33,9 +33,9 @@ public abstract class ChannelHttpCallback implements HttpCallback<WritableByteCh
 	}
 
 	private static class ResponseBodyStream implements ResponseBodyConsumer<WritableByteChannel> {
-		private WritableByteChannel channel;
+		private final WritableByteChannel channel;
 
-		private ProgressInvoker progressInvoker;
+		private final ProgressInvoker progressInvoker;
 
 		public ResponseBodyStream(WritableByteChannel channel, ProgressInvoker progressInvoker) {
 			this.channel = channel;
@@ -69,7 +69,7 @@ public abstract class ChannelHttpCallback implements HttpCallback<WritableByteCh
 	}
 
 	private static class ProgressInvoker {
-		private ProgressCallback progressCallback;
+		private final ProgressCallback progressCallback;
 		private long contentLength;
 		private long readLength;
 

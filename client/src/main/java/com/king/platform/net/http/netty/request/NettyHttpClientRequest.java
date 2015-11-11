@@ -40,10 +40,9 @@ public class NettyHttpClientRequest<T> {
 
 	public boolean isDontWriteBodyBecauseExpectContinue() {
 		String expectHeader = nettyHeaders.get(HttpHeaders.Names.EXPECT);
-		if (expectHeader != null && expectHeader.equalsIgnoreCase(HttpHeaders.Values.CONTINUE)) {
-			return true;
-		}
-		return false;
+
+		return expectHeader != null
+			&& expectHeader.equalsIgnoreCase(HttpHeaders.Values.CONTINUE);
 	}
 
 	public void setKeepAlive(boolean keepAlive) {

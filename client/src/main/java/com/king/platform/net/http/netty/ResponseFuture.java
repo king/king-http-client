@@ -31,7 +31,7 @@ public class ResponseFuture<T> implements Future<FutureResult<T>> {
 			@Override
 			public void onFirstEvent(Event2 event, HttpRequestContext requestContext, Throwable throwable) {
 				if ((throwable instanceof CancellationException || !canceled.get()) && done.compareAndSet(false, true)) {
-					result = new FutureResult<T>(throwable);
+					result = new FutureResult<>(throwable);
 					latch.countDown();
 				}
 			}
@@ -41,7 +41,7 @@ public class ResponseFuture<T> implements Future<FutureResult<T>> {
 			@Override
 			public void onFirstEvent(Event1 event, HttpResponse payload) {
 				if (!canceled.get() && done.compareAndSet(false, true)) {
-					result = new FutureResult<T>(payload);
+					result = new FutureResult<>(payload);
 					latch.countDown();
 				}
 			}
@@ -84,7 +84,7 @@ public class ResponseFuture<T> implements Future<FutureResult<T>> {
 
 	protected static <T> ResponseFuture<T> error(Throwable error) {
 		ResponseFuture<T> future = new ResponseFuture<>(new NoopRequestEventBus(), null);
-		future.result = new FutureResult<T>(error);
+		future.result = new FutureResult<>(error);
 		future.done.set(true);
 		future.latch.countDown();
 		return future;

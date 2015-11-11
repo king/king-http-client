@@ -94,10 +94,7 @@ public class ServerInfo {
 	}
 
 	public boolean isSecure() {
-		if (scheme.equalsIgnoreCase("https")) {
-			return true;
-		}
-		return false;
+		return scheme.equalsIgnoreCase("https");
 	}
 }
 
