@@ -13,8 +13,7 @@ import com.king.platform.net.http.netty.pool.NoChannelPool;
 
 public class TestingHttpClientFactory {
 
-
-	private RecordingEventBus recordingEventBus;
+	private final RecordingEventBus recordingEventBus;
 
 	public TestingHttpClientFactory() {
 		recordingEventBus = new RecordingEventBus(new DefaultEventBus());

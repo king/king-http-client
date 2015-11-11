@@ -51,7 +51,7 @@ public class JettyIntegrationServer implements IntegrationServer {
 	private void start(boolean useHttps) throws Exception {
 		this.port = findFreePort();
 
-		server = new Server(new QueuedThreadPool(maxParallelThreads, 10, 5000, new BlockingArrayQueue<Runnable>(200, 20, 800)));
+		server = new Server(new QueuedThreadPool(maxParallelThreads, 10, 5000, new BlockingArrayQueue<>(200, 20, 800)));
 
 		if (useHttps) {
 			URL keyStoreUrl = getClass().getResource("/keystore.jks");

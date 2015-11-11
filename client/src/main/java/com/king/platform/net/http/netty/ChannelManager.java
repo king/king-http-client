@@ -39,7 +39,7 @@ public class ChannelManager {
 	private final ChannelPool channelPool;
 	private final Bootstrap plainBootstrap;
 	private final Bootstrap secureBootstrap;
-	private Timer nettyTimer;
+	private final Timer nettyTimer;
 
 
 	public ChannelManager(NioEventLoopGroup nioEventLoop, final HttpClientHandler httpClientHandler, Timer nettyTimer, TimeProvider timeProvider, ChannelPool

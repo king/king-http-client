@@ -8,7 +8,7 @@ package com.king.platform.net.http.netty.eventbus;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class RunOnceCallback2<T1, T2> implements EventBusCallback2<T1, T2> {
-	private AtomicBoolean executed = new AtomicBoolean();
+	private final AtomicBoolean executed = new AtomicBoolean();
 
 	public abstract void onFirstEvent(Event2 event, T1 payload1, T2 payload2);
 

@@ -21,7 +21,7 @@ public class BlockingBinaryHttpCallback implements HttpCallback<byte[]> {
 	private HttpResponse<byte[]> httpResponse;
 	private Throwable exception;
 
-	private CountDownLatch countDownLatch = new CountDownLatch(1);
+	private final CountDownLatch countDownLatch = new CountDownLatch(1);
 
 
 	@Override
