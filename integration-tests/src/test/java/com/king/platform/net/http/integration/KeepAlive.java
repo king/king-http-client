@@ -53,7 +53,7 @@ public class KeepAlive {
 		integrationServer.addServlet(new HttpServlet() {
 			@Override
 			protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-				resp.setHeader("Connection", "close");
+				resp.setHeader("connection", "close");
 				resp.getWriter().write(okBody);
 				resp.getWriter().flush();
 			}
@@ -79,7 +79,7 @@ public class KeepAlive {
 		integrationServer.addServlet(new HttpServlet() {
 			@Override
 			protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-				resp.setHeader("Connection", "close");
+				resp.setHeader("connection", "close");
 				resp.getWriter().write(okBody);
 				resp.getWriter().flush();
 			}
@@ -106,7 +106,7 @@ public class KeepAlive {
 		integrationServer.addServlet(new HttpServlet() {
 			@Override
 			protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-				resp.setHeader("Connection", "keep-alive");
+				resp.setHeader("connection", "keep-alive");
 				resp.getWriter().write(okBody);
 				resp.getWriter().flush();
 			}
@@ -133,7 +133,7 @@ public class KeepAlive {
 		integrationServer.addServlet(new HttpServlet() {
 			@Override
 			protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-				resp.setHeader("Connection", "keep-alive");
+				resp.setHeader("connection", "keep-alive");
 				resp.getWriter().write(okBody);
 				resp.getWriter().flush();
 			}

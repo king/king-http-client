@@ -53,7 +53,7 @@ public class HttpClientResponseHandler {
 				logger.trace("read HttpResponse");
 				HttpResponse response = (HttpResponse) msg;
 
-				HttpResponseStatus httpResponseStatus = response.getStatus();
+				HttpResponseStatus httpResponseStatus = response.status();
 				HttpHeaders httpHeaders = response.headers();
 
 				nettyHttpClientResponse.setHttpResponseStatus(httpResponseStatus);
@@ -70,15 +70,15 @@ public class HttpClientResponseHandler {
 				}
 
 
-				if (response.getStatus().code() == 100) {
+				if (response.status().code() == 100) {
 					requestEventBus.triggerEvent(Event.WRITE_BODY, ctx);
 					return;
 				}
 
 
-				String contentLength = httpHeaders.get(HttpHeaders.Names.CONTENT_LENGTH);
+				String contentLength = httpHeaders.get(HttpHeaderNames.CONTENT_LENGTH);
 
-				String contentType = httpHeaders.get(HttpHeaders.Names.CONTENT_TYPE);
+				String contentType = httpHeaders.get(HttpHeaderNames.CONTENT_TYPE);
 				String charset = StringUtil.substringAfter(contentType, '=');
 				if (charset == null) {
 					charset = StandardCharsets.ISO_8859_1.name();

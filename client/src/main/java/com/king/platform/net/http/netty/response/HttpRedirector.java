@@ -11,6 +11,7 @@ import com.king.platform.net.http.netty.HttpRequestContext;
 import com.king.platform.net.http.netty.ServerInfo;
 import com.king.platform.net.http.netty.eventbus.Event;
 import com.king.platform.net.http.netty.eventbus.RequestEventBus;
+import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
@@ -47,7 +48,7 @@ public class HttpRedirector {
 
 		try {
 
-			String redirectLocation = responseHttpHeaders.get(HttpHeaders.Names.LOCATION);
+			String redirectLocation = responseHttpHeaders.get(HttpHeaderNames.LOCATION);
 
 			ServerInfo redirectServerInfo = ServerInfo.buildFromUri(redirectLocation);
 

@@ -8,8 +8,7 @@ package com.king.platform.net.http.netty.request;
 
 import com.king.platform.net.http.netty.ServerInfo;
 import com.king.platform.net.http.netty.util.UriUtil;
-import io.netty.handler.codec.http.HttpHeaders;
-import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.*;
 
 public class NettyHttpClientRequest<T> {
 	private final ServerInfo serverInfo;
@@ -39,15 +38,15 @@ public class NettyHttpClientRequest<T> {
 
 
 	public boolean isDontWriteBodyBecauseExpectContinue() {
-		String expectHeader = nettyHeaders.get(HttpHeaders.Names.EXPECT);
-		if (expectHeader != null && expectHeader.equalsIgnoreCase(HttpHeaders.Values.CONTINUE)) {
+		String expectHeader = nettyHeaders.get(HttpHeaderNames.EXPECT);
+		if (expectHeader != null && HttpHeaderValues.CONTINUE.contentEqualsIgnoreCase(expectHeader)) {
 			return true;
 		}
 		return false;
 	}
 
 	public void setKeepAlive(boolean keepAlive) {
-		HttpHeaders.setKeepAlive(nettyRequest, keepAlive);
+		HttpUtil.setKeepAlive(nettyRequest, keepAlive);
 	}
 
 
