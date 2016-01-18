@@ -6,7 +6,7 @@
 package com.king.platform.net.http.integration;
 
 
-import com.king.platform.net.http.HttpClientRequestWithBody;
+import com.king.platform.net.http.HttpClientRequestWithBodyBuilder;
 import com.king.platform.net.http.netty.NettyHttpClient;
 import org.junit.After;
 import org.junit.Before;
@@ -34,7 +34,7 @@ public class HttpPost {
 	private AtomicReference<byte[]> readBodyContent;
 	private AtomicReference<String> contentTypeValue;
 
-	private HttpClientRequestWithBody post;
+	private HttpClientRequestWithBodyBuilder post;
 	private BlockingHttpCallback httpCallback;
 
 

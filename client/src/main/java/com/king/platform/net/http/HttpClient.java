@@ -13,13 +13,13 @@ public interface HttpClient {
 
 	<T> void setConf(ConfKeys<T> key, T value);
 
-	HttpClientRequest createGet(String uri);
+	HttpClientRequestBuilder createGet(String uri);
 
-	HttpClientRequestWithBody createPost(String uri);
+	HttpClientRequestWithBodyBuilder createPost(String uri);
 
-	HttpClientRequestWithBody createPut(String uri);
+	HttpClientRequestWithBodyBuilder createPut(String uri);
 
-	HttpClientRequest createDelete(String uri);
+	HttpClientRequestBuilder createDelete(String uri);
 
 
 }

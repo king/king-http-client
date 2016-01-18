@@ -6,7 +6,7 @@
 package com.king.platform.net.http.integration;
 
 
-import com.king.platform.net.http.HttpClientRequest;
+import com.king.platform.net.http.HttpClientRequestBuilder;
 import com.king.platform.net.http.netty.NettyHttpClient;
 import org.junit.After;
 import org.junit.Before;
@@ -165,7 +165,7 @@ public class HttpGetWithParameters {
 		}, "/testOk");
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		HttpClientRequest request = httpClient.createGet("http://localhost:" + port + "/testOk");
+		HttpClientRequestBuilder request = httpClient.createGet("http://localhost:" + port + "/testOk");
 
 		for (int i = 0; i < values.length; i++) {
 			request.withQueryParameter("param" + i, values[i]);
