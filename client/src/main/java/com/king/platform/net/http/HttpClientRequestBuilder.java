@@ -6,21 +6,7 @@
 package com.king.platform.net.http;
 
 
-public interface HttpClientRequestBuilder {
-
-	HttpClientRequestBuilder withHeader(String name, String value);
-
-	HttpClientRequestBuilder keepAlive(boolean keepAlive);
-
-	HttpClientRequestBuilder acceptCompressedResponse(boolean acceptCompressedResponse);
-
-	HttpClientRequestBuilder withQueryParameter(String name, String value);
-
-	HttpClientRequestBuilder idleTimeoutMillis(int readTimeoutMillis);
-
-	HttpClientRequestBuilder totalRequestTimeoutMillis(int requestTimeoutMillis);
-
-	HttpClientRequestBuilder followRedirects(boolean followRedirects);
+public interface HttpClientRequestBuilder extends HttpClientRequestHeaderBuilder<HttpClientRequestBuilder> {
 
 	BuiltClientRequest build();
 

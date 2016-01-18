@@ -13,22 +13,7 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.Map;
 
-public interface HttpClientRequestWithBodyBuilder extends HttpClientRequestBuilder {
-
-	HttpClientRequestWithBodyBuilder withHeader(String name, String value);
-
-	HttpClientRequestWithBodyBuilder keepAlive(boolean keepAlive);
-
-	HttpClientRequestWithBodyBuilder acceptCompressedResponse(boolean acceptCompressedResponse);
-
-	HttpClientRequestWithBodyBuilder withQueryParameter(String name, String value);
-
-	HttpClientRequestWithBodyBuilder idleTimeoutMillis(int readTimeoutMillis);
-
-	HttpClientRequestWithBodyBuilder totalRequestTimeoutMillis(int requestTimeoutMillis);
-
-	HttpClientRequestWithBodyBuilder followRedirects(boolean followRedirects);
-
+public interface HttpClientRequestWithBodyBuilder extends HttpClientRequestHeaderBuilder<HttpClientRequestWithBodyBuilder> {
 	HttpClientRequestWithBodyBuilder contentType(String contentType);
 
 	HttpClientRequestWithBodyBuilder content(byte[] content);
@@ -44,6 +29,8 @@ public interface HttpClientRequestWithBodyBuilder extends HttpClientRequestBuild
 	HttpClientRequestWithBodyBuilder addFormParameter(String name, String value);
 
 	HttpClientRequestWithBodyBuilder addFormParameters(Map<String, String> parameters);
+
+	BuiltClientRequest build();
 
 
 }

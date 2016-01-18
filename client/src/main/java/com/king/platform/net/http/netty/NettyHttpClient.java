@@ -14,6 +14,7 @@ import com.king.platform.net.http.netty.pool.ChannelPool;
 import com.king.platform.net.http.netty.request.HttpClientRequestHandler;
 import com.king.platform.net.http.netty.request.NettyHttpClientRequest;
 import com.king.platform.net.http.netty.requestbuilder.HttpClientRequestBuilderImpl;
+import com.king.platform.net.http.netty.requestbuilder.HttpClientRequestWithBodyBuilderImpl;
 import com.king.platform.net.http.netty.response.HttpClientResponseHandler;
 import com.king.platform.net.http.netty.response.HttpRedirector;
 import com.king.platform.net.http.netty.util.TimeProvider;
@@ -200,7 +201,7 @@ public class NettyHttpClient implements HttpClient {
 			throw new IllegalStateException("Http client is not started!");
 		}
 
-		return new HttpClientRequestBuilderImpl(this, HttpVersion.HTTP_1_1, HttpMethod.POST, uri, confMap);
+		return new HttpClientRequestWithBodyBuilderImpl(this, HttpVersion.HTTP_1_1, HttpMethod.POST, uri, confMap);
 	}
 
 	@Override
@@ -209,7 +210,7 @@ public class NettyHttpClient implements HttpClient {
 			throw new IllegalStateException("Http client is not started!");
 		}
 
-		return new HttpClientRequestBuilderImpl(this, HttpVersion.HTTP_1_1, HttpMethod.PUT, uri, confMap);
+		return new HttpClientRequestWithBodyBuilderImpl(this, HttpVersion.HTTP_1_1, HttpMethod.PUT, uri, confMap);
 	}
 
 	@Override
