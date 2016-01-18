@@ -16,7 +16,7 @@ import io.netty.handler.codec.http.HttpVersion;
 public class HttpClientRequestBuilderImpl extends HttpClientRequestHeaderBuilderImpl<HttpClientRequestBuilder> implements HttpClientRequestBuilder {
 
 	public HttpClientRequestBuilderImpl(NettyHttpClient nettyHttpClient, HttpVersion httpVersion, HttpMethod httpMethod, String uri, ConfMap confMap) {
-		super(nettyHttpClient, httpVersion, httpMethod, uri, confMap);
+		super(HttpClientRequestBuilder.class, nettyHttpClient, httpVersion, httpMethod, uri, confMap);
 	}
 
 	@Override

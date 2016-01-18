@@ -6,7 +6,7 @@
 package com.king.platform.net.http;
 
 
-public interface HttpClientRequestHeaderBuilder<T> {
+public interface HttpClientRequestHeaderBuilder<T extends HttpClientRequestHeaderBuilder> {
 
 	T withHeader(String name, String value);
 

@@ -16,7 +16,8 @@ import io.netty.handler.codec.http.HttpVersion;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class HttpClientRequestHeaderBuilderImpl<T> implements HttpClientRequestHeaderBuilder<T> {
+public abstract class HttpClientRequestHeaderBuilderImpl<T extends HttpClientRequestHeaderBuilder> implements HttpClientRequestHeaderBuilder<T> {
+	private final Class<T> implClass;
 	protected final NettyHttpClient nettyHttpClient;
 	protected final HttpVersion httpVersion;
 	protected final HttpMethod httpMethod;
@@ -35,7 +36,8 @@ public abstract class HttpClientRequestHeaderBuilderImpl<T> implements HttpClien
 	protected boolean keepAlive;
 
 
-	public HttpClientRequestHeaderBuilderImpl(NettyHttpClient nettyHttpClient, HttpVersion httpVersion, HttpMethod httpMethod, String uri, ConfMap confMap) {
+	protected HttpClientRequestHeaderBuilderImpl(Class<T> implClass, NettyHttpClient nettyHttpClient, HttpVersion httpVersion, HttpMethod httpMethod, String uri, ConfMap confMap) {
+		this.implClass = implClass;
 		this.nettyHttpClient = nettyHttpClient;
 		this.httpVersion = httpVersion;
 		this.httpMethod = httpMethod;
@@ -57,43 +59,43 @@ public abstract class HttpClientRequestHeaderBuilderImpl<T> implements HttpClien
 	@Override
 	public T withHeader(String name, String value) {
 		headerParameters.add(new Param(name, value));
-		return (T) this;
+		return implClass.cast(this);
 	}
 
 	@Override
 	public T keepAlive(boolean keepAlive) {
 		this.keepAlive = keepAlive;
-		return (T) this;
+		return implClass.cast(this);
 	}
 
 	@Override
 	public T acceptCompressedResponse(boolean acceptCompressedResponse) {
 		this.acceptCompressedResponse = acceptCompressedResponse;
-		return (T) this;
+		return implClass.cast(this);
 	}
 
 	@Override
 	public T withQueryParameter(String name, String value) {
 		queryParameters.add(new Param(name, value));
-		return (T) this;
+		return implClass.cast(this);
 	}
 
 	@Override
 	public T idleTimeoutMillis(int idleTimeoutMillis) {
 		this.idleTimeoutMillis = idleTimeoutMillis;
-		return (T) this;
+		return implClass.cast(this);
 	}
 
 	@Override
 	public T totalRequestTimeoutMillis(int totalRequestTimeoutMillis) {
 		this.totalRequestTimeoutMillis = totalRequestTimeoutMillis;
-		return (T) this;
+		return implClass.cast(this);
 	}
 
 	@Override
 	public T followRedirects(boolean followRedirects) {
 		this.followRedirects = followRedirects;
-		return (T) this;
+		return implClass.cast(this);
 	}
 
 }

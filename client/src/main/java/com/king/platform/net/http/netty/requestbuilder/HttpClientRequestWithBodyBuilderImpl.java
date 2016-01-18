@@ -27,7 +27,7 @@ public class HttpClientRequestWithBodyBuilderImpl extends HttpClientRequestHeade
 	private Charset bodyCharset;
 
 	public HttpClientRequestWithBodyBuilderImpl(NettyHttpClient nettyHttpClient, HttpVersion httpVersion, HttpMethod httpMethod, String uri, ConfMap confMap) {
-		super(nettyHttpClient, httpVersion, httpMethod, uri, confMap);
+		super(HttpClientRequestWithBodyBuilder.class, nettyHttpClient, httpVersion, httpMethod, uri, confMap);
 
 		bodyCharset = confMap.get(ConfKeys.REQUEST_BODY_CHARSET);
 
