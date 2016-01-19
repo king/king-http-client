@@ -14,22 +14,68 @@ import java.nio.charset.Charset;
 import java.util.Map;
 
 public interface HttpClientRequestWithBodyBuilder extends HttpClientRequestHeaderBuilder<HttpClientRequestWithBodyBuilder> {
+
+	/**
+	 * Set what content type the sent body has
+	 * @param contentType the content type
+	 * @return the builder
+	 */
 	HttpClientRequestWithBodyBuilder contentType(String contentType);
 
+	/**
+	 * Set what byte[] to post/put to the server
+	 * @param content the content to send in
+	 * @return the builder
+	 */
 	HttpClientRequestWithBodyBuilder content(byte[] content);
 
+	/**
+	 * Set what File to send to the server. The file will be streamed with the least overhead (zero copy for non-ssl connection).
+	 * @param file the file to send in
+	 * @return the builder
+	 */
 	HttpClientRequestWithBodyBuilder content(File file);
 
+	/**
+	 * Set a custom httpBody to post/put to the server.
+	 * @param httpBody the custom http body implementation
+	 * @return the builder
+	 */
 	HttpClientRequestWithBodyBuilder content(HttpBody httpBody);
 
+	/**
+	 * Set what InputStream to stream to the server.
+	 * @param inputStream the InputStream to stream
+	 * @return the builder
+	 */
 	HttpClientRequestWithBodyBuilder content(InputStream inputStream);
 
+	/**
+	 * Set the encoding of the body
+	 * @param charset the charset encoding type
+	 * @return the builder
+	 */
 	HttpClientRequestWithBodyBuilder bodyCharset(Charset charset);
 
+	/**
+	 * Add a parameter to a form urlencoded body
+	 * @param name the parameter name
+	 * @param value the parameter value
+	 * @return the body
+	 */
 	HttpClientRequestWithBodyBuilder addFormParameter(String name, String value);
 
+	/**
+	 * Add multiple parameters to a form urlencoded body
+	 * @param parameters the parameter map
+	 * @return the builder
+	 */
 	HttpClientRequestWithBodyBuilder addFormParameters(Map<String, String> parameters);
 
+	/**
+	 * Build the request
+	 * @return the built request
+	 */
 	BuiltClientRequest build();
 
 

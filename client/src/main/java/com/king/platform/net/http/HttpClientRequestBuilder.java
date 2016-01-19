@@ -8,6 +8,10 @@ package com.king.platform.net.http;
 
 public interface HttpClientRequestBuilder extends HttpClientRequestHeaderBuilder<HttpClientRequestBuilder> {
 
+	/**
+	 * Build the request
+	 * @return the built request
+	 */
 	BuiltClientRequest build();
 
 
