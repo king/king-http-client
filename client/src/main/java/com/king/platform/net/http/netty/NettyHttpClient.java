@@ -141,11 +141,6 @@ public class NettyHttpClient implements HttpClient {
 		subscribeToNioCallbackEvents(nioCallback, requestRequestEventBus);
 
 
-		if (httpCallback != null && responseBodyConsumer == null) {
-			responseBodyConsumer = httpCallback.newResponseBodyConsumer();
-		}
-
-
 		if (responseBodyConsumer == null) {
 			responseBodyConsumer = (ResponseBodyConsumer<T>) EMPTY_RESPONSE_BODY_CONSUMER;
 		}
