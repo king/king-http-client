@@ -18,7 +18,7 @@ public class NoChannelPool implements ChannelPool {
 
 	@Override
 	public void offer(ServerInfo serverInfo, Channel channel) {
-
+		channel.close();
 	}
 
 	@Override
