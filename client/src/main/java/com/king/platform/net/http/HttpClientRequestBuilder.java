@@ -6,14 +6,13 @@
 package com.king.platform.net.http;
 
 
-public abstract class StringHttpCallback implements HttpCallback<String> {
+public interface HttpClientRequestBuilder extends HttpClientRequestHeaderBuilder<HttpClientRequestBuilder> {
 
-	protected StringHttpCallback() {
-	}
+	/**
+	 * Build the request
+	 * @return the built request
+	 */
+	BuiltClientRequest build();
 
-	@Override
-	public ResponseBodyConsumer<String> newResponseBodyConsumer() {
-		return new StringResponseBody();
-	}
 
 }

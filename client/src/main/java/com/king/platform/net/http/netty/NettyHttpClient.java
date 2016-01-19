@@ -8,12 +8,13 @@ package com.king.platform.net.http.netty;
 
 import com.king.platform.net.http.*;
 import com.king.platform.net.http.netty.backpressure.BackPressure;
-import com.king.platform.net.http.netty.requestbuilder.HttpClientRequestBuilder;
 import com.king.platform.net.http.netty.eventbus.*;
 import com.king.platform.net.http.netty.metric.TimeStampRecorder;
 import com.king.platform.net.http.netty.pool.ChannelPool;
 import com.king.platform.net.http.netty.request.HttpClientRequestHandler;
 import com.king.platform.net.http.netty.request.NettyHttpClientRequest;
+import com.king.platform.net.http.netty.requestbuilder.HttpClientRequestBuilderImpl;
+import com.king.platform.net.http.netty.requestbuilder.HttpClientRequestWithBodyBuilderImpl;
 import com.king.platform.net.http.netty.response.HttpClientResponseHandler;
 import com.king.platform.net.http.netty.response.HttpRedirector;
 import com.king.platform.net.http.netty.util.TimeProvider;
@@ -140,11 +141,6 @@ public class NettyHttpClient implements HttpClient {
 		subscribeToNioCallbackEvents(nioCallback, requestRequestEventBus);
 
 
-		if (httpCallback != null && responseBodyConsumer == null) {
-			responseBodyConsumer = httpCallback.newResponseBodyConsumer();
-		}
-
-
 		if (responseBodyConsumer == null) {
 			responseBodyConsumer = (ResponseBodyConsumer<T>) EMPTY_RESPONSE_BODY_CONSUMER;
 		}
@@ -186,39 +182,39 @@ public class NettyHttpClient implements HttpClient {
 
 
 	@Override
-	public HttpClientRequest createGet(String uri) {
+	public HttpClientRequestBuilder createGet(String uri) {
 		if (!started.get()) {
 			throw new IllegalStateException("Http client is not started!");
 		}
 
-		return new HttpClientRequestBuilder(this, HttpVersion.HTTP_1_1, HttpMethod.GET, uri, confMap);
+		return new HttpClientRequestBuilderImpl(this, HttpVersion.HTTP_1_1, HttpMethod.GET, uri, confMap);
 	}
 
 	@Override
-	public HttpClientRequestWithBody createPost(String uri) {
+	public HttpClientRequestWithBodyBuilder createPost(String uri) {
 		if (!started.get()) {
 			throw new IllegalStateException("Http client is not started!");
 		}
 
-		return new HttpClientRequestBuilder(this, HttpVersion.HTTP_1_1, HttpMethod.POST, uri, confMap);
+		return new HttpClientRequestWithBodyBuilderImpl(this, HttpVersion.HTTP_1_1, HttpMethod.POST, uri, confMap);
 	}
 
 	@Override
-	public HttpClientRequestWithBody createPut(String uri) {
+	public HttpClientRequestWithBodyBuilder createPut(String uri) {
 		if (!started.get()) {
 			throw new IllegalStateException("Http client is not started!");
 		}
 
-		return new HttpClientRequestBuilder(this, HttpVersion.HTTP_1_1, HttpMethod.PUT, uri, confMap);
+		return new HttpClientRequestWithBodyBuilderImpl(this, HttpVersion.HTTP_1_1, HttpMethod.PUT, uri, confMap);
 	}
 
 	@Override
-	public HttpClientRequest createDelete(String uri) {
+	public HttpClientRequestBuilder createDelete(String uri) {
 		if (!started.get()) {
 			throw new IllegalStateException("Http client is not started!");
 		}
 
-		return new HttpClientRequestBuilder(this, HttpVersion.HTTP_1_1, HttpMethod.DELETE, uri, confMap);
+		return new HttpClientRequestBuilderImpl(this, HttpVersion.HTTP_1_1, HttpMethod.DELETE, uri, confMap);
 	}
 
 

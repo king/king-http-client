@@ -6,74 +6,36 @@
 package com.king.platform.net.http.netty.requestbuilder;
 
 
-import com.king.platform.net.http.*;
-import com.king.platform.net.http.netty.*;
-import com.king.platform.net.http.netty.request.*;
+import com.king.platform.net.http.BuiltClientRequest;
+import com.king.platform.net.http.ConfKeys;
+import com.king.platform.net.http.HttpClientRequestWithBodyBuilder;
+import com.king.platform.net.http.netty.ConfMap;
+import com.king.platform.net.http.netty.NettyHttpClient;
+import com.king.platform.net.http.netty.request.HttpBody;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpVersion;
 
 import java.io.File;
 import java.io.InputStream;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
-public class HttpClientRequestBuilder implements HttpClientRequest, HttpClientRequestWithBody {
-	private final NettyHttpClient nettyHttpClient;
-	private final HttpVersion httpVersion;
-	private final HttpMethod httpMethod;
-	private final String uri;
-
-	private final List<Param> queryParameters = new ArrayList<>();
-	private final List<Param> headerParameters = new ArrayList<>();
-
-	private final String defaultUserAgent;
-
-
-	private int idleTimeoutMillis;
-	private int totalRequestTimeoutMillis;
-
-	private boolean followRedirects;
-	private boolean acceptCompressedResponse;
-	private boolean keepAlive;
+public class HttpClientRequestWithBodyBuilderImpl extends HttpClientRequestHeaderBuilderImpl<HttpClientRequestWithBodyBuilder> implements HttpClientRequestWithBodyBuilder {
 
 	private RequestBodyBuilder requestBodyBuilder;
 	private String contentType;
 	private Charset bodyCharset;
 
-
-	public HttpClientRequestBuilder(NettyHttpClient nettyHttpClient, HttpVersion httpVersion, HttpMethod httpMethod, String uri, ConfMap confMap) {
-
-
-		this.nettyHttpClient = nettyHttpClient;
-		this.httpVersion = httpVersion;
-		this.httpMethod = httpMethod;
-		this.uri = uri;
-
-		idleTimeoutMillis = confMap.get(ConfKeys.IDLE_TIMEOUT_MILLIS);
-		totalRequestTimeoutMillis = confMap.get(ConfKeys.TOTAL_REQUEST_TIMEOUT_MILLIS);
-		followRedirects = confMap.get(ConfKeys.HTTP_FOLLOW_REDIRECTS);
-
-
-		acceptCompressedResponse = confMap.get(ConfKeys.ACCEPT_COMPRESSED_RESPONSE);
-
-		keepAlive = confMap.get(ConfKeys.KEEP_ALIVE);
+	public HttpClientRequestWithBodyBuilderImpl(NettyHttpClient nettyHttpClient, HttpVersion httpVersion, HttpMethod httpMethod, String uri, ConfMap confMap) {
+		super(HttpClientRequestWithBodyBuilder.class, nettyHttpClient, httpVersion, httpMethod, uri, confMap);
 
 		bodyCharset = confMap.get(ConfKeys.REQUEST_BODY_CHARSET);
 
-		defaultUserAgent = confMap.get(ConfKeys.USER_AGENT);
 	}
 
 
 	@Override
-	public HttpClientRequestWithBody withHeader(String name, String value) {
-		headerParameters.add(new Param(name, value));
-		return this;
-	}
-
-	@Override
-	public HttpClientRequestWithBody content(byte[] content) {
+	public HttpClientRequestWithBodyBuilder content(byte[] content) {
 		if (requestBodyBuilder != null) {
 			throw new RuntimeException("Already defined request body as " + requestBodyBuilder.getName());
 		}
@@ -83,7 +45,7 @@ public class HttpClientRequestBuilder implements HttpClientRequest, HttpClientRe
 	}
 
 	@Override
-	public HttpClientRequestWithBody content(File file) {
+	public HttpClientRequestWithBodyBuilder content(File file) {
 		if (requestBodyBuilder != null) {
 			throw new RuntimeException("Already defined request body as " + requestBodyBuilder.getName());
 		}
@@ -94,7 +56,7 @@ public class HttpClientRequestBuilder implements HttpClientRequest, HttpClientRe
 	}
 
 	@Override
-	public HttpClientRequestWithBody content(HttpBody httpBody) {
+	public HttpClientRequestWithBodyBuilder content(HttpBody httpBody) {
 		if (requestBodyBuilder != null) {
 			throw new RuntimeException("Already defined request body as " + requestBodyBuilder.getName());
 		}
@@ -105,37 +67,21 @@ public class HttpClientRequestBuilder implements HttpClientRequest, HttpClientRe
 	}
 
 	@Override
-	public HttpClientRequestWithBody contentType(String contentType) {
+	public HttpClientRequestWithBodyBuilder contentType(String contentType) {
 		this.contentType = contentType;
 		return this;
 	}
 
-	@Override
-	public HttpClientRequestWithBody keepAlive(boolean keepAlive) {
-		this.keepAlive = keepAlive;
-		return this;
-	}
 
 	@Override
-	public HttpClientRequestWithBody bodyCharset(Charset charset) {
+	public HttpClientRequestWithBodyBuilder bodyCharset(Charset charset) {
 		this.bodyCharset = charset;
 		return this;
 	}
 
-	@Override
-	public HttpClientRequestWithBody acceptCompressedResponse(boolean acceptCompressedResponse) {
-		this.acceptCompressedResponse = acceptCompressedResponse;
-		return this;
-	}
 
 	@Override
-	public HttpClientRequestWithBody withQueryParameter(String name, String value) {
-		queryParameters.add(new Param(name, value));
-		return this;
-	}
-
-	@Override
-	public HttpClientRequestWithBody addFormParameter(String name, String value) {
+	public HttpClientRequestWithBodyBuilder addFormParameter(String name, String value) {
 		validateRequestBuilderStat(FormParameterBodyBuilder.class);
 
 		if (requestBodyBuilder == null) {
@@ -148,7 +94,7 @@ public class HttpClientRequestBuilder implements HttpClientRequest, HttpClientRe
 	}
 
 	@Override
-	public HttpClientRequestWithBody addFormParameters(Map<String, String> parameters) {
+	public HttpClientRequestWithBodyBuilder addFormParameters(Map<String, String> parameters) {
 		validateRequestBuilderStat(FormParameterBodyBuilder.class);
 
 		if (requestBodyBuilder == null) {
@@ -175,31 +121,13 @@ public class HttpClientRequestBuilder implements HttpClientRequest, HttpClientRe
 	}
 
 	@Override
-	public HttpClientRequestWithBody content(InputStream inputStream) {
+	public HttpClientRequestWithBodyBuilder content(InputStream inputStream) {
 		if (requestBodyBuilder != null) {
 			throw new RuntimeException("Already defined request body as " + requestBodyBuilder.getName());
 		}
 
 		requestBodyBuilder = new InputStreamHttpBodyBuilder(inputStream);
 
-		return this;
-	}
-
-	@Override
-	public HttpClientRequestWithBody idleTimeoutMillis(int idleTimeoutMillis) {
-		this.idleTimeoutMillis = idleTimeoutMillis;
-		return this;
-	}
-
-	@Override
-	public HttpClientRequestWithBody totalRequestTimeoutMillis(int totalRequestTimeoutMillis) {
-		this.totalRequestTimeoutMillis = totalRequestTimeoutMillis;
-		return this;
-	}
-
-	@Override
-	public HttpClientRequestWithBody followRedirects(boolean followRedirects) {
-		this.followRedirects = followRedirects;
 		return this;
 	}
 

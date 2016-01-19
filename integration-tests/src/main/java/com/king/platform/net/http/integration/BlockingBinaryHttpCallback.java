@@ -8,12 +8,7 @@ package com.king.platform.net.http.integration;
 
 import com.king.platform.net.http.HttpCallback;
 import com.king.platform.net.http.HttpResponse;
-import com.king.platform.net.http.ResponseBodyConsumer;
 
-import java.io.ByteArrayOutputStream;
-import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
-import java.nio.channels.WritableByteChannel;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -66,33 +61,5 @@ public class BlockingBinaryHttpCallback implements HttpCallback<byte[]> {
 		return countDownLatch.await(timeout, unit);
 	}
 
-	@Override
-	public ResponseBodyConsumer<byte[]> newResponseBodyConsumer() {
-		return new ResponseBodyConsumer<byte[]>() {
-			private ByteArrayOutputStream outputStream;
-			private WritableByteChannel channel;
 
-			@Override
-			public void onBodyStart(String contentType, String charset, long contentLength) throws Exception {
-				outputStream = new ByteArrayOutputStream();
-				channel = Channels.newChannel(outputStream);
-			}
-
-			@Override
-			public void onReceivedContentPart(ByteBuffer buffer) throws Exception {
-				channel.write(buffer);
-			}
-
-			@Override
-			public void onCompletedBody() throws Exception {
-				channel.close();
-
-			}
-
-			@Override
-			public byte[] getBody() {
-				return outputStream.toByteArray();
-			}
-		};
-	}
 }

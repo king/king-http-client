@@ -6,7 +6,7 @@
 package com.king.platform.net.http.integration;
 
 
-import com.king.platform.net.http.HttpClientRequest;
+import com.king.platform.net.http.HttpClientRequestBuilder;
 import com.king.platform.net.http.NioCallback;
 import com.king.platform.net.http.netty.NettyHttpClient;
 import io.netty.buffer.ByteBuf;
@@ -60,7 +60,7 @@ public class HttpNioCallback {
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
 		NioCallback nioCallback = mock(NioCallback.class);
 
-		HttpClientRequest request = httpClient.createGet("http://localhost:" + port + "/testOk");
+		HttpClientRequestBuilder request = httpClient.createGet("http://localhost:" + port + "/testOk");
 		request.build().execute(httpCallback, nioCallback);
 		httpCallback.waitForCompletion();
 

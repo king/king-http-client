@@ -6,6 +6,7 @@
 package com.king.platform.net.http.integration;
 
 
+import com.king.platform.net.http.ByteArrayResponseBodyConsumer;
 import com.king.platform.net.http.ConfKeys;
 import com.king.platform.net.http.netty.NettyHttpClient;
 import io.netty.util.ResourceLeakDetector;
@@ -70,7 +71,7 @@ public class HttpPutChunkedFile {
 		BlockingBinaryHttpCallback httpCallback = new BlockingBinaryHttpCallback();
 
 
-		httpClient.createPut("http://localhost:" + port + "/putFile").content(temporaryFile.getFile()).build().execute(httpCallback);
+		httpClient.createPut("http://localhost:" + port + "/putFile").content(temporaryFile.getFile()).build().execute(httpCallback, new ByteArrayResponseBodyConsumer());
 
 		httpCallback.waitForCompletion();
 

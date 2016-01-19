@@ -64,31 +64,40 @@ public class BuiltNettyClientRequest implements BuiltClientRequest {
 
 	@Override
 	public Future<FutureResult<String>> execute() {
-		return internalExecute(null, null, new StringResponseBody());
+		return internalExecute(null, new StringResponseBody(), null);
 	}
 
+	@Override
+	public Future<FutureResult<String>> execute(HttpCallback<String> httpCallback) {
+		return internalExecute(httpCallback, new StringResponseBody(), null);
+	}
 
 	@Override
-	public <T> Future<FutureResult<T>> execute(HttpCallback<T> httpCallback) {
-		return internalExecute(httpCallback, null, null);
+	public Future<FutureResult<String>> execute(HttpCallback<String> httpCallback, NioCallback nioCallback) {
+		return internalExecute(httpCallback, new StringResponseBody(), nioCallback);
+	}
+
+	@Override
+	public <T> Future<FutureResult<T>> execute(HttpCallback<T> httpCallback, ResponseBodyConsumer<T> responseBodyConsumer) {
+		return internalExecute(httpCallback, responseBodyConsumer, null);
 	}
 
 	@Override
 	public Future<FutureResult<String>> execute(NioCallback nioCallback) {
-		return internalExecute(null, nioCallback, null);
+		return internalExecute(null, null, nioCallback);
 	}
 
 	@Override
-	public <T> Future<FutureResult<T>> execute(HttpCallback<T> httpCallback, NioCallback nioCallback) {
-		return internalExecute(httpCallback, nioCallback, null);
+	public <T> Future<FutureResult<T>> execute(HttpCallback<T> httpCallback, ResponseBodyConsumer<T> responseBodyConsumer, NioCallback nioCallback) {
+		return internalExecute(httpCallback, responseBodyConsumer, nioCallback);
 	}
 
 	@Override
 	public <T> Future<FutureResult<T>> execute(ResponseBodyConsumer<T> responseBodyConsumer) {
-		return internalExecute(null, null, responseBodyConsumer);
+		return internalExecute(null, responseBodyConsumer, null);
 	}
 
-	private <T> Future<FutureResult<T>> internalExecute(HttpCallback<T> httpCallback, NioCallback nioCallback, ResponseBodyConsumer<T> responseBodyConsumer) {
+	private <T> Future<FutureResult<T>> internalExecute(HttpCallback<T> httpCallback, ResponseBodyConsumer<T> responseBodyConsumer, NioCallback nioCallback) {
 		String completeUri = UriUtil.getUriWithParameters(uri, queryParameters);
 
 		ServerInfo serverInfo = null;

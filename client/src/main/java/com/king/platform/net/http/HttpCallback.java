@@ -9,8 +9,6 @@ package com.king.platform.net.http;
 public interface HttpCallback<T> {
 	void onCompleted(HttpResponse<T> httpResponse);
 
-	ResponseBodyConsumer<T> newResponseBodyConsumer();
-
 	void onError(Throwable throwable);
 
 }

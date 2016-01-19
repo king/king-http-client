@@ -8,12 +8,7 @@ package com.king.platform.net.http.integration;
 
 import com.king.platform.net.http.HttpCallback;
 import com.king.platform.net.http.HttpResponse;
-import com.king.platform.net.http.ResponseBodyConsumer;
 
-import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
-import java.nio.channels.WritableByteChannel;
-import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -63,45 +58,4 @@ public class BlockingMD5CalculatingHttpCallback implements HttpCallback<byte[]> 
 		return countDownLatch.await(timeout, unit);
 	}
 
-	public ResponseBodyConsumer<byte[]> newResponseBodyConsumer() {
-		final MD5CalculatingOutputStream outputStream;
-
-		try {
-			outputStream = new MD5CalculatingOutputStream();
-		} catch (NoSuchAlgorithmException e) {
-			throw new RuntimeException(e);
-		}
-
-
-		return new ResponseBodyConsumer<byte[]>() {
-
-
-			private WritableByteChannel channel;
-
-			@Override
-			public void onBodyStart(String contentType, String charset, long contentLength) throws Exception {
-				channel = Channels.newChannel(outputStream);
-			}
-
-			@Override
-			public void onReceivedContentPart(ByteBuffer buffer) throws Exception {
-				try {
-					channel.write(buffer);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-
-			}
-
-			@Override
-			public void onCompletedBody() throws Exception {
-				channel.close();
-			}
-
-			@Override
-			public byte[] getBody() {
-				return outputStream.getMD5();
-			}
-		};
-	}
 }

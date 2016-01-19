@@ -6,13 +6,13 @@
 package com.king.platform.net.http.integration;
 
 
+import com.king.platform.net.http.HttpCallback;
 import com.king.platform.net.http.HttpResponse;
-import com.king.platform.net.http.StringHttpCallback;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-public class BlockingHttpCallback extends StringHttpCallback {
+public class BlockingHttpCallback implements HttpCallback<String> {
 	private HttpResponse<String> httpResponse;
 	private Throwable exception;
 
