@@ -23,6 +23,9 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 
+/**
+ * Builder for creating netty implementation of HttpClient
+ */
 public class NettyHttpClientBuilder {
 	private int nioThreads = 2;
 	private int httpCallbackExecutorThreads;
@@ -41,16 +44,32 @@ public class NettyHttpClientBuilder {
 
 	private MetricCallback metricCallback;
 
+	/**
+	 * Set the amount of nio threads used for netty io reactor - defaults to two.
+	 * @param nioThreads the number of nio threads
+	 * @return the builder
+	 */
 	public NettyHttpClientBuilder setNioThreads(int nioThreads) {
 		this.nioThreads = nioThreads;
 		return this;
 	}
 
+	/**
+	 * Set an metric callback which can be used to collect metrics of each calls and the state of the client.
+	 * @param metricCallback the metric callback implementation
+	 * @return the builder
+	 */
 	public NettyHttpClientBuilder setMetricCallback(MetricCallback metricCallback) {
 		this.metricCallback = metricCallback;
 		return this;
 	}
 
+	/**
+	 * Set the amount of threads used for http callbacks. Defaults to two.
+	 * Can only be set if httpCallbackExecutor has not been set.
+	 * @param httpCallbackExecutorThreads the number of threads
+	 * @return the builder
+	 */
 	public NettyHttpClientBuilder setHttpCallbackExecutorThreads(int httpCallbackExecutorThreads) {
 		if (httpCallbackExecutor != null) {
 			throw new IllegalStateException("Can't set callback dispatcher threads when httpCallbackExecutor has already been set.");
@@ -59,6 +78,12 @@ public class NettyHttpClientBuilder {
 		return this;
 	}
 
+	/**
+	 * Set an custom executor used for http callbacks.
+	 * Can only be set if httpCallbackExecutorThreads has not been set.
+	 * @param executor the executor used for callbacks
+	 * @return the builder
+	 */
 	public NettyHttpClientBuilder setHttpCallbackExecutor(Executor executor) {
 		if (httpCallbackExecutorThreads != 0) {
 			throw new IllegalStateException("Can't set httpCallbackExecutor when httpCallbackExecutorThreads has already been set.");
@@ -69,6 +94,13 @@ public class NettyHttpClientBuilder {
 	}
 
 
+	/**
+	 * Set the amount of threads used for executor used for executing http requests. Defaults to two.
+	 * Not used if {@link com.king.platform.net.http.ConfKeys#EXECUTE_ON_CALLING_THREAD} is set to true.
+	 * Can only be set if httpExecuteExecutor has not been set.
+	 * @param httpExecuteExecutorThreads the amount of threads
+	 * @return the builder
+	 */
 	public NettyHttpClientBuilder setHttpExecuteExecutorThreads(int httpExecuteExecutorThreads) {
 		if (httpExecuteExecutor != null) {
 			throw new IllegalStateException("Can't set httpExecuteExecutorThreads  when httpExecuteExecutor has already been set.");
@@ -77,6 +109,13 @@ public class NettyHttpClientBuilder {
 		return this;
 	}
 
+	/**
+	 * Set a custom executor used for executing http requests.
+	 * Not used if {@link com.king.platform.net.http.ConfKeys#EXECUTE_ON_CALLING_THREAD} is set to true.
+	 * Can only be set if httpExecuteExecutorThreads has not been set.
+	 * @param httpExecuteExecutor the executor used for executing requests
+	 * @return the builder
+	 */
 	public NettyHttpClientBuilder setHttpExecuteExecutor(Executor httpExecuteExecutor) {
 		if (httpExecuteExecutorThreads != 0) {
 			throw new IllegalStateException("Can't set httpExecuteExecutor when httpExecuteExecutorThreads has already been set.");
@@ -87,37 +126,73 @@ public class NettyHttpClientBuilder {
 	}
 
 
+	/**
+	 * Set an custom thread factory for netty nio.
+	 * @param nioThreadFactory the thread factory.
+	 * @return the builder
+	 */
 	public NettyHttpClientBuilder setNioThreadFactory(ThreadFactory nioThreadFactory) {
 		this.nioThreadFactory = nioThreadFactory;
 		return this;
 	}
 
 
+	/**
+	 * Set a custom timer used for cleanup jobs
+	 * @param cleanupTimer the cleanup timer
+	 * @return the builder
+	 */
 	public NettyHttpClientBuilder setCleanupTimer(Timer cleanupTimer) {
 		this.cleanupTimer = cleanupTimer;
 		return this;
 	}
 
+
+	/**
+	 * Set a custom timeProvider implementation
+	 * @param timeProvider the time provider
+	 * @return the builder
+	 */
 	public NettyHttpClientBuilder setTimeProvider(TimeProvider timeProvider) {
 		this.timeProvider = timeProvider;
 		return this;
 	}
 
+	/**
+	 * Set what back pressure should be used for executing requests.
+	 * @param executionBackPressure the back pressure implementation
+	 * @return the builder
+	 */
 	public NettyHttpClientBuilder setExecutionBackPressure(BackPressure executionBackPressure) {
 		this.executionBackPressure = executionBackPressure;
 		return this;
 	}
 
+	/**
+	 * Set a custom root event bus
+	 * @param rootEventBus the root event bus
+	 * @return the builder
+	 */
 	public NettyHttpClientBuilder setRootEventBus(RootEventBus rootEventBus) {
 		this.rootEventBus = rootEventBus;
 		return this;
 	}
 
+	/**
+	 * Set a custom socket channel pool. Defaults to {@link com.king.platform.net.http.netty.pool.PoolingChannelPool}
+	 * If no pooling of connections is wanted, please provide {@link com.king.platform.net.http.netty.pool.NoChannelPool}
+	 * @param channelPool the channel pool to use
+	 * @return the builder
+	 */
 	public NettyHttpClientBuilder setChannelPool(ChannelPool channelPool) {
 		this.channelPool = channelPool;
 		return this;
 	}
 
+	/**
+	 * Create a HttpClient instance with the current settings.
+	 * @return the built HttpClient
+	 */
 	public NettyHttpClient createHttpClient() {
 		if (httpCallbackExecutor == null) {
 			if (httpCallbackExecutorThreads == 0) {
@@ -134,7 +209,7 @@ public class NettyHttpClientBuilder {
 		}
 
 		if (nioThreadFactory == null) {
-			this.nioThreadFactory = newThreadFactory("HttpClient nio event loop");
+			this.nioThreadFactory = newThreadFactory("HttpClient-nio-event-loop");
 		}
 
 		if (cleanupTimer == null) {
