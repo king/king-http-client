@@ -15,6 +15,7 @@ import com.king.platform.net.http.netty.request.HttpClientRequestHandler;
 import com.king.platform.net.http.netty.request.NettyHttpClientRequest;
 import com.king.platform.net.http.netty.requestbuilder.HttpClientRequestBuilderImpl;
 import com.king.platform.net.http.netty.requestbuilder.HttpClientRequestWithBodyBuilderImpl;
+import com.king.platform.net.http.netty.requestbuilder.HttpClientSSERequestBuilderImpl;
 import com.king.platform.net.http.netty.response.HttpClientResponseHandler;
 import com.king.platform.net.http.netty.response.HttpRedirector;
 import com.king.platform.net.http.netty.util.TimeProvider;
@@ -131,9 +132,7 @@ public class NettyHttpClient implements HttpClient {
 	NioCallback nioCallback, ResponseBodyConsumer<T> responseBodyConsumer, int idleTimeoutMillis, int totalRequestTimeoutMillis, boolean followRedirects,
 	                                              boolean keepAlive) {
 
-		if (!started.get()) {
-			throw new IllegalStateException("Http client is not started!");
-		}
+		validateStarted();
 
 		final RequestEventBus requestRequestEventBus = rootEventBus.createRequestEventBus();
 
@@ -183,40 +182,34 @@ public class NettyHttpClient implements HttpClient {
 
 	@Override
 	public HttpClientRequestBuilder createGet(String uri) {
-		if (!started.get()) {
-			throw new IllegalStateException("Http client is not started!");
-		}
-
 		return new HttpClientRequestBuilderImpl(this, HttpVersion.HTTP_1_1, HttpMethod.GET, uri, confMap);
 	}
 
 	@Override
 	public HttpClientRequestWithBodyBuilder createPost(String uri) {
-		if (!started.get()) {
-			throw new IllegalStateException("Http client is not started!");
-		}
-
 		return new HttpClientRequestWithBodyBuilderImpl(this, HttpVersion.HTTP_1_1, HttpMethod.POST, uri, confMap);
 	}
 
 	@Override
 	public HttpClientRequestWithBodyBuilder createPut(String uri) {
-		if (!started.get()) {
-			throw new IllegalStateException("Http client is not started!");
-		}
-
 		return new HttpClientRequestWithBodyBuilderImpl(this, HttpVersion.HTTP_1_1, HttpMethod.PUT, uri, confMap);
 	}
 
 	@Override
 	public HttpClientRequestBuilder createDelete(String uri) {
-		if (!started.get()) {
-			throw new IllegalStateException("Http client is not started!");
-		}
-
 		return new HttpClientRequestBuilderImpl(this, HttpVersion.HTTP_1_1, HttpMethod.DELETE, uri, confMap);
 	}
 
+	@Override
+	public HttpClientSSERequestBuilder createSSE(String uri) {
+		return new HttpClientSSERequestBuilderImpl(this, HttpVersion.HTTP_1_1, HttpMethod.GET, uri, confMap);
+	}
+
+	private void validateStarted() {
+		if (!started.get()) {
+			throw new IllegalStateException("Http client is not started!");
+		}
+	}
 
 	private <T> void subscribeToHttpCallbackEvents(final HttpCallback<T> httpCallback, RequestEventBus requestRequestEventBus) {
 		if (httpCallback == null) {
