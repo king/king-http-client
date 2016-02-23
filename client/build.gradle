@@ -7,7 +7,7 @@ apply plugin: 'maven'
 apply plugin: 'findbugs'
 
 group 'com.king.king-http-client'
-version '1.0.0'
+version '1.0.1'
 
 archivesBaseName = 'king-http-client'
 
