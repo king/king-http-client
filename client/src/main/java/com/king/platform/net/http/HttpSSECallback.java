@@ -6,9 +6,9 @@ public interface HttpSSECallback {
 
 	void onDisconnect();
 
-	void onData(String data);
+	void onError(Throwable throwable);
 
-	void onComment(String comment);
+	void onData(String data);
 
 	void onEvent(String name, String data);
 }
