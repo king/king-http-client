@@ -29,16 +29,7 @@ task sourceJar(type: Jar) {
 	classifier "sources"
 }
 
-uploadArchives {
-	repositories {
-		mavenDeployer {
-			//put artifactoryUser, artifactoryPassword and artifactoryUrl in your ~/.gradle/gradle.properties file
-			repository(url: artifactoryUrl) {
-				authentication(userName: artifactoryUser, password: artifactoryPassword)
-			}
-		}
-	}
-}
+
 
 
 dependencies {
@@ -55,3 +46,33 @@ dependencies {
 
 }
 
+
+
+
+def artifactoryUrl = "UNDEFINED"
+if (properties.containsKey('artifactoryUrl')) {
+	artifactoryUrl = properties.get('artifactoryUrl');
+}
+
+def artifactoryUser = "UNDEFINED"
+if (properties.containsKey('artifactoryUser')) {
+	artifactoryUser = properties.get('artifactoryUser');
+}
+
+
+def artifactoryPassword = "UNDEFINED"
+if (properties.containsKey('artifactoryPassword')) {
+	artifactoryPassword = properties.get('artifactoryPassword');
+}
+
+
+uploadArchives {
+	repositories {
+		mavenDeployer {
+			//put artifactoryUser, artifactoryPassword and artifactoryUrl in your ~/.gradle/gradle.properties file
+			repository(url: artifactoryUrl) {
+				authentication(userName: artifactoryUser, password: artifactoryPassword)
+			}
+		}
+	}
+}
