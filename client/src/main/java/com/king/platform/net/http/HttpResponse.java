@@ -17,9 +17,13 @@ public class HttpResponse<T> {
 	private final ResponseBodyConsumer<T> responseBodyConsumer;
 
 
-	public HttpResponse(int statusCode, ResponseBodyConsumer<T> responseBodyConsumer) {
+	public HttpResponse(int statusCode, ResponseBodyConsumer<T> responseBodyConsumer, List<Map.Entry<String, String>> httpHeaders) {
 		this.statusCode = statusCode;
 		this.responseBodyConsumer = responseBodyConsumer;
+
+		for (Map.Entry<String, String> httpHeader : httpHeaders) {
+			headers.add(new HeaderParameter(httpHeader.getKey(), httpHeader.getValue()));
+		}
 	}
 
 	public int getStatusCode() {
@@ -30,13 +34,9 @@ public class HttpResponse<T> {
 		return responseBodyConsumer.getBody();
 	}
 
-	public void addHeader(String name, String value) {
-		headers.add(new HeaderParameter(name, value));
-	}
-
 	public String getHeader(String name) {
 		for (HeaderParameter header : headers) {
-			if (header.getName().equals(name)) {
+			if (header.getName().equalsIgnoreCase(name)) {
 				return header.getValue();
 			}
 		}
@@ -47,7 +47,7 @@ public class HttpResponse<T> {
 		List<String> values = new ArrayList<>();
 
 		for (HeaderParameter header : headers) {
-			if (header.getName().equals(name)) {
+			if (header.getName().equalsIgnoreCase(name)) {
 				values.add(header.getValue());
 			}
 		}

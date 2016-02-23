@@ -24,6 +24,22 @@ task generateJavadoc(type: Javadoc) {
 }
 
 
+task sourceJar(type: Jar) {
+	from sourceSets.main.allJava
+	classifier "sources"
+}
+
+uploadArchives {
+	repositories {
+		mavenDeployer {
+			//put artifactoryUser, artifactoryPassword and artifactoryUrl in your ~/.gradle/gradle.properties file
+			repository(url: artifactoryUrl) {
+				authentication(userName: artifactoryUser, password: artifactoryPassword)
+			}
+		}
+	}
+}
+
 
 dependencies {
 	compile 'org.slf4j:slf4j-api:1.7.7'
