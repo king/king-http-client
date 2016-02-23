@@ -18,7 +18,6 @@ import org.slf4j.Logger;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -143,13 +142,10 @@ public class HttpClientResponseHandler {
 					requestEventBus.triggerEvent(Event.onReceivedCompleted, httpResponseStatus, httpHeaders);
 					httpRequestContext.getTimeRecorder().responseBodyCompleted();
 
+					@SuppressWarnings("unchecked")
 					com.king.platform.net.http.HttpResponse httpResponse = new com.king.platform.net.http.HttpResponse(httpResponseStatus.code(),
-						responseBodyConsumer);
+						responseBodyConsumer, httpHeaders.entries());
 
-
-					for (Map.Entry<String, String> entry : httpHeaders.entries()) {
-						httpResponse.addHeader(entry.getKey(), entry.getValue());
-					}
 
 					requestEventBus.triggerEvent(Event.onHttpResponseDone, httpResponse);
 
