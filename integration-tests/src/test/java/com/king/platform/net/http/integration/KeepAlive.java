@@ -6,7 +6,8 @@
 package com.king.platform.net.http.integration;
 
 
-import com.king.platform.net.http.netty.NettyHttpClient;
+import com.king.platform.net.http.HttpClient;
+import com.king.platform.net.http.HttpClient;
 import com.king.platform.net.http.netty.NettyHttpClientBuilder;
 import com.king.platform.net.http.netty.eventbus.DefaultEventBus;
 import com.king.platform.net.http.netty.eventbus.Event;
@@ -24,7 +25,7 @@ import static org.junit.Assert.*;
 
 public class KeepAlive {
 	IntegrationServer integrationServer;
-	private NettyHttpClient httpClient;
+	private HttpClient httpClient;
 	private int port;
 
 	private String okBody = "EVERYTHING IS OKAY!";

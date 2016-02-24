@@ -7,7 +7,8 @@ package com.king.platform.net.http.integration;
 
 
 import com.king.platform.net.http.ConfKeys;
-import com.king.platform.net.http.netty.NettyHttpClient;
+import com.king.platform.net.http.HttpClient;
+import com.king.platform.net.http.HttpClient;
 import com.king.platform.net.http.netty.NettyHttpClientBuilder;
 import com.king.platform.net.http.netty.backpressure.EvictingBackPressure;
 import com.king.platform.net.http.netty.pool.NoChannelPool;
@@ -26,7 +27,7 @@ import static org.junit.Assert.assertNotNull;
 
 public class BackPressure {
 	IntegrationServer integrationServer;
-	private NettyHttpClient httpClient;
+	private HttpClient httpClient;
 	private int port;
 
 	private String okBody = "EVERYTHING IS OKAY!";

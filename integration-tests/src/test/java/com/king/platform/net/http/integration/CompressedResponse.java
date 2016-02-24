@@ -6,7 +6,8 @@
 package com.king.platform.net.http.integration;
 
 
-import com.king.platform.net.http.netty.NettyHttpClient;
+import com.king.platform.net.http.HttpClient;
+import com.king.platform.net.http.HttpClient;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlets.GzipFilter;
 import org.junit.After;
@@ -23,7 +24,7 @@ import static org.junit.Assert.assertEquals;
 
 public class CompressedResponse {
 	IntegrationServer integrationServer;
-	private NettyHttpClient httpClient;
+	private HttpClient httpClient;
 	private int port;
 
 	private String okBody = "Morbi ut pretium augue, eu fringilla tortor. Nulla quis feugiat velit. Proin iaculis justo ut gravida cursus. Fusce nec posuere " +

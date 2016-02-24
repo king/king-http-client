@@ -6,6 +6,7 @@
 package com.king.platform.net.http.integration;
 
 import com.king.platform.net.http.ConfKeys;
+import com.king.platform.net.http.HttpClient;
 import com.king.platform.net.http.netty.NettyHttpClient;
 import com.king.platform.net.http.netty.NettyHttpClientBuilder;
 import com.king.platform.net.http.netty.eventbus.DefaultEventBus;
@@ -20,9 +21,9 @@ public class TestingHttpClientFactory {
 		recordingEventBus = new RecordingEventBus(new DefaultEventBus());
 	}
 
-	public NettyHttpClient create() {
+	public HttpClient create() {
 
-		NettyHttpClient httpClient = new NettyHttpClientBuilder()
+		HttpClient httpClient = new NettyHttpClientBuilder()
 			.setNioThreads(2)
 			.setHttpCallbackExecutorThreads(2)
 			.setHttpExecuteExecutorThreads(2).setRootEventBus(recordingEventBus)
