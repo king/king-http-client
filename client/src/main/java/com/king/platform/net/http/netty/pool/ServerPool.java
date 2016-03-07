@@ -6,22 +6,24 @@
 package com.king.platform.net.http.netty.pool;
 
 
-import com.king.platform.net.http.netty.ServerInfo;
-import com.king.platform.net.http.netty.metric.MetricCallback;
-import com.king.platform.net.http.netty.util.TimeProvider;
+import static org.slf4j.LoggerFactory.getLogger;
 import io.netty.channel.Channel;
-import org.slf4j.Logger;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import org.slf4j.Logger;
+
+import com.king.platform.net.http.netty.ServerInfo;
+import com.king.platform.net.http.netty.metric.MetricCallback;
+import com.king.platform.net.http.netty.util.TimeProvider;
 
 public class ServerPool {
 	private final Logger logger = getLogger(getClass());
@@ -30,7 +32,7 @@ public class ServerPool {
 	private final TimeUnit ttlTimeUnit;
 
 	private final AtomicInteger idGenerator = new AtomicInteger();
-	private final ConcurrentLinkedQueue<PooledChannel> pooledChannels = new ConcurrentLinkedQueue<>();
+	private final ConcurrentLinkedDeque<PooledChannel> pooledChannels = new ConcurrentLinkedDeque<>();
 	private final ConcurrentHashMap<Channel, PooledChannel> channelsMap = new ConcurrentHashMap<>();
 	private final TimeProvider timeProvider;
 	private final MetricCallback metricCallback;
@@ -106,7 +108,7 @@ public class ServerPool {
 
 		lastOfferedConnectionTime = timeProvider.currentTimeInMillis();
 		pooledChannel.lastUsedTimeStamp = timeProvider.currentTimeInMillis();
-		pooledChannels.offer(pooledChannel);
+		pooledChannels.addFirst(pooledChannel);
 	}
 
 	public void discard(Channel channel) {

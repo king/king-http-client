@@ -119,8 +119,8 @@ public class PoolingChannelPoolTest {
 
 		Channel fetchedChannel1 = poolingChannelPool.get(serverInfo);
 		Channel fetchedChannel2 = poolingChannelPool.get(serverInfo);
-		assertSame(channel1, fetchedChannel1);
-		assertSame(fetchedChannel2, channel2);
+		assertSame(channel2, fetchedChannel1);
+		assertSame(channel1, fetchedChannel2);
 
 		assertEquals(0, poolingChannelPool.getPoolSize(serverInfo));
 	}
