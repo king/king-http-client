@@ -7,7 +7,9 @@ package com.king.platform.net.http.integration;
 
 
 import com.king.platform.net.http.ConfKeys;
+import com.king.platform.net.http.FutureResult;
 import com.king.platform.net.http.HttpClient;
+import com.king.platform.net.http.HttpResponse;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -18,6 +20,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
@@ -87,6 +90,35 @@ public class HttpGetWithRedirect {
 
 		assertEquals(okBody, httpCallback.getBody());
 		assertEquals(200, httpCallback.getStatusCode());
+
+
+	}
+
+	@Test
+	public void getWithRedirectUsingFuture() throws Exception {
+
+		integrationServer.addServlet(new HttpServlet() {
+			@Override
+			protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+				resp.sendRedirect("/test2");
+			}
+		}, "/test1");
+
+
+		integrationServer.addServlet(new HttpServlet() {
+			@Override
+			protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+				resp.getWriter().write(okBody);
+				resp.getWriter().flush();
+			}
+		}, "/test2");
+
+		final Future<FutureResult<String>> resultFuture = httpClient.createGet("http://localhost:" + port + "/test1").build().execute();
+
+		final FutureResult<String> result = resultFuture.get(1000, TimeUnit.MILLISECONDS);
+		final HttpResponse<String> httpResponse = result.getHttpResponse();
+		assertEquals(okBody, httpResponse.getBody());
+		assertEquals(200, httpResponse.getStatusCode());
 
 
 	}
