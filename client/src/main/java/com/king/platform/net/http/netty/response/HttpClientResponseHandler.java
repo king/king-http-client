@@ -7,6 +7,7 @@ package com.king.platform.net.http.netty.response;
 
 
 import com.king.platform.net.http.ResponseBodyConsumer;
+import com.king.platform.net.http.netty.HttpClientHandler;
 import com.king.platform.net.http.netty.HttpRequestContext;
 import com.king.platform.net.http.netty.eventbus.Event;
 import com.king.platform.net.http.netty.eventbus.RequestEventBus;
@@ -37,6 +38,12 @@ public class HttpClientResponseHandler {
 			logger.trace("httpRequestContext is null, msg was {}", msg);
 			return;
 		}
+
+		if (ctx.channel().attr(HttpClientHandler.HTTP_CLIENT_HANDLER_TRIGGERED_ERROR).get()) {
+			logger.trace("This channel has already triggered error, ignoring this invocation");
+			return;
+		}
+
 
 		NettyHttpClientResponse nettyHttpClientResponse = httpRequestContext.getNettyHttpClientResponse();
 
