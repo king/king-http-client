@@ -127,13 +127,15 @@ public class NettyHttpClient implements HttpClient {
 	}
 
 
-	public <T> Future<FutureResult<T>> execute(final NettyHttpClientRequest<T> nettyHttpClientRequest, final HttpCallback<T> httpCallback, final
+	public <T> Future<FutureResult<T>> execute(final NettyHttpClientRequest<T> nettyHttpClientRequest, HttpCallback<T> httpCallback, final
 	NioCallback nioCallback, ResponseBodyConsumer<T> responseBodyConsumer, int idleTimeoutMillis, int totalRequestTimeoutMillis, boolean followRedirects,
 	                                              boolean keepAlive) {
 
 		if (!started.get()) {
 			throw new IllegalStateException("Http client is not started!");
 		}
+
+		httpCallback = runOnlyOnceWrapper(httpCallback);
 
 		final RequestEventBus requestRequestEventBus = rootEventBus.createRequestEventBus();
 
@@ -170,6 +172,29 @@ public class NettyHttpClient implements HttpClient {
 		}
 
 		return future;
+	}
+
+	private <T> HttpCallback<T> runOnlyOnceWrapper(final HttpCallback<T> httpCallback) {
+		if (httpCallback == null) {
+			return null;
+		}
+
+		return new HttpCallback<T>() {
+			private final AtomicBoolean firstExecute = new AtomicBoolean();
+			@Override
+			public void onCompleted(HttpResponse<T> httpResponse) {
+				if (firstExecute.compareAndSet(false, true)) {
+					httpCallback.onCompleted(httpResponse);
+				}
+			}
+
+			@Override
+			public void onError(Throwable throwable) {
+				if (firstExecute.compareAndSet(false, true)) {
+					httpCallback.onError(throwable);
+				}
+			}
+		};
 	}
 
 	private <T> void sendRequest(RequestEventBus requestRequestEventBus, HttpRequestContext<T> httpRequestContext) {
