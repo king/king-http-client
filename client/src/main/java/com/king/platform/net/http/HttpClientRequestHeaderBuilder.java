@@ -6,6 +6,8 @@
 package com.king.platform.net.http;
 
 
+import java.util.Map;
+
 public interface HttpClientRequestHeaderBuilder<T extends HttpClientRequestHeaderBuilder> {
 
 	/**
@@ -15,6 +17,14 @@ public interface HttpClientRequestHeaderBuilder<T extends HttpClientRequestHeade
 	 * @return the builder
 	 */
 	T withHeader(String name, String value);
+
+
+	/**
+	 * Add a map of custom headers to the request
+	 * @param headers Key Value map of header values
+	 * @return the builder
+	 */
+	T withHeaders(Map<String, String> headers);
 
 	/**
 	 * Set if the connection should be kept alive or not.<br>
@@ -32,6 +42,8 @@ public interface HttpClientRequestHeaderBuilder<T extends HttpClientRequestHeade
 	 * @return the builder
 	 */
 	T acceptCompressedResponse(boolean acceptCompressedResponse);
+
+
 
 	/**
 	 * Set the idle timeout in milliseconds <br>
@@ -65,5 +77,13 @@ public interface HttpClientRequestHeaderBuilder<T extends HttpClientRequestHeade
 	 * @return the builder
 	 */
 	T withQueryParameter(String name, String value);
+
+
+	/**
+	 * Add a map of query parameters to the current uri
+	 * @param parameters the map of query parameters
+	 * @return the builder
+	 */
+	T withQueryParameters(Map<String, String> parameters);
 
 }

@@ -7,6 +7,7 @@ package com.king.platform.net.http.netty.response;
 
 
 import com.king.platform.net.http.ResponseBodyConsumer;
+import com.king.platform.net.http.netty.HttpClientHandler;
 import com.king.platform.net.http.netty.HttpRequestContext;
 import com.king.platform.net.http.netty.eventbus.Event;
 import com.king.platform.net.http.netty.eventbus.RequestEventBus;
@@ -18,7 +19,6 @@ import org.slf4j.Logger;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -38,6 +38,12 @@ public class HttpClientResponseHandler {
 			logger.trace("httpRequestContext is null, msg was {}", msg);
 			return;
 		}
+
+		if (ctx.channel().attr(HttpClientHandler.HTTP_CLIENT_HANDLER_TRIGGERED_ERROR).get()) {
+			logger.trace("This channel has already triggered error, ignoring this invocation");
+			return;
+		}
+
 
 		NettyHttpClientResponse nettyHttpClientResponse = httpRequestContext.getNettyHttpClientResponse();
 
@@ -143,13 +149,10 @@ public class HttpClientResponseHandler {
 					requestEventBus.triggerEvent(Event.onReceivedCompleted, httpResponseStatus, httpHeaders);
 					httpRequestContext.getTimeRecorder().responseBodyCompleted();
 
+					@SuppressWarnings("unchecked")
 					com.king.platform.net.http.HttpResponse httpResponse = new com.king.platform.net.http.HttpResponse(httpResponseStatus.code(),
-						responseBodyConsumer);
+						responseBodyConsumer, httpHeaders.entries());
 
-
-					for (Map.Entry<String, String> entry : httpHeaders.entries()) {
-						httpResponse.addHeader(entry.getKey(), entry.getValue());
-					}
 
 					requestEventBus.triggerEvent(Event.onHttpResponseDone, httpResponse);
 

@@ -6,6 +6,7 @@
 package com.king.platform.net.http.netty.request;
 
 
+import com.king.platform.net.http.netty.HttpClientHandler;
 import com.king.platform.net.http.netty.HttpRequestContext;
 import com.king.platform.net.http.netty.eventbus.Event;
 import com.king.platform.net.http.netty.eventbus.Event1;
@@ -15,6 +16,7 @@ import com.king.platform.net.http.netty.response.NettyHttpClientResponse;
 import io.netty.channel.*;
 import io.netty.handler.codec.http.DefaultLastHttpContent;
 import io.netty.handler.codec.http.HttpRequest;
+import io.netty.util.Attribute;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -30,7 +32,14 @@ public class HttpClientRequestHandler {
 	}
 
 	public void handleRequest(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) {
+		Attribute<Boolean> errorAttribute = ctx.channel().attr(HttpClientHandler.HTTP_CLIENT_HANDLER_TRIGGERED_ERROR);
+		if (errorAttribute.get() != null && errorAttribute.get()) {
+			logger.trace("This channel has already triggered error, ignoring this invocation");
+			return;
+		}
+
 		if (HttpRequestContext.class.isAssignableFrom(msg.getClass())) {
+			errorAttribute.set(false);
 			HttpRequestContext httpRequestContext = (HttpRequestContext) msg;
 
 			NettyHttpClientRequest request = httpRequestContext.getNettyHttpClientRequest();

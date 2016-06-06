@@ -49,7 +49,7 @@ public class HttpRequestContext<T> {
 
 	public HttpRequestContext createRedirectRequest(ServerInfo redirectServerInfo, String redirectLocation) {
 		NettyHttpClientRequest redirectRequest = nettyHttpClientRequest.createRedirectRequest(redirectServerInfo, redirectLocation);
-		HttpRequestContext httpRequestContext = new HttpRequestContext(redirectRequest, requestEventBus.createRequestEventBus(), responseBodyConsumer,
+		HttpRequestContext httpRequestContext = new HttpRequestContext(redirectRequest, requestEventBus, responseBodyConsumer,
 			idleTimeoutMillis, totalRequestTimeoutMillis, followRedirects, keepAlive, timeStampRecorder);
 		httpRequestContext.redirectionCount = this.redirectionCount + 1;
 

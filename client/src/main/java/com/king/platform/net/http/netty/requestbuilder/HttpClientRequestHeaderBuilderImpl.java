@@ -15,6 +15,7 @@ import io.netty.handler.codec.http.HttpVersion;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public abstract class HttpClientRequestHeaderBuilderImpl<T extends HttpClientRequestHeaderBuilder> implements HttpClientRequestHeaderBuilder<T> {
 	private final Class<T> implClass;
@@ -63,6 +64,15 @@ public abstract class HttpClientRequestHeaderBuilderImpl<T extends HttpClientReq
 	}
 
 	@Override
+	public T withHeaders(Map<String, String> headers) {
+		for (Map.Entry<String, String> entry : headers.entrySet()) {
+			withHeader(entry.getKey(), entry.getValue());
+		}
+
+		return implClass.cast(this);
+	}
+
+	@Override
 	public T keepAlive(boolean keepAlive) {
 		this.keepAlive = keepAlive;
 		return implClass.cast(this);
@@ -77,6 +87,14 @@ public abstract class HttpClientRequestHeaderBuilderImpl<T extends HttpClientReq
 	@Override
 	public T withQueryParameter(String name, String value) {
 		queryParameters.add(new Param(name, value));
+		return implClass.cast(this);
+	}
+
+	@Override
+	public T withQueryParameters(Map<String, String> parameters) {
+		for (Map.Entry<String, String> entry : parameters.entrySet()) {
+			queryParameters.add(new Param(entry.getKey(), entry.getValue()));
+		}
 		return implClass.cast(this);
 	}
 

@@ -8,7 +8,7 @@ package com.king.platform.net.http.integration;
 
 import com.king.platform.net.http.HttpClientRequestBuilder;
 import com.king.platform.net.http.NioCallback;
-import com.king.platform.net.http.netty.NettyHttpClient;
+import com.king.platform.net.http.HttpClient;
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.After;
@@ -29,7 +29,7 @@ import static se.mockachino.matchers.Matchers.anyInt;
 
 public class HttpNioCallback {
 	IntegrationServer integrationServer;
-	private NettyHttpClient httpClient;
+	private HttpClient httpClient;
 	private int port;
 
 	private String okBody = "EVERYTHING IS OKAY!";

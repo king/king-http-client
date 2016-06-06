@@ -5,6 +5,7 @@
 
 package com.king.platform.net.http.netty;
 
+import com.king.platform.net.http.HttpClient;
 import com.king.platform.net.http.netty.backpressure.BackPressure;
 import com.king.platform.net.http.netty.backpressure.NoBackPressure;
 import com.king.platform.net.http.netty.eventbus.DefaultEventBus;
@@ -193,7 +194,7 @@ public class NettyHttpClientBuilder {
 	 * Create a HttpClient instance with the current settings.
 	 * @return the built HttpClient
 	 */
-	public NettyHttpClient createHttpClient() {
+	public HttpClient createHttpClient() {
 		if (httpCallbackExecutor == null) {
 			if (httpCallbackExecutorThreads == 0) {
 				httpCallbackExecutorThreads = 2;

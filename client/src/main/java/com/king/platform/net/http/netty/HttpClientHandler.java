@@ -13,6 +13,7 @@ import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandler.Sharable;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
+import io.netty.util.AttributeKey;
 import org.slf4j.Logger;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -20,6 +21,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 @Sharable
 public class HttpClientHandler extends ChannelDuplexHandler {
 
+	public static final AttributeKey<Boolean> HTTP_CLIENT_HANDLER_TRIGGERED_ERROR = AttributeKey.valueOf("__HttpClientHandler_ErrorTriggered");
 
 	private final Logger logger = getLogger(getClass());
 	private final HttpClientResponseHandler httpClientResponseHandler;
@@ -44,7 +46,9 @@ public class HttpClientHandler extends ChannelDuplexHandler {
 
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, final Throwable cause) {
-		logger.error("Exception on channel " + ctx.channel(), cause);
+		logger.trace("Exception on channel " + ctx.channel(), cause);
+
+		ctx.channel().attr(HTTP_CLIENT_HANDLER_TRIGGERED_ERROR).set(true);
 
 		HttpRequestContext httpRequestContext = ctx.channel().attr(HttpRequestContext.HTTP_REQUEST_ATTRIBUTE_KEY).get();
 		if (httpRequestContext != null) {

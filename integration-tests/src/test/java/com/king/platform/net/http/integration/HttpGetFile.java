@@ -9,7 +9,7 @@ package com.king.platform.net.http.integration;
 import com.king.platform.net.http.ConfKeys;
 import com.king.platform.net.http.FileResponseConsumer;
 import com.king.platform.net.http.FutureResult;
-import com.king.platform.net.http.netty.NettyHttpClient;
+import com.king.platform.net.http.HttpClient;
 import io.netty.util.ResourceLeakDetector;
 import org.eclipse.jetty.server.HttpOutput;
 import org.junit.After;
@@ -40,7 +40,7 @@ public class HttpGetFile {
 	public TemporaryFolder folder = new TemporaryFolder();
 
 	IntegrationServer integrationServer;
-	private NettyHttpClient httpClient;
+	private HttpClient httpClient;
 	private int port;
 	private TemporaryFile temporaryFile;
 

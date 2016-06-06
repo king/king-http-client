@@ -8,7 +8,7 @@ package com.king.platform.net.http.integration;
 
 import com.king.platform.net.http.ByteArrayResponseBodyConsumer;
 import com.king.platform.net.http.ConfKeys;
-import com.king.platform.net.http.netty.NettyHttpClient;
+import com.king.platform.net.http.HttpClient;
 import io.netty.util.ResourceLeakDetector;
 import org.junit.After;
 import org.junit.Before;
@@ -32,7 +32,7 @@ public class HttpPutChunkedFile {
 	public TemporaryFolder folder = new TemporaryFolder();
 
 	IntegrationServer integrationServer;
-	private NettyHttpClient httpClient;
+	private HttpClient httpClient;
 	private int port;
 	private TemporaryFile temporaryFile;
 
