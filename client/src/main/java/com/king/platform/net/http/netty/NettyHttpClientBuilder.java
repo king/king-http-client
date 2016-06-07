@@ -20,7 +20,10 @@ import com.king.platform.net.http.netty.util.TimeProvider;
 import io.netty.util.HashedWheelTimer;
 import io.netty.util.Timer;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 
@@ -195,18 +198,36 @@ public class NettyHttpClientBuilder {
 	 * @return the built HttpClient
 	 */
 	public HttpClient createHttpClient() {
+		List<NettyHttpClient.ShutdownJob> shutdownJobs = new ArrayList<>();
+
 		if (httpCallbackExecutor == null) {
 			if (httpCallbackExecutorThreads == 0) {
 				httpCallbackExecutorThreads = 2;
 			}
-			httpCallbackExecutor = Executors.newFixedThreadPool(httpCallbackExecutorThreads, newThreadFactory("HttpClient-HttpCallback"));
+			ExecutorService executorService = Executors.newFixedThreadPool(httpCallbackExecutorThreads, newThreadFactory("HttpClient-HttpCallback"));
+			httpCallbackExecutor = executorService;
+
+			shutdownJobs.add(new NettyHttpClient.ShutdownJob() {
+				@Override
+				public void onShutdown() {
+					executorService.shutdown();
+				}
+			});
 		}
 
 		if (httpExecuteExecutor == null) {
 			if (httpExecuteExecutorThreads == 0) {
 				httpExecuteExecutorThreads = 2;
 			}
-			httpExecuteExecutor = Executors.newFixedThreadPool(httpExecuteExecutorThreads, newThreadFactory("HttpClient-Executor"));
+			ExecutorService executorService = Executors.newFixedThreadPool(httpExecuteExecutorThreads, newThreadFactory("HttpClient-Executor"));
+			httpExecuteExecutor = executorService;
+
+			shutdownJobs.add(new NettyHttpClient.ShutdownJob() {
+				@Override
+				public void onShutdown() {
+					executorService.shutdown();
+				}
+			});
 		}
 
 		if (nioThreadFactory == null) {
@@ -215,6 +236,13 @@ public class NettyHttpClientBuilder {
 
 		if (cleanupTimer == null) {
 			cleanupTimer = new HashedWheelTimer();
+
+			shutdownJobs.add(new NettyHttpClient.ShutdownJob() {
+				@Override
+				public void onShutdown() {
+					cleanupTimer.stop();
+				}
+			});
 		}
 
 		if (timeProvider == null) {
@@ -239,8 +267,14 @@ public class NettyHttpClientBuilder {
 			executionBackPressure = new NoBackPressure();
 		}
 
-		return new NettyHttpClient(nioThreads, nioThreadFactory, httpCallbackExecutor, httpExecuteExecutor, cleanupTimer, timeProvider, executionBackPressure,
+		NettyHttpClient nettyHttpClient = new NettyHttpClient(nioThreads, nioThreadFactory, httpCallbackExecutor, httpExecuteExecutor, cleanupTimer, timeProvider, executionBackPressure,
 			rootEventBus, channelPool);
+
+		for (NettyHttpClient.ShutdownJob shutdownJob : shutdownJobs) {
+			nettyHttpClient.addShutdownJob(shutdownJob);
+		}
+
+		return nettyHttpClient;
 	}
 
 

@@ -25,9 +25,12 @@ import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.util.Timer;
+import io.netty.util.concurrent.EventExecutor;
 import org.slf4j.Logger;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
@@ -57,6 +60,7 @@ public class NettyHttpClient implements HttpClient {
 	private BackPressure executionBackPressure;
 	private Boolean executeOnCallingThread;
 
+	private List<ShutdownJob> shutdownJobs = new ArrayList<>();
 
 	public NettyHttpClient(int nioThreads, ThreadFactory nioThreadFactory, Executor httpClientCallbackExecutor, Executor httpClientExecuteExecutor, Timer
 		cleanupTimer, TimeProvider timeProvider, final BackPressure executionBackPressure, RootEventBus rootEventBus, ChannelPool channelPool) {
@@ -113,6 +117,10 @@ public class NettyHttpClient implements HttpClient {
 
 		if (group != null) {
 			group.shutdownGracefully(0, 10, TimeUnit.SECONDS);
+		}
+
+		for (ShutdownJob shutdownJob : shutdownJobs) {
+			shutdownJob.onShutdown();
 		}
 
 	}
@@ -289,6 +297,10 @@ public class NettyHttpClient implements HttpClient {
 
 	}
 
+	public void addShutdownJob(ShutdownJob shutdownJob) {
+		shutdownJobs.add(shutdownJob);
+	}
+
 	private void subscribeToNioCallbackEvents(final NioCallback nioCallback, RequestEventBus requestRequestEventBus) {
 		if (nioCallback == null) {
 			return;
@@ -383,5 +395,10 @@ public class NettyHttpClient implements HttpClient {
 			return null;
 		}
 	};
+
+
+	interface ShutdownJob {
+		void onShutdown();
+	}
 
 }
