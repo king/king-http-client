@@ -6,27 +6,7 @@
 package com.king.platform.net.http.netty;
 
 
-import com.king.platform.net.http.*;
-import com.king.platform.net.http.netty.backpressure.BackPressure;
-import com.king.platform.net.http.netty.eventbus.*;
-import com.king.platform.net.http.netty.metric.TimeStampRecorder;
-import com.king.platform.net.http.netty.pool.ChannelPool;
-import com.king.platform.net.http.netty.request.HttpClientRequestHandler;
-import com.king.platform.net.http.netty.request.NettyHttpClientRequest;
-import com.king.platform.net.http.netty.requestbuilder.HttpClientRequestBuilderImpl;
-import com.king.platform.net.http.netty.requestbuilder.HttpClientRequestWithBodyBuilderImpl;
-import com.king.platform.net.http.netty.response.HttpClientResponseHandler;
-import com.king.platform.net.http.netty.response.HttpRedirector;
-import com.king.platform.net.http.netty.util.TimeProvider;
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.handler.codec.http.HttpHeaders;
-import io.netty.handler.codec.http.HttpMethod;
-import io.netty.handler.codec.http.HttpResponseStatus;
-import io.netty.handler.codec.http.HttpVersion;
-import io.netty.util.Timer;
-import io.netty.util.concurrent.EventExecutor;
-import org.slf4j.Logger;
+import static org.slf4j.LoggerFactory.getLogger;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -37,7 +17,48 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.slf4j.LoggerFactory.getLogger;
+import org.slf4j.Logger;
+
+import com.king.platform.net.http.ConfKeys;
+import com.king.platform.net.http.FutureResult;
+import com.king.platform.net.http.HttpCallback;
+import com.king.platform.net.http.HttpClient;
+import com.king.platform.net.http.HttpClientRequestBuilder;
+import com.king.platform.net.http.HttpClientRequestWithBodyBuilder;
+import com.king.platform.net.http.HttpResponse;
+import com.king.platform.net.http.KingHttpException;
+import com.king.platform.net.http.NioCallback;
+import com.king.platform.net.http.ResponseBodyConsumer;
+import com.king.platform.net.http.netty.backpressure.BackPressure;
+import com.king.platform.net.http.netty.eventbus.Event;
+import com.king.platform.net.http.netty.eventbus.Event1;
+import com.king.platform.net.http.netty.eventbus.Event2;
+import com.king.platform.net.http.netty.eventbus.EventBusCallback1;
+import com.king.platform.net.http.netty.eventbus.EventBusCallback2;
+import com.king.platform.net.http.netty.eventbus.RequestEventBus;
+import com.king.platform.net.http.netty.eventbus.RootEventBus;
+import com.king.platform.net.http.netty.eventbus.RunOnceCallback1;
+import com.king.platform.net.http.netty.eventbus.RunOnceCallback2;
+import com.king.platform.net.http.netty.metric.TimeStampRecorder;
+import com.king.platform.net.http.netty.pool.ChannelPool;
+import com.king.platform.net.http.netty.request.HttpClientRequestHandler;
+import com.king.platform.net.http.netty.request.NettyHttpClientRequest;
+import com.king.platform.net.http.netty.requestbuilder.HttpClientRequestBuilderImpl;
+import com.king.platform.net.http.netty.requestbuilder.HttpClientRequestWithBodyBuilderImpl;
+import com.king.platform.net.http.netty.response.HttpClientResponseHandler;
+import com.king.platform.net.http.netty.response.HttpRedirector;
+import com.king.platform.net.http.netty.util.TimeProvider;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.epoll.Epoll;
+import io.netty.channel.epoll.EpollEventLoopGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpVersion;
+import io.netty.util.Timer;
 
 public class NettyHttpClient implements HttpClient {
 	private final AtomicBoolean started = new AtomicBoolean();
@@ -55,7 +76,7 @@ public class NettyHttpClient implements HttpClient {
 	private final RootEventBus rootEventBus;
 	private final ChannelPool channelPool;
 
-	private NioEventLoopGroup group;
+	private EventLoopGroup group;
 	private ChannelManager channelManager;
 	private BackPressure executionBackPressure;
 	private Boolean executeOnCallingThread;
@@ -101,8 +122,12 @@ public class NettyHttpClient implements HttpClient {
 
 		executeOnCallingThread = confMap.get(ConfKeys.EXECUTE_ON_CALLING_THREAD);
 
-		group = new NioEventLoopGroup(nioThreads, nioThreadFactory);
-
+		if (Epoll.isAvailable()) {
+		    group = new EpollEventLoopGroup(nioThreads, nioThreadFactory);
+		} else {
+		    group = new NioEventLoopGroup(nioThreads, nioThreadFactory);
+		}
+		
 		HttpClientResponseHandler responseHandler = new HttpClientResponseHandler(new HttpRedirector());
 		HttpClientRequestHandler requestHandler = new HttpClientRequestHandler();
 		HttpClientHandler clientHandler = new HttpClientHandler(responseHandler, requestHandler);
