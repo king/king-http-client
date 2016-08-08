@@ -61,6 +61,7 @@ public class HttpGetAndServerClose {
 					outputStream.write("Date: Fri, 31 Dec 1999 23:59:59 GMT\r\n".getBytes(Charset.defaultCharset()));
 					outputStream.write("Server: JavaSocket\r\n".getBytes(Charset.defaultCharset()));
 					outputStream.write("X-Status: OK\r\n".getBytes(Charset.defaultCharset()));
+	                                outputStream.write("Content-Length: 13\r\n".getBytes(Charset.defaultCharset()));
 					outputStream.write("\r\n".getBytes(Charset.defaultCharset()));
 					outputStream.write("Hello World\r\n".getBytes(Charset.defaultCharset()));
 					outputStream.flush();
