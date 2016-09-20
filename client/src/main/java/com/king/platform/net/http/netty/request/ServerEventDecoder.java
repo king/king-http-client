@@ -115,6 +115,13 @@ public class ServerEventDecoder {
 	}
 
 	private void dispatchEvent() {
+		String thisEventName = eventName;
+		eventName = null;
+
+		if (data.length() == 0) {
+			return;
+		}
+
 		if (isNewLine(data.charAt(data.length()-1))) {
 			data.setLength(data.length() - 1);
 		}
@@ -125,7 +132,7 @@ public class ServerEventDecoder {
 		httpClientCallbackExecutor.execute(new Runnable() {
 			@Override
 			public void run() {
-				httpSSECallback.onEvent(lastEventId, eventName, dataString);
+				httpSSECallback.onEvent(lastEventId, thisEventName, dataString);
 			}
 		});
 

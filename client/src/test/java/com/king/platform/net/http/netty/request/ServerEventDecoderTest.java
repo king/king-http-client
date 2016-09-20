@@ -114,6 +114,19 @@ public class ServerEventDecoderTest {
 	}
 
 	@Test
+	public void emptyLinesShouldNotTriggerEvents() throws Exception {
+		ServerEventDecoder serverEventDecoder = new ServerEventDecoder(sseCallback, executor);
+		serverEventDecoder.onReceivedContentPart(buffer("\n"));
+		serverEventDecoder.onReceivedContentPart(buffer("\n"));
+		serverEventDecoder.onReceivedContentPart(buffer("\n"));
+		serverEventDecoder.onReceivedContentPart(buffer("\n"));
+		serverEventDecoder.onReceivedContentPart(buffer("\n"));
+		serverEventDecoder.onReceivedContentPart(buffer("\n"));
+
+		assertEquals(0, sseCallback.count);
+	}
+
+	@Test
 	public void partialEmitOfDataEvents() throws Exception {
 		ServerEventDecoder serverEventDecoder = new ServerEventDecoder(sseCallback, executor);
 		serverEventDecoder.onReceivedContentPart(buffer("da"));
