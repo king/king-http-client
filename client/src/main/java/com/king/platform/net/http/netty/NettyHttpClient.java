@@ -179,6 +179,9 @@ public class NettyHttpClient implements HttpClient {
 		}
 	}
 
+	public Executor getHttpClientCallbackExecutor() {
+		return httpClientCallbackExecutor;
+	}
 
 	@Override
 	public HttpClientRequestBuilder createGet(String uri) {

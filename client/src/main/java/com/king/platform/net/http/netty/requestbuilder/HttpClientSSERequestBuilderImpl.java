@@ -4,6 +4,7 @@ package com.king.platform.net.http.netty.requestbuilder;
 import com.king.platform.net.http.*;
 import com.king.platform.net.http.netty.ConfMap;
 import com.king.platform.net.http.netty.NettyHttpClient;
+import com.king.platform.net.http.netty.request.ServerEventDecoder;
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
@@ -11,6 +12,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 
 import java.nio.ByteBuffer;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 
 public class HttpClientSSERequestBuilderImpl extends HttpClientRequestHeaderBuilderImpl<HttpClientSSERequestBuilder> implements HttpClientSSERequestBuilder {
@@ -28,20 +30,28 @@ public class HttpClientSSERequestBuilderImpl extends HttpClientRequestHeaderBuil
 			headerParameters);
 
 
+		Executor httpClientCallbackExecutor = nettyHttpClient.getHttpClientCallbackExecutor();
+
+
 		return new BuiltSSEClientRequest() {
 			@Override
 			public Future<FutureResult<Void>> execute(HttpSSECallback httpSSECallback) {
-				return builtNettyClientRequest.execute(new VoidHttpCallback(httpSSECallback), new VoidResponseConsumer(), new DelegatingNioHttpCallback(httpSSECallback));
+
+				ServerEventDecoder serverEventDecoder = new ServerEventDecoder(httpSSECallback, httpClientCallbackExecutor);
+
+				return builtNettyClientRequest.execute(new DelegatingHttpCallback(httpSSECallback), new VoidResponseConsumer(), new DelegatingNioHttpCallback
+					(serverEventDecoder));
 			}
 		};
 
 	}
 
 	private static class DelegatingNioHttpCallback implements NioCallback {
-		private final HttpSSECallback httpSSECallback;
 
-		public DelegatingNioHttpCallback(HttpSSECallback httpSSECallback) {
-			this.httpSSECallback = httpSSECallback;
+		private final ServerEventDecoder serverEventDecoder;
+
+		public DelegatingNioHttpCallback(ServerEventDecoder serverEventDecoder) {
+			this.serverEventDecoder = serverEventDecoder;
 		}
 
 		@Override
@@ -80,8 +90,8 @@ public class HttpClientSSERequestBuilderImpl extends HttpClientRequestHeaderBuil
 		}
 
 		@Override
-		public void onReceivedContentPart(int len, ByteBuf buffer) {
-
+		public void onReceivedContentPart(int len, ByteBuf buffer)  {
+			serverEventDecoder.onReceivedContentPart(buffer);
 		}
 
 		@Override
@@ -96,10 +106,10 @@ public class HttpClientSSERequestBuilderImpl extends HttpClientRequestHeaderBuil
 	}
 
 
-	private static class VoidHttpCallback implements HttpCallback<Void> {
+	private static class DelegatingHttpCallback implements HttpCallback<Void> {
 		private final HttpSSECallback httpSSECallback;
 
-		public VoidHttpCallback(HttpSSECallback httpSSECallback) {
+		public DelegatingHttpCallback(HttpSSECallback httpSSECallback) {
 			this.httpSSECallback = httpSSECallback;
 		}
 

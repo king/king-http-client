@@ -8,7 +8,11 @@ public interface HttpSSECallback {
 
 	void onError(Throwable throwable);
 
-	void onData(String data);
+	void onEvent(String lastSentId, String event, String data);
 
-	void onEvent(String name, String data);
+	class ServerSideEvent {
+		private String id;
+		private String event;
+		private String data;
+	}
 }

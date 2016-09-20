@@ -6,6 +6,7 @@
 package com.king.platform.net.http.integration;
 
 
+import com.king.platform.net.http.FutureResult;
 import com.king.platform.net.http.HttpSSECallback;
 import com.king.platform.net.http.NioCallback;
 import com.king.platform.net.http.netty.NettyHttpClient;
@@ -21,6 +22,10 @@ import org.junit.Test;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicReference;
+
+import static org.junit.Assert.assertEquals;
 
 public class HttpSSE {
 	IntegrationServer integrationServer;
@@ -55,7 +60,7 @@ public class HttpSSE {
 							public void run() {
 								for (int i = 0; i < 10; i++) {
 									try {
-										emitter.data("from event " + i);
+										emitter.data("" + i);
 										Thread.sleep(100);
 									} catch (IOException e) {
 										return;
@@ -76,7 +81,11 @@ public class HttpSSE {
 			}
 		}, "/testSSE");
 
-		httpClient.createSSE("http://localhost:" + port + "/testSSE").build().execute(new HttpSSECallback() {
+		AtomicReference<String> output = new AtomicReference<>();
+
+		Future<FutureResult<Void>> sseResult = httpClient.createSSE("http://localhost:" + port + "/testSSE").build().execute(new HttpSSECallback() {
+			String buffer = "";
+
 			@Override
 			public void onConnect() {
 
@@ -84,7 +93,7 @@ public class HttpSSE {
 
 			@Override
 			public void onDisconnect() {
-
+				output.set(buffer);
 			}
 
 			@Override
@@ -93,15 +102,14 @@ public class HttpSSE {
 			}
 
 			@Override
-			public void onData(String data) {
-
+			public void onEvent(String lastSentId, String event, String data) {
+				buffer = buffer + data;
 			}
+		});
 
-			@Override
-			public void onEvent(String name, String data) {
+		sseResult.get(); //block until complete
 
-			}
-		}).get();
+		assertEquals("0123456789", output.get());
 
 
 	}
