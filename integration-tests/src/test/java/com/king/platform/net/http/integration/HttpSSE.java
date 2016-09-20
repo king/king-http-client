@@ -7,6 +7,7 @@ package com.king.platform.net.http.integration;
 
 
 import com.king.platform.net.http.FutureResult;
+import com.king.platform.net.http.HttpClient;
 import com.king.platform.net.http.HttpSSECallback;
 import com.king.platform.net.http.NioCallback;
 import com.king.platform.net.http.netty.NettyHttpClient;
@@ -29,7 +30,7 @@ import static org.junit.Assert.assertEquals;
 
 public class HttpSSE {
 	IntegrationServer integrationServer;
-	private NettyHttpClient httpClient;
+	private HttpClient httpClient;
 	private int port;
 
 	private String okBody = "EVERYTHING IS OKAY!";
@@ -114,102 +115,6 @@ public class HttpSSE {
 
 	}
 
-
-
-	@Test
-	public void get200() throws Exception {
-
-		integrationServer.addServlet(new EventSourceServlet() {
-
-			@Override
-			protected EventSource newEventSource(HttpServletRequest request) {
-				return new EventSource() {
-					@Override
-					public void onOpen(final Emitter emitter) throws IOException {
-						new Thread(new Runnable() {
-							@Override
-							public void run() {
-								for (int i = 0; i < 10; i++) {
-									try {
-										emitter.data("from event " + i);
-										Thread.sleep(100);
-									} catch (IOException e) {
-										return;
-									} catch (InterruptedException e) {
-
-									}
-								}
-								emitter.close();
-							}
-						}).start();
-					}
-
-					@Override
-					public void onClose() {
-
-					}
-				};
-			}
-		}, "/testSSE");
-
-
-		httpClient.createGet("http://localhost:" + port + "/testSSE").withHeader("Accept", "text/event-stream").build()
-		.execute(new NioCallback() {
-			@Override
-			public void onConnecting() {
-
-			}
-
-			@Override
-			public void onConnected() {
-
-			}
-
-			@Override
-			public void onWroteHeaders() {
-
-			}
-
-			@Override
-			public void onWroteContentProgressed(long progress, long total) {
-
-			}
-
-			@Override
-			public void onWroteContentCompleted() {
-
-			}
-
-			@Override
-			public void onReceivedStatus(HttpResponseStatus httpResponseStatus) {
-
-			}
-
-			@Override
-			public void onReceivedHeaders(HttpHeaders httpHeaders) {
-
-			}
-
-			@Override
-			public void onReceivedContentPart(int len, ByteBuf buffer) {
-				System.out.println("Received " + buffer.toString(Charset.defaultCharset()));
-			}
-
-			@Override
-			public void onReceivedCompleted(HttpResponseStatus httpResponseStatus, HttpHeaders httpHeaders) {
-				System.out.println("DONE");
-			}
-
-			@Override
-			public void onError(Throwable throwable) {
-
-			}
-		}).get();
-
-
-
-
-	}
 
 
 	@After

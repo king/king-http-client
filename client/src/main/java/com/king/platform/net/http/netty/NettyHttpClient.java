@@ -17,18 +17,9 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.king.platform.net.http.*;
 import org.slf4j.Logger;
 
-import com.king.platform.net.http.ConfKeys;
-import com.king.platform.net.http.FutureResult;
-import com.king.platform.net.http.HttpCallback;
-import com.king.platform.net.http.HttpClient;
-import com.king.platform.net.http.HttpClientRequestBuilder;
-import com.king.platform.net.http.HttpClientRequestWithBodyBuilder;
-import com.king.platform.net.http.HttpResponse;
-import com.king.platform.net.http.KingHttpException;
-import com.king.platform.net.http.NioCallback;
-import com.king.platform.net.http.ResponseBodyConsumer;
 import com.king.platform.net.http.netty.backpressure.BackPressure;
 import com.king.platform.net.http.netty.eventbus.Event;
 import com.king.platform.net.http.netty.eventbus.Event1;
@@ -128,7 +119,7 @@ public class NettyHttpClient implements HttpClient {
 		} else {
 		    group = new NioEventLoopGroup(nioThreads, nioThreadFactory);
 		}
-		
+
 		HttpClientResponseHandler responseHandler = new HttpClientResponseHandler(new HttpRedirector());
 		HttpClientRequestHandler requestHandler = new HttpClientRequestHandler();
 		HttpClientHandler clientHandler = new HttpClientHandler(responseHandler, requestHandler);
