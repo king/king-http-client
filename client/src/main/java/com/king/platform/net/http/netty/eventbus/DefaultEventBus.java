@@ -81,32 +81,15 @@ public class DefaultEventBus implements RequestEventBus, RootEventBus {
 
 	@Override
 	public <T> void triggerEvent(Event1<T> event, T payload) {
-
-		if (validEvent(event)) {
-			triggerEvent1(event, payload, persistentEvent1Callbacks);
-			triggerEvent1(event, payload, event1Callbacks);
-		} else {
-			logger.error("Invalid event order, tried to trigger event {} with payload {}, but hasTriggeredCompleted was {} and hasTriggeredError was {}",
-				event, payload, hasTriggeredCompleted.get(), hasTriggeredError.get());
-
-		}
+		triggerEvent1(event, payload, persistentEvent1Callbacks);
+		triggerEvent1(event, payload, event1Callbacks);
 	}
 
 
 	@Override
 	public <T1, T2> void triggerEvent(Event2<T1, T2> event, T1 payload1, T2 payload2) {
-		if (validEvent(event)) {
-			triggerEvent2(event, payload1, payload2, persistentEvent2Callbacks);
-			triggerEvent2(event, payload1, payload2, event2Callbacks);
-		} else {
-			logger.error("Invalid event order, tried to trigger event {} with payload1 {}, payload2 {} but hasTriggeredCompleted was {} and hasTriggeredError was {}",
-				event, payload1, payload2, hasTriggeredCompleted.get(), hasTriggeredError.get());
-
-			if (event == Event.ERROR && payload2 instanceof Throwable) {
-				Throwable throwable = (Throwable) payload2;
-				logger.trace("Triggered error had throwable", throwable);
-			}
-		}
+		triggerEvent2(event, payload1, payload2, persistentEvent2Callbacks);
+		triggerEvent2(event, payload1, payload2, event2Callbacks);
 	}
 
 
@@ -134,22 +117,6 @@ public class DefaultEventBus implements RequestEventBus, RootEventBus {
 			EventBusCallback2<T1, T2> callback = (EventBusCallback2<T1, T2>) eventBusCallback;
 			callback.onEvent(event, payload1, payload2);
 		}
-	}
-
-
-	private <T> boolean validEvent(Event event) {
-		if (event == Event.COMPLETED) {
-			if (hasTriggeredError.get()) {
-				return false;
-			}
-			hasTriggeredCompleted.set(true);
-		}
-
-		if (event == Event.ERROR) {
-			hasTriggeredError.set(true);
-		}
-
-		return true;
 	}
 
 

@@ -6,14 +6,35 @@
 package com.king.platform.net.http.netty;
 
 
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.util.concurrent.TimeUnit;
+
+import org.slf4j.Logger;
+
 import com.king.platform.net.http.ConfKeys;
-import com.king.platform.net.http.netty.eventbus.*;
+import com.king.platform.net.http.netty.eventbus.Event;
+import com.king.platform.net.http.netty.eventbus.Event1;
+import com.king.platform.net.http.netty.eventbus.Event2;
+import com.king.platform.net.http.netty.eventbus.EventBusCallback1;
+import com.king.platform.net.http.netty.eventbus.EventBusCallback2;
+import com.king.platform.net.http.netty.eventbus.RequestEventBus;
+import com.king.platform.net.http.netty.eventbus.RootEventBus;
 import com.king.platform.net.http.netty.pool.ChannelPool;
 import com.king.platform.net.http.netty.response.NettyHttpClientResponse;
 import com.king.platform.net.http.netty.util.TimeProvider;
+
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.*;
-import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.ChannelPipeline;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.epoll.Epoll;
+import io.netty.channel.epoll.EpollSocketChannel;
+import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpContentDecompressor;
@@ -24,11 +45,6 @@ import io.netty.handler.stream.ChunkedWriteHandler;
 import io.netty.util.Timer;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
-import org.slf4j.Logger;
-
-import java.util.concurrent.TimeUnit;
-
-import static org.slf4j.LoggerFactory.getLogger;
 
 public class ChannelManager {
 	private final Logger logger = getLogger(getClass());
@@ -42,7 +58,7 @@ public class ChannelManager {
 	private Timer nettyTimer;
 
 
-	public ChannelManager(NioEventLoopGroup nioEventLoop, final HttpClientHandler httpClientHandler, Timer nettyTimer, TimeProvider timeProvider, ChannelPool
+	public ChannelManager(EventLoopGroup nioEventLoop, final HttpClientHandler httpClientHandler, Timer nettyTimer, TimeProvider timeProvider, ChannelPool
 		channelPool, final ConfMap confMap, RootEventBus rootEventBus) {
 		this.eventLoopGroup = nioEventLoop;
 		this.nettyTimer = nettyTimer;
@@ -50,8 +66,14 @@ public class ChannelManager {
 		this.channelPool = channelPool;
 		this.confMap = confMap;
 
+		final Class <? extends SocketChannel> socketChannelClass;
+		if (Epoll.isAvailable()) {
+		    socketChannelClass = EpollSocketChannel.class;
+		} else {
+		    socketChannelClass = NioSocketChannel.class;
+		}
 
-		plainBootstrap = new Bootstrap().channel(NioSocketChannel.class).group(eventLoopGroup);
+		plainBootstrap = new Bootstrap().channel(socketChannelClass).group(eventLoopGroup);
 		plainBootstrap.handler(new ChannelInitializer() {
 			@Override
 			protected void initChannel(Channel ch) throws Exception {
@@ -67,7 +89,7 @@ public class ChannelManager {
 		});
 
 
-		secureBootstrap = new Bootstrap().channel(NioSocketChannel.class).group(eventLoopGroup);
+		secureBootstrap = new Bootstrap().channel(socketChannelClass).group(eventLoopGroup);
 		secureBootstrap.handler(new ChannelInitializer() {
 			@Override
 			protected void initChannel(Channel ch) throws Exception {

@@ -5,40 +5,13 @@
 
 apply plugin: 'maven'
 apply plugin: 'findbugs'
-
+apply plugin: 'signing'
 group 'com.king.king-http-client'
-version '1.0.0'
+version '1.0.7'
+
+ext.isReleaseVersion = !version.endsWith("SNAPSHOT")
 
 archivesBaseName = 'king-http-client'
-
-
-tasks.withType(FindBugs) {
-	reports {
-		xml.enabled = false
-		html.enabled = true
-	}
-}
-
-task generateJavadoc(type: Javadoc) {
-	source = sourceSets.main.allJava
-}
-
-
-task sourceJar(type: Jar) {
-	from sourceSets.main.allJava
-	classifier "sources"
-}
-
-uploadArchives {
-	repositories {
-		mavenDeployer {
-			//put artifactoryUser, artifactoryPassword and artifactoryUrl in your ~/.gradle/gradle.properties file
-			repository(url: artifactoryUrl) {
-				authentication(userName: artifactoryUser, password: artifactoryPassword)
-			}
-		}
-	}
-}
 
 
 dependencies {
@@ -55,3 +28,114 @@ dependencies {
 
 }
 
+
+tasks.withType(FindBugs) {
+	reports {
+		xml.enabled = false
+		html.enabled = true
+	}
+}
+
+task generateJavadoc(type: Javadoc) {
+	source = sourceSets.main.allJava
+}
+
+task sourcesJar(type: Jar) {
+	classifier = 'sources'
+	from sourceSets.main.allSource
+}
+
+task javadocJar(type: Jar) {
+	classifier = 'javadoc'
+	from javadoc
+}
+
+artifacts {
+	archives javadocJar, sourcesJar
+}
+
+signing {
+	required { isReleaseVersion && gradle.taskGraph.hasTask("uploadArchives") }
+	sign configurations.archives
+}
+
+
+if (properties.containsKey('ossrhUsername')) {
+
+	uploadArchives {
+		repositories {
+			mavenDeployer {
+				beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+				repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+					authentication(userName: ossrhUsername, password: ossrhPassword)
+				}
+
+				snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+					authentication(userName: ossrhUsername, password: ossrhPassword)
+				}
+
+				pom.project {
+					name 'King Http Client'
+					packaging 'jar'
+					// optionally artifactId can be defined here
+					description 'A asyncronous http client built ontop of netty.'
+					url 'https://github.com/king/king-http-client'
+
+					scm {
+						connection 'scm:git:https://github.com/king/king-http-client.git'
+						developerConnection 'scm:svn:https://github.com/king/king-http-client.git'
+						url 'https://github.com/king/king-http-client'
+					}
+
+					licenses {
+						license {
+							name 'The Apache License, Version 2.0'
+							url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+						}
+					}
+
+					developers {
+						developer {
+							id 'magnus-gustafsson'
+							name 'Magnus Gustafsson'
+							email 'magnus.gustafsson@king.com'
+						}
+					}
+				}
+			}
+		}
+	}
+
+}
+/*
+
+
+def artifactoryUrl = "UNDEFINED"
+if (properties.containsKey('artifactoryUrl')) {
+	artifactoryUrl = properties.get('artifactoryUrl');
+}
+
+def artifactoryUser = "UNDEFINED"
+if (properties.containsKey('artifactoryUser')) {
+	artifactoryUser = properties.get('artifactoryUser');
+}
+
+
+def artifactoryPassword = "UNDEFINED"
+if (properties.containsKey('artifactoryPassword')) {
+	artifactoryPassword = properties.get('artifactoryPassword');
+}
+
+
+uploadArchives {
+	repositories {
+		mavenDeployer {
+			//put artifactoryUser, artifactoryPassword and artifactoryUrl in your ~/.gradle/gradle.properties file
+			repository(url: artifactoryUrl) {
+				authentication(userName: artifactoryUser, password: artifactoryPassword)
+			}
+		}
+	}
+}
+*/

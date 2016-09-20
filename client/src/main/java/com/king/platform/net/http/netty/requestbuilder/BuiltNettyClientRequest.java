@@ -155,7 +155,12 @@ public class BuiltNettyClientRequest implements BuiltClientRequest {
 			headers.set(HttpHeaders.Names.USER_AGENT, defaultUserAgent);
 		}
 
-		headers.set(HttpHeaders.Names.HOST, serverInfo.getHost() + ":" + serverInfo.getPort());
+		if (serverInfo.getPort() == 80 || serverInfo.getPort() == 443) {	//Don't write the ports for default ports: Host = "Host" ":" host [ ":" port ] ;
+			headers.set(HttpHeaders.Names.HOST, serverInfo.getHost());
+		} else {
+			headers.set(HttpHeaders.Names.HOST, serverInfo.getHost() + ":" + serverInfo.getPort());
+		}
+
 
 		nettyHttpClientRequest.setKeepAlive(keepAlive);
 

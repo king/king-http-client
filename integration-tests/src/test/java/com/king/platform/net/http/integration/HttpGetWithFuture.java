@@ -9,7 +9,7 @@ package com.king.platform.net.http.integration;
 import com.king.platform.net.http.FutureResult;
 import com.king.platform.net.http.HttpResponse;
 import com.king.platform.net.http.StringResponseBody;
-import com.king.platform.net.http.netty.NettyHttpClient;
+import com.king.platform.net.http.HttpClient;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -26,7 +26,7 @@ import static org.junit.Assert.*;
 
 public class HttpGetWithFuture {
 	IntegrationServer integrationServer;
-	private NettyHttpClient httpClient;
+	private HttpClient httpClient;
 	private int port;
 
 	private String okBody = "EVERYTHING IS OKAY!";

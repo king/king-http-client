@@ -6,9 +6,39 @@
 package com.king.platform.net.http.netty;
 
 
-import com.king.platform.net.http.*;
+import static org.slf4j.LoggerFactory.getLogger;
+
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.slf4j.Logger;
+
+import com.king.platform.net.http.ConfKeys;
+import com.king.platform.net.http.FutureResult;
+import com.king.platform.net.http.HttpCallback;
+import com.king.platform.net.http.HttpClient;
+import com.king.platform.net.http.HttpClientRequestBuilder;
+import com.king.platform.net.http.HttpClientRequestWithBodyBuilder;
+import com.king.platform.net.http.HttpResponse;
+import com.king.platform.net.http.KingHttpException;
+import com.king.platform.net.http.NioCallback;
+import com.king.platform.net.http.ResponseBodyConsumer;
 import com.king.platform.net.http.netty.backpressure.BackPressure;
-import com.king.platform.net.http.netty.eventbus.*;
+import com.king.platform.net.http.netty.eventbus.Event;
+import com.king.platform.net.http.netty.eventbus.Event1;
+import com.king.platform.net.http.netty.eventbus.Event2;
+import com.king.platform.net.http.netty.eventbus.EventBusCallback1;
+import com.king.platform.net.http.netty.eventbus.EventBusCallback2;
+import com.king.platform.net.http.netty.eventbus.RequestEventBus;
+import com.king.platform.net.http.netty.eventbus.RootEventBus;
+import com.king.platform.net.http.netty.eventbus.RunOnceCallback1;
+import com.king.platform.net.http.netty.eventbus.RunOnceCallback2;
 import com.king.platform.net.http.netty.metric.TimeStampRecorder;
 import com.king.platform.net.http.netty.pool.ChannelPool;
 import com.king.platform.net.http.netty.request.HttpClientRequestHandler;
@@ -19,23 +49,17 @@ import com.king.platform.net.http.netty.requestbuilder.HttpClientSSERequestBuild
 import com.king.platform.net.http.netty.response.HttpClientResponseHandler;
 import com.king.platform.net.http.netty.response.HttpRedirector;
 import com.king.platform.net.http.netty.util.TimeProvider;
+
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.epoll.Epoll;
+import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.util.Timer;
-import org.slf4j.Logger;
-
-import java.nio.ByteBuffer;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import static org.slf4j.LoggerFactory.getLogger;
 
 public class NettyHttpClient implements HttpClient {
 	private final AtomicBoolean started = new AtomicBoolean();
@@ -53,11 +77,12 @@ public class NettyHttpClient implements HttpClient {
 	private final RootEventBus rootEventBus;
 	private final ChannelPool channelPool;
 
-	private NioEventLoopGroup group;
+	private EventLoopGroup group;
 	private ChannelManager channelManager;
 	private BackPressure executionBackPressure;
 	private Boolean executeOnCallingThread;
 
+	private List<ShutdownJob> shutdownJobs = new ArrayList<>();
 
 	public NettyHttpClient(int nioThreads, ThreadFactory nioThreadFactory, Executor httpClientCallbackExecutor, Executor httpClientExecuteExecutor, Timer
 		cleanupTimer, TimeProvider timeProvider, final BackPressure executionBackPressure, RootEventBus rootEventBus, ChannelPool channelPool) {
@@ -98,8 +123,12 @@ public class NettyHttpClient implements HttpClient {
 
 		executeOnCallingThread = confMap.get(ConfKeys.EXECUTE_ON_CALLING_THREAD);
 
-		group = new NioEventLoopGroup(nioThreads, nioThreadFactory);
-
+		if (Epoll.isAvailable()) {
+		    group = new EpollEventLoopGroup(nioThreads, nioThreadFactory);
+		} else {
+		    group = new NioEventLoopGroup(nioThreads, nioThreadFactory);
+		}
+		
 		HttpClientResponseHandler responseHandler = new HttpClientResponseHandler(new HttpRedirector());
 		HttpClientRequestHandler requestHandler = new HttpClientRequestHandler();
 		HttpClientHandler clientHandler = new HttpClientHandler(responseHandler, requestHandler);
@@ -116,6 +145,10 @@ public class NettyHttpClient implements HttpClient {
 			group.shutdownGracefully(0, 10, TimeUnit.SECONDS);
 		}
 
+		for (ShutdownJob shutdownJob : shutdownJobs) {
+			shutdownJob.onShutdown();
+		}
+
 	}
 
 	@Override
@@ -128,11 +161,13 @@ public class NettyHttpClient implements HttpClient {
 	}
 
 
-	public <T> Future<FutureResult<T>> execute(final NettyHttpClientRequest<T> nettyHttpClientRequest, final HttpCallback<T> httpCallback, final
+	public <T> Future<FutureResult<T>> execute(final NettyHttpClientRequest<T> nettyHttpClientRequest, HttpCallback<T> httpCallback, final
 	NioCallback nioCallback, ResponseBodyConsumer<T> responseBodyConsumer, int idleTimeoutMillis, int totalRequestTimeoutMillis, boolean followRedirects,
 	                                              boolean keepAlive) {
 
 		validateStarted();
+
+		httpCallback = runOnlyOnceWrapper(httpCallback);
 
 		final RequestEventBus requestRequestEventBus = rootEventBus.createRequestEventBus();
 
@@ -169,6 +204,29 @@ public class NettyHttpClient implements HttpClient {
 		}
 
 		return future;
+	}
+
+	private <T> HttpCallback<T> runOnlyOnceWrapper(final HttpCallback<T> httpCallback) {
+		if (httpCallback == null) {
+			return null;
+		}
+
+		return new HttpCallback<T>() {
+			private final AtomicBoolean firstExecute = new AtomicBoolean();
+			@Override
+			public void onCompleted(HttpResponse<T> httpResponse) {
+				if (firstExecute.compareAndSet(false, true)) {
+					httpCallback.onCompleted(httpResponse);
+				}
+			}
+
+			@Override
+			public void onError(Throwable throwable) {
+				if (firstExecute.compareAndSet(false, true)) {
+					httpCallback.onError(throwable);
+				}
+			}
+		};
 	}
 
 	private <T> void sendRequest(RequestEventBus requestRequestEventBus, HttpRequestContext<T> httpRequestContext) {
@@ -258,6 +316,10 @@ public class NettyHttpClient implements HttpClient {
 
 		return ResponseFuture.error(throwable);
 
+	}
+
+	public void addShutdownJob(ShutdownJob shutdownJob) {
+		shutdownJobs.add(shutdownJob);
 	}
 
 	private void subscribeToNioCallbackEvents(final NioCallback nioCallback, RequestEventBus requestRequestEventBus) {
@@ -354,5 +416,10 @@ public class NettyHttpClient implements HttpClient {
 			return null;
 		}
 	};
+
+
+	interface ShutdownJob {
+		void onShutdown();
+	}
 
 }
