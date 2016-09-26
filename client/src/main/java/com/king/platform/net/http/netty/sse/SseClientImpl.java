@@ -9,6 +9,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
+import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -22,8 +23,8 @@ public class SseClientImpl implements SseClient {
 
 	private AtomicReference<State> state = new AtomicReference<>(State.DISCONNECTED);
 
-	private final ConcurrentHashMap<String, SseCallback> eventCallbackMap = new ConcurrentHashMap<>();
-	private SseCallback dataCallback;
+	private final ConcurrentHashMap<String, List<SseCallback>> eventCallbackMap = new ConcurrentHashMap<>();
+	private List<SseCallback> dataCallback = new CopyOnWriteArrayList<>();
 
 	private CountDownLatch countDownLatch;
 
@@ -52,12 +53,20 @@ public class SseClientImpl implements SseClient {
 
 	@Override
 	public void subscribe(String eventName, SseCallback callback) {
-		eventCallbackMap.put(eventName, callback);
+		List<SseCallback> sseCallbacks = eventCallbackMap.get(eventName);
+		if (sseCallbacks == null) {
+			sseCallbacks = new CopyOnWriteArrayList<>();
+			List<SseCallback> prevValue = eventCallbackMap.putIfAbsent(eventName, sseCallbacks);
+			if (prevValue != null) {
+				sseCallbacks = prevValue;
+			}
+		}
+		sseCallbacks.add(callback);
 	}
 
 	@Override
 	public void subscribe(SseCallback callback) {
-		dataCallback = callback;
+		dataCallback.add(callback);
 	}
 
 	@Override
@@ -73,6 +82,10 @@ public class SseClientImpl implements SseClient {
 	public void reconnect() {
 		if (!state.compareAndSet(State.DISCONNECTED, State.RECONNECTING)) {
 			throw new RuntimeException("sse client is not in disconnected state");
+		}
+
+		if (countDownLatch != null) {
+			countDownLatch.countDown();
 		}
 
 		countDownLatch = new CountDownLatch(1);
@@ -107,13 +120,27 @@ public class SseClientImpl implements SseClient {
 		@Override
 		public void onEvent(String lastSentId, String event, String data) {
 			httpSseCallback.onEvent(lastSentId, event, data);
-			if (dataCallback != null) {
-				dataCallback.onEvent(new ServerSideEventImpl(lastSentId, event, data));
+
+			ServerSideEvent serverSideEvent = null;
+
+			if (!dataCallback.isEmpty()) {
+				serverSideEvent = new ServerSideEventImpl(lastSentId, event, data);
+				for (SseCallback sseCallback : dataCallback) {
+					sseCallback.onEvent(serverSideEvent);
+				}
 			}
+
+
 			if (event != null) {
-				SseCallback sseCallback = eventCallbackMap.get(event);
-				if (sseCallback != null) {
-					sseCallback.onEvent(new ServerSideEventImpl(lastSentId, event, data));
+				List<SseCallback> sseCallbacks = eventCallbackMap.get(event);
+				if (sseCallbacks != null) {
+					if (serverSideEvent == null) {
+						serverSideEvent = new ServerSideEventImpl(lastSentId, event, data);
+					}
+
+					for (SseCallback sseCallback : sseCallbacks) {
+						sseCallback.onEvent(serverSideEvent);
+					}
 				}
 			}
 		}

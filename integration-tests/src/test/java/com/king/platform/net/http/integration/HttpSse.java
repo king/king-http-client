@@ -83,29 +83,7 @@ public class HttpSse {
 
 	}
 
-	@Test
-	public void getSSECallback() throws Exception {
 
-		integrationServer.addServlet(new CountingEventSourceServlet(), "/testSSE");
-
-
-		SseClient sseClient = httpClient.createSSE("http://localhost:" + port + "/testSSE").build().execute();
-		final AtomicReference<String> buffer = new AtomicReference<>("");
-
-		sseClient.subscribe(new SseCallback() {
-			@Override
-			public void onEvent(ServerSideEvent serverSideEvent) {
-				buffer.set(buffer.get() + serverSideEvent.data());
-
-			}
-		});
-
-		sseClient.awaitClose(); //block until complete
-
-		assertEquals("0123456789", buffer.get());
-
-
-	}
 
 	@Test
 	public void getSseAndClose() throws Exception {
@@ -233,6 +211,67 @@ public class HttpSse {
 		for (EventData receivedEvent : receivedEvents) {
 			assertTrue(events.contains(receivedEvent));
 		}
+	}
+
+	@Test
+	public void addMultipleOfTheSameEventCallbacks() throws Exception {
+		List<EventData> events = new ArrayList<>();
+		events.add(new EventData("event1", "data1"));
+		events.add(new EventData("event1", "data2"));
+		events.add(new EventData("event1", "data3"));
+
+
+		integrationServer.addServlet(new EmittingEventSourceServlet(events), "/testSSE");
+
+		SseClient sseClient = httpClient.createSSE("http://localhost:" + port + "/testSSE").build().execute();
+
+		List<EventData> receivedEvents1 = new ArrayList<>();
+		sseClient.subscribe("event1", new SseCallback() {
+			@Override
+			public void onEvent(ServerSideEvent serverSideEvent) {
+				receivedEvents1.add(new EventData(serverSideEvent.event(), serverSideEvent.data()));
+
+			}
+		});
+
+
+		List<EventData> receivedEvents2 = new ArrayList<>();
+		sseClient.subscribe("event1", new SseCallback() {
+			@Override
+			public void onEvent(ServerSideEvent serverSideEvent) {
+				receivedEvents2.add(new EventData(serverSideEvent.event(), serverSideEvent.data()));
+
+			}
+		});
+
+		sseClient.awaitClose();
+
+
+		assertEquals(3, receivedEvents1.size());
+		assertEquals(3, receivedEvents2.size());
+
+	}
+
+	@Test
+	public void addGenericCallback() throws Exception {
+
+		integrationServer.addServlet(new CountingEventSourceServlet(), "/testSSE");
+
+
+		SseClient sseClient = httpClient.createSSE("http://localhost:" + port + "/testSSE").build().execute();
+		final AtomicReference<String> buffer = new AtomicReference<>("");
+
+		sseClient.subscribe(new SseCallback() {
+			@Override
+			public void onEvent(ServerSideEvent serverSideEvent) {
+				buffer.set(buffer.get() + serverSideEvent.data());
+
+			}
+		});
+
+		sseClient.awaitClose(); //block until complete
+
+		assertEquals("0123456789", buffer.get());
 	}
 
 	@After
