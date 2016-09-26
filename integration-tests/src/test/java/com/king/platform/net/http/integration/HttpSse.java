@@ -52,7 +52,7 @@ public class HttpSse {
 
 		AtomicReference<String> output = new AtomicReference<>();
 
-		SseClient sseClient = httpClient.createSSE("http://localhost:" + port + "/testSSE").build().execute(new HttpSseCallback() {
+		SseClient sseClient = httpClient.createSSE("http://localhost:" + port + "/testSSE").build().execute(new SseExecutionCallback() {
 			String buffer = "";
 
 			@Override
@@ -95,7 +95,7 @@ public class HttpSse {
 		AtomicBoolean onConnect = new AtomicBoolean();
 		AtomicBoolean onDisconnect = new AtomicBoolean();
 
-		SseClient sseClient = httpClient.createSSE("http://localhost:" + port + "/testSSE").build().execute(new HttpSseCallback() {
+		SseClient sseClient = httpClient.createSSE("http://localhost:" + port + "/testSSE").build().execute(new SseExecutionCallback() {
 
 			@Override
 			public void onConnect() {
@@ -141,7 +141,7 @@ public class HttpSse {
 
 		AtomicReference<String> output = new AtomicReference<>();
 
-		SseClient sseClient = httpClient.createSSE("http://localhost:" + port + "/testSSE").build().execute(new HttpSseCallback() {
+		SseClient sseClient = httpClient.createSSE("http://localhost:" + port + "/testSSE").build().execute(new SseExecutionCallback() {
 			String buffer = "";
 
 			@Override

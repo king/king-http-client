@@ -1,9 +1,9 @@
 package com.king.platform.net.http.netty.sse;
 
 
-import com.king.platform.net.http.HttpSseCallback;
+import com.king.platform.net.http.SseExecutionCallback;
 
-class EmptyHttpSseCallback implements HttpSseCallback {
+class EmptySseExecutionCallback implements SseExecutionCallback {
 	@Override
 	public void onConnect() {
 

@@ -28,21 +28,21 @@ public class SseClientImpl implements SseClient {
 
 	private CountDownLatch countDownLatch;
 
-	public SseClientImpl(HttpSseCallback providedHttpSseCallback, BuiltNettyClientRequest builtNettyClientRequest, Executor httpClientCallbackExecutor) {
-		if (providedHttpSseCallback == null) {
-			providedHttpSseCallback = new EmptyHttpSseCallback();
+	public SseClientImpl(SseExecutionCallback providedSseExecutionCallback, BuiltNettyClientRequest builtNettyClientRequest, Executor httpClientCallbackExecutor) {
+		if (providedSseExecutionCallback == null) {
+			providedSseExecutionCallback = new EmptySseExecutionCallback();
 		}
 
-		providedHttpSseCallback = new WrappedHttpSseCallback(providedHttpSseCallback);
+		providedSseExecutionCallback = new WrappedSseExecutionCallback(providedSseExecutionCallback);
 
 		this.builtNettyClientRequest = builtNettyClientRequest;
 
 		externalEventTrigger = new ExternalEventTrigger();
 
-		httpCallback = new DelegatingHttpCallback(providedHttpSseCallback);
+		httpCallback = new DelegatingHttpCallback(providedSseExecutionCallback);
 		responseBodyConsumer = new VoidResponseConsumer();
-		serverEventDecoder = new ServerEventDecoder(providedHttpSseCallback, httpClientCallbackExecutor);
-		nioCallback = new DelegatingNioHttpCallback(serverEventDecoder, providedHttpSseCallback, httpClientCallbackExecutor);
+		serverEventDecoder = new ServerEventDecoder(providedSseExecutionCallback, httpClientCallbackExecutor);
+		nioCallback = new DelegatingNioHttpCallback(serverEventDecoder, providedSseExecutionCallback, httpClientCallbackExecutor);
 	}
 
 
@@ -95,31 +95,31 @@ public class SseClientImpl implements SseClient {
 		builtNettyClientRequest.execute(httpCallback, responseBodyConsumer, nioCallback, externalEventTrigger);
 	}
 
-	private class WrappedHttpSseCallback implements HttpSseCallback {
-		private final HttpSseCallback httpSseCallback;
+	private class WrappedSseExecutionCallback implements SseExecutionCallback {
+		private final SseExecutionCallback sseExecutionCallback;
 
-		private WrappedHttpSseCallback(HttpSseCallback httpSseCallback) {
-			this.httpSseCallback = httpSseCallback;
+		private WrappedSseExecutionCallback(SseExecutionCallback sseExecutionCallback) {
+			this.sseExecutionCallback = sseExecutionCallback;
 		}
 
 		@Override
 		public void onConnect() {
-			httpSseCallback.onConnect();
+			sseExecutionCallback.onConnect();
 		}
 
 		@Override
 		public void onDisconnect() {
-			httpSseCallback.onDisconnect();
+			sseExecutionCallback.onDisconnect();
 		}
 
 		@Override
 		public void onError(Throwable throwable) {
-			httpSseCallback.onError(throwable);
+			sseExecutionCallback.onError(throwable);
 		}
 
 		@Override
 		public void onEvent(String lastSentId, String event, String data) {
-			httpSseCallback.onEvent(lastSentId, event, data);
+			sseExecutionCallback.onEvent(lastSentId, event, data);
 
 			ServerSideEvent serverSideEvent = null;
 
@@ -150,12 +150,12 @@ public class SseClientImpl implements SseClient {
 	private class DelegatingNioHttpCallback implements NioCallback {
 
 		private final ServerEventDecoder serverEventDecoder;
-		private final HttpSseCallback providedHttpSseCallback;
+		private final SseExecutionCallback providedSseExecutionCallback;
 		private final Executor httpClientCallbackExecutor;
 
-		public DelegatingNioHttpCallback(ServerEventDecoder serverEventDecoder, HttpSseCallback providedHttpSseCallback, Executor httpClientCallbackExecutor) {
+		public DelegatingNioHttpCallback(ServerEventDecoder serverEventDecoder, SseExecutionCallback providedSseExecutionCallback, Executor httpClientCallbackExecutor) {
 			this.serverEventDecoder = serverEventDecoder;
-			this.providedHttpSseCallback = providedHttpSseCallback;
+			this.providedSseExecutionCallback = providedSseExecutionCallback;
 			this.httpClientCallbackExecutor = httpClientCallbackExecutor;
 		}
 
@@ -170,7 +170,7 @@ public class SseClientImpl implements SseClient {
 			httpClientCallbackExecutor.execute(new Runnable() {
 				@Override
 				public void run() {
-					providedHttpSseCallback.onConnect();
+					providedSseExecutionCallback.onConnect();
 				}
 			});
 		}
@@ -218,15 +218,15 @@ public class SseClientImpl implements SseClient {
 
 
 	private class DelegatingHttpCallback implements HttpCallback<Void> {
-		private final HttpSseCallback httpSseCallback;
+		private final SseExecutionCallback sseExecutionCallback;
 
-		DelegatingHttpCallback(HttpSseCallback httpSseCallback) {
-			this.httpSseCallback = httpSseCallback;
+		DelegatingHttpCallback(SseExecutionCallback sseExecutionCallback) {
+			this.sseExecutionCallback = sseExecutionCallback;
 		}
 
 		@Override
 		public void onCompleted(HttpResponse<Void> httpResponse) {
-			httpSseCallback.onDisconnect();
+			sseExecutionCallback.onDisconnect();
 			state.set(State.DISCONNECTED);
 			countDownLatch.countDown();
 
@@ -234,7 +234,7 @@ public class SseClientImpl implements SseClient {
 
 		@Override
 		public void onError(Throwable throwable) {
-			httpSseCallback.onError(throwable);
+			sseExecutionCallback.onError(throwable);
 			state.set(State.DISCONNECTED);
 			countDownLatch.countDown();
 		}
