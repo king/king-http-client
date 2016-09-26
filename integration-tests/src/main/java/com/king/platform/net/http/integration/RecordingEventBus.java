@@ -156,6 +156,16 @@ public class RecordingEventBus implements RequestEventBus, RootEventBus {
 		return false;
 	}
 
+	public int getTriggeredCount(Event event) {
+		int count = 0;
+		for (RecordingEventBus.Interaction interaction : getFilteredInteractions(RecordingEventBus.InteractionType.TRIGGER)) {
+			if (event == interaction.getEvent()) {
+				count ++;
+			}
+		}
+		return count;
+	}
+
 
 	private void forEachCreatedEventBus(VisitedEventBusCallback visitedEventBusCallback) {
 		visitedEventBusCallback.onEventBus(this);

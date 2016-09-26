@@ -171,6 +171,13 @@ public class ChannelManager {
 		scheduleTimeOutTasks(requestEventBus, httpRequestContext, httpRequestContext.getTotalRequestTimeoutMillis(), httpRequestContext.getIdleTimeoutMillis
 			());
 
+		requestEventBus.subscribe(Event.CLOSE, new EventBusCallback1<Void>() {
+			@Override
+			public void onEvent(Event1<Void> event, Void payload) {
+				channel.close();
+			}
+		});
+
 		ChannelFuture channelFuture = channel.writeAndFlush(httpRequestContext);
 		channelFuture.addListener(new GenericFutureListener<Future<? super Void>>() {
 			@Override
@@ -219,6 +226,9 @@ public class ChannelManager {
 					requestEventBus.triggerEvent(Event.onConnected);
 
 					Channel channel = future.channel();
+
+
+
 					channel.attr(ServerInfo.ATTRIBUTE_KEY).set(serverInfo);
 					logger.trace("Opened a new channel {}, for request {}", channel, httpRequestContext);
 					sendOnChannel(channel, httpRequestContext, requestEventBus);
@@ -272,7 +282,9 @@ public class ChannelManager {
 			ServerInfo serverInfo = httpRequestContext.getServerInfo();
 
 			if (!channelPool.isActive()) {
-				channel.close();
+				if (channel != null) {
+					channel.close();
+				}
 				requestEventBus.triggerEvent(Event.CLOSED_CONNECTION, serverInfo);
 				return;
 			}

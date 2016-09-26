@@ -10,7 +10,7 @@ public interface SseClient {
 
 	void subscribe(SseCallback callback);
 
-	void awaitClose() throws ExecutionException, InterruptedException;
+	void awaitClose() throws InterruptedException;
 
 	void reconnect();
 }

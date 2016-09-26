@@ -11,6 +11,7 @@ import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
 import java.nio.ByteBuffer;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
@@ -22,12 +23,17 @@ public class SseClientImpl implements SseClient {
 	private final DelegatingHttpCallback httpCallback;
 	private final VoidResponseConsumer responseBodyConsumer;
 	private final ServerEventDecoder serverEventDecoder;
-
-	private Future<FutureResult<Void>> future;
+	private final DelegatingNioHttpCallback nioCallback;
 
 	private AtomicReference<State> state = new AtomicReference<>(State.DISCONNECTED);
 
+	private CountDownLatch countDownLatch;
+
 	public SseClientImpl(HttpSseCallback providedHttpSseCallback, BuiltNettyClientRequest builtNettyClientRequest, Executor httpClientCallbackExecutor) {
+		if (providedHttpSseCallback == null) {
+			providedHttpSseCallback = new EmptyHttpSseCallback();
+		}
+
 		this.builtNettyClientRequest = builtNettyClientRequest;
 
 		externalEventTrigger = new ExternalEventTrigger();
@@ -35,6 +41,7 @@ public class SseClientImpl implements SseClient {
 		httpCallback = new DelegatingHttpCallback(providedHttpSseCallback);
 		responseBodyConsumer = new VoidResponseConsumer();
 		serverEventDecoder = new ServerEventDecoder(providedHttpSseCallback, httpClientCallbackExecutor);
+		nioCallback = new DelegatingNioHttpCallback(serverEventDecoder, providedHttpSseCallback, httpClientCallbackExecutor);
 	}
 
 
@@ -54,8 +61,8 @@ public class SseClientImpl implements SseClient {
 	}
 
 	@Override
-	public void awaitClose() throws ExecutionException, InterruptedException {
-		future.get();
+	public void awaitClose() throws  InterruptedException {
+		countDownLatch.await();
 	}
 
 	public void connect() {
@@ -68,18 +75,45 @@ public class SseClientImpl implements SseClient {
 			throw new RuntimeException("sse client is not in disconnected state");
 		}
 
+		countDownLatch = new CountDownLatch(1);
 
-		DelegatingNioHttpCallback nioCallback = new DelegatingNioHttpCallback(serverEventDecoder);
+		serverEventDecoder.reset();
 
-		future = builtNettyClientRequest.execute(httpCallback, responseBodyConsumer, nioCallback, externalEventTrigger);
+		builtNettyClientRequest.execute(httpCallback, responseBodyConsumer, nioCallback, externalEventTrigger);
+	}
+
+	private static class EmptyHttpSseCallback implements HttpSseCallback {
+		@Override
+		public void onConnect() {
+
+		}
+
+		@Override
+		public void onDisconnect() {
+
+		}
+
+		@Override
+		public void onError(Throwable throwable) {
+
+		}
+
+		@Override
+		public void onEvent(String lastSentId, String event, String data) {
+
+		}
 	}
 
 	private class DelegatingNioHttpCallback implements NioCallback {
 
 		private final ServerEventDecoder serverEventDecoder;
+		private final HttpSseCallback providedHttpSseCallback;
+		private final Executor httpClientCallbackExecutor;
 
-		public DelegatingNioHttpCallback(ServerEventDecoder serverEventDecoder) {
+		public DelegatingNioHttpCallback(ServerEventDecoder serverEventDecoder, HttpSseCallback providedHttpSseCallback, Executor httpClientCallbackExecutor) {
 			this.serverEventDecoder = serverEventDecoder;
+			this.providedHttpSseCallback = providedHttpSseCallback;
+			this.httpClientCallbackExecutor = httpClientCallbackExecutor;
 		}
 
 		@Override
@@ -90,6 +124,12 @@ public class SseClientImpl implements SseClient {
 		@Override
 		public void onConnected() {
 			state.set(State.CONNECTED);
+			httpClientCallbackExecutor.execute(new Runnable() {
+				@Override
+				public void run() {
+					providedHttpSseCallback.onConnect();
+				}
+			});
 		}
 
 		@Override
@@ -145,6 +185,7 @@ public class SseClientImpl implements SseClient {
 		public void onCompleted(HttpResponse<Void> httpResponse) {
 			httpSseCallback.onDisconnect();
 			state.set(State.DISCONNECTED);
+			countDownLatch.countDown();
 
 		}
 
@@ -152,6 +193,7 @@ public class SseClientImpl implements SseClient {
 		public void onError(Throwable throwable) {
 			httpSseCallback.onError(throwable);
 			state.set(State.DISCONNECTED);
+			countDownLatch.countDown();
 		}
 	}
 
