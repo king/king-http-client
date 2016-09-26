@@ -1,4 +1,4 @@
-package com.king.platform.net.http.netty.request;
+package com.king.platform.net.http.netty.sse;
 
 
 import com.king.platform.net.http.HttpSseCallback;

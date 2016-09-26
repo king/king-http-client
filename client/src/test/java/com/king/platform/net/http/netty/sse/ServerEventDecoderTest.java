@@ -1,6 +1,7 @@
-package com.king.platform.net.http.netty.request;
+package com.king.platform.net.http.netty.sse;
 
 import com.king.platform.net.http.HttpSseCallback;
+import com.king.platform.net.http.netty.sse.ServerEventDecoder;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import org.junit.Before;
