@@ -294,7 +294,7 @@ public class HttpSse {
 						public void run() {
 							for (int i = 0; i < 10; i++) {
 								try {
-									Thread.sleep(100);
+									Thread.sleep(50);
 									emitter.data("" + i);
 								} catch (IOException e) {
 									return;
@@ -334,7 +334,7 @@ public class HttpSse {
 							for (EventData event : events) {
 								try {
 									emitter.event(event.name, event.data);
-									Thread.sleep(100);
+									Thread.sleep(50);
 								} catch (IOException e) {
 									return;
 								} catch (InterruptedException ignored) {
