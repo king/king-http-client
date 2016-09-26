@@ -28,7 +28,7 @@ import com.king.platform.net.http.netty.request.HttpClientRequestHandler;
 import com.king.platform.net.http.netty.request.NettyHttpClientRequest;
 import com.king.platform.net.http.netty.requestbuilder.HttpClientRequestBuilderImpl;
 import com.king.platform.net.http.netty.requestbuilder.HttpClientRequestWithBodyBuilderImpl;
-import com.king.platform.net.http.netty.requestbuilder.HttpClientSSERequestBuilderImpl;
+import com.king.platform.net.http.netty.requestbuilder.HttpClientSseRequestBuilderImpl;
 import com.king.platform.net.http.netty.response.HttpClientResponseHandler;
 import com.king.platform.net.http.netty.response.HttpRedirector;
 import com.king.platform.net.http.netty.util.TimeProvider;
@@ -260,8 +260,8 @@ public class NettyHttpClient implements HttpClient {
 	}
 
 	@Override
-	public HttpClientSSERequestBuilder createSSE(String uri) {
-		return new HttpClientSSERequestBuilderImpl(this, HttpVersion.HTTP_1_1, HttpMethod.GET, uri, confMap);
+	public HttpClientSseRequestBuilder createSSE(String uri) {
+		return new HttpClientSseRequestBuilderImpl(this, HttpVersion.HTTP_1_1, HttpMethod.GET, uri, confMap);
 	}
 
 	private void validateStarted() {

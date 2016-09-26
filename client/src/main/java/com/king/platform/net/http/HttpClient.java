@@ -64,9 +64,9 @@ public interface HttpClient {
 	/**
 	 * Create reusable builder for http server side events.The client has to be started before this method is called.
 	 * @param uri Http uri to call
-	 * @return The reusable {@link HttpClientSSERequestBuilder}
+	 * @return The reusable {@link HttpClientSseRequestBuilder}
 	 */
-	HttpClientSSERequestBuilder createSSE(String uri);
+	HttpClientSseRequestBuilder createSSE(String uri);
 
 
 }

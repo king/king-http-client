@@ -1,7 +1,7 @@
 package com.king.platform.net.http;
 
 
-public interface BuiltSSEClientRequest {
+public interface BuiltSseClientRequest {
 	SseClient execute(SseExecutionCallback sseExecutionCallback);
 
 	SseClient execute();

@@ -195,8 +195,8 @@ public class HttpSse {
 
 		SseCallback callback = new SseCallback() {
 			@Override
-			public void onEvent(ServerSideEvent serverSideEvent) {
-				receivedEvents.add(new EventData(serverSideEvent.event(), serverSideEvent.data()));
+			public void onEvent(String lastSentId, String event, String data) {
+				receivedEvents.add(new EventData(event, data));
 			}
 		};
 
@@ -228,8 +228,8 @@ public class HttpSse {
 		List<EventData> receivedEvents1 = new ArrayList<>();
 		sseClient.subscribe("event1", new SseCallback() {
 			@Override
-			public void onEvent(ServerSideEvent serverSideEvent) {
-				receivedEvents1.add(new EventData(serverSideEvent.event(), serverSideEvent.data()));
+			public void onEvent(String lastSentId, String event, String data) {
+				receivedEvents1.add(new EventData(event, data));
 
 			}
 		});
@@ -238,8 +238,8 @@ public class HttpSse {
 		List<EventData> receivedEvents2 = new ArrayList<>();
 		sseClient.subscribe("event1", new SseCallback() {
 			@Override
-			public void onEvent(ServerSideEvent serverSideEvent) {
-				receivedEvents2.add(new EventData(serverSideEvent.event(), serverSideEvent.data()));
+			public void onEvent(String lastSentId, String event, String data) {
+				receivedEvents2.add(new EventData(event, data));
 
 			}
 		});
@@ -263,8 +263,8 @@ public class HttpSse {
 
 		sseClient.subscribe(new SseCallback() {
 			@Override
-			public void onEvent(ServerSideEvent serverSideEvent) {
-				buffer.set(buffer.get() + serverSideEvent.data());
+			public void onEvent(String lastSentId, String event, String data) {
+				buffer.set(buffer.get() + data);
 
 			}
 		});

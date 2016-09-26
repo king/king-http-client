@@ -7,7 +7,6 @@ package com.king.platform.net.http;
 
 
 import com.king.platform.net.http.netty.eventbus.ExternalEventTrigger;
-import com.king.platform.net.http.netty.requestbuilder.HttpClientSSERequestBuilderImpl;
 
 import java.util.concurrent.Future;
 

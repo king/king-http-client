@@ -121,26 +121,18 @@ public class SseClientImpl implements SseClient {
 		public void onEvent(String lastSentId, String event, String data) {
 			sseExecutionCallback.onEvent(lastSentId, event, data);
 
-			ServerSideEvent serverSideEvent = null;
-
-			if (!dataCallback.isEmpty()) {
-				serverSideEvent = new ServerSideEventImpl(lastSentId, event, data);
-				for (SseCallback sseCallback : dataCallback) {
-					sseCallback.onEvent(serverSideEvent);
-				}
-			}
-
+			invokeCallbacks(lastSentId, event, data, dataCallback);
 
 			if (event != null) {
 				List<SseCallback> sseCallbacks = eventCallbackMap.get(event);
-				if (sseCallbacks != null) {
-					if (serverSideEvent == null) {
-						serverSideEvent = new ServerSideEventImpl(lastSentId, event, data);
-					}
+				invokeCallbacks(lastSentId, event, data, sseCallbacks);
+			}
+		}
 
-					for (SseCallback sseCallback : sseCallbacks) {
-						sseCallback.onEvent(serverSideEvent);
-					}
+		private void invokeCallbacks(String lastSentId, String event, String data, List<SseCallback> sseCallbacks) {
+			if (sseCallbacks != null) {
+				for (SseCallback sseCallback : sseCallbacks) {
+					sseCallback.onEvent(lastSentId, event, data);
 				}
 			}
 		}
