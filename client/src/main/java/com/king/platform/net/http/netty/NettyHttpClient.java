@@ -106,7 +106,8 @@ public class NettyHttpClient implements HttpClient {
 
 		executeOnCallingThread = confMap.get(ConfKeys.EXECUTE_ON_CALLING_THREAD);
 
-		if (Epoll.isAvailable()) {
+
+		if (Epoll.isAvailable() && confMap.get(ConfKeys.USE_EPOLL)) {
 		    group = new EpollEventLoopGroup(nioThreads, nioThreadFactory);
 		} else {
 		    group = new NioEventLoopGroup(nioThreads, nioThreadFactory);

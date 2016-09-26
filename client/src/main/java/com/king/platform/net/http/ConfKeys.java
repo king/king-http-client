@@ -73,6 +73,12 @@ public class ConfKeys<T> {
 
 
 	/**
+	 * Use epoll if available
+	 */
+	public static final ConfKeys<Boolean> USE_EPOLL = new ConfKeys<>(false);
+
+
+	/**
 	 * Add any custom {@link io.netty.channel.ChannelOption} that will be used to populate the connection to the servers.
 	 */
 	public static final ConfKeys<NettyChannelOptions> NETTY_CHANNEL_OPTIONS = new ConfKeys<>(new NettyChannelOptions());
@@ -98,7 +104,7 @@ public class ConfKeys<T> {
 	 */
 	public static final ConfKeys<String> USER_AGENT = new ConfKeys<>("king-http-client");
 
-	
+
 	private final T defaultValue;
 
 	private ConfKeys(T defaultValue) {

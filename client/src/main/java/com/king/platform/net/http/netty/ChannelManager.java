@@ -67,7 +67,8 @@ public class ChannelManager {
 		this.confMap = confMap;
 
 		final Class <? extends SocketChannel> socketChannelClass;
-		if (Epoll.isAvailable()) {
+
+		if (Epoll.isAvailable() && confMap.get(ConfKeys.USE_EPOLL)) {
 		    socketChannelClass = EpollSocketChannel.class;
 		} else {
 		    socketChannelClass = NioSocketChannel.class;
