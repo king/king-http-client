@@ -16,16 +16,14 @@ import org.junit.Test;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class HttpSse {
 	IntegrationServer integrationServer;
@@ -50,7 +48,7 @@ public class HttpSse {
 	@Test
 	public void getSSE() throws Exception {
 
-		integrationServer.addServlet(new MyEventSourceServlet(), "/testSSE");
+		integrationServer.addServlet(new CountingEventSourceServlet(), "/testSSE");
 
 		AtomicReference<String> output = new AtomicReference<>();
 
@@ -86,8 +84,32 @@ public class HttpSse {
 	}
 
 	@Test
+	public void getSSECallback() throws Exception {
+
+		integrationServer.addServlet(new CountingEventSourceServlet(), "/testSSE");
+
+
+		SseClient sseClient = httpClient.createSSE("http://localhost:" + port + "/testSSE").build().execute();
+		final AtomicReference<String> buffer = new AtomicReference<>("");
+
+		sseClient.subscribe(new SseCallback() {
+			@Override
+			public void onEvent(ServerSideEvent serverSideEvent) {
+				buffer.set(buffer.get() + serverSideEvent.data());
+
+			}
+		});
+
+		sseClient.awaitClose(); //block until complete
+
+		assertEquals("0123456789", buffer.get());
+
+
+	}
+
+	@Test
 	public void getSseAndClose() throws Exception {
-		integrationServer.addServlet(new MyEventSourceServlet(), "/testSSE");
+		integrationServer.addServlet(new CountingEventSourceServlet(), "/testSSE");
 
 		CountDownLatch countDownLatch = new CountDownLatch(2);
 		AtomicInteger counter = new AtomicInteger();
@@ -137,7 +159,7 @@ public class HttpSse {
 
 	@Test
 	public void reconnect() throws Exception {
-		integrationServer.addServlet(new MyEventSourceServlet(), "/testSSE");
+		integrationServer.addServlet(new CountingEventSourceServlet(), "/testSSE");
 
 		AtomicReference<String> output = new AtomicReference<>();
 
@@ -174,10 +196,44 @@ public class HttpSse {
 		sseClient.awaitClose();
 		assertEquals("01234567890123456789", output.get());
 
-
 	}
 
+	@Test
+	public void addEventTypeSubscriptions() throws Exception {
 
+		List<EventData> events = new ArrayList<>();
+		events.add(new EventData("event1", "data1"));
+		events.add(new EventData("event2", "data2"));
+		events.add(new EventData("event3", "data3"));
+		events.add(new EventData("event4", "data4"));
+		events.add(new EventData("event5", "data5"));
+
+		integrationServer.addServlet(new EmittingEventSourceServlet(events), "/testSSE");
+
+		SseClient sseClient = httpClient.createSSE("http://localhost:" + port + "/testSSE").build().execute();
+
+
+		List<EventData> receivedEvents = new ArrayList<>();
+
+		SseCallback callback = new SseCallback() {
+			@Override
+			public void onEvent(ServerSideEvent serverSideEvent) {
+				receivedEvents.add(new EventData(serverSideEvent.event(), serverSideEvent.data()));
+			}
+		};
+
+		sseClient.subscribe("event1", callback);
+		sseClient.subscribe("event2", callback);
+		sseClient.subscribe("event3", callback);
+
+		sseClient.awaitClose();
+
+		assertEquals(3, receivedEvents.size());
+
+		for (EventData receivedEvent : receivedEvents) {
+			assertTrue(events.contains(receivedEvent));
+		}
+	}
 
 	@After
 	public void tearDown() throws Exception {
@@ -187,7 +243,7 @@ public class HttpSse {
 	}
 
 
-	private static class MyEventSourceServlet extends EventSourceServlet {
+	private static class CountingEventSourceServlet extends EventSourceServlet {
 
 		@Override
 		protected EventSource newEventSource(HttpServletRequest request) {
@@ -199,8 +255,8 @@ public class HttpSse {
 						public void run() {
 							for (int i = 0; i < 10; i++) {
 								try {
-									emitter.data("" + i);
 									Thread.sleep(100);
+									emitter.data("" + i);
 								} catch (IOException e) {
 									return;
 								} catch (InterruptedException e) {
@@ -219,4 +275,76 @@ public class HttpSse {
 			};
 		}
 	}
+
+	private static class EmittingEventSourceServlet extends EventSourceServlet {
+		private final List<EventData> events;
+
+		private EmittingEventSourceServlet(List<EventData> events) {
+			this.events = events;
+		}
+
+		@Override
+		protected EventSource newEventSource(HttpServletRequest request) {
+			return new EventSource() {
+				@Override
+				public void onOpen(Emitter emitter) throws IOException {
+					new Thread(new Runnable() {
+						@Override
+						public void run() {
+
+							for (EventData event : events) {
+								try {
+									emitter.event(event.name, event.data);
+									Thread.sleep(100);
+								} catch (IOException e) {
+									return;
+								} catch (InterruptedException ignored) {
+								}
+							}
+
+							emitter.close();
+						}
+					}).start();
+				}
+
+				@Override
+				public void onClose() {
+
+				}
+			};
+		}
+	}
+
+	private static class EventData {
+		String name;
+		String data;
+
+		public EventData(String name, String data) {
+			this.name = name;
+			this.data = data;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o)
+				return true;
+			if (o == null || getClass() != o.getClass())
+				return false;
+
+			EventData eventData = (EventData) o;
+
+			if (name != null ? !name.equals(eventData.name) : eventData.name != null)
+				return false;
+			return data != null ? data.equals(eventData.data) : eventData.data == null;
+
+		}
+
+		@Override
+		public int hashCode() {
+			int result = name != null ? name.hashCode() : 0;
+			result = 31 * result + (data != null ? data.hashCode() : 0);
+			return result;
+		}
+	}
+
 }

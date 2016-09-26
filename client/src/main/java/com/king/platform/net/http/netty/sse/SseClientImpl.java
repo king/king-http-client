@@ -10,11 +10,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
-import java.nio.ByteBuffer;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class SseClientImpl implements SseClient {
@@ -27,12 +23,17 @@ public class SseClientImpl implements SseClient {
 
 	private AtomicReference<State> state = new AtomicReference<>(State.DISCONNECTED);
 
+	private final ConcurrentHashMap<String, SseCallback> eventCallbackMap = new ConcurrentHashMap<>();
+	private SseCallback dataCallback;
+
 	private CountDownLatch countDownLatch;
 
 	public SseClientImpl(HttpSseCallback providedHttpSseCallback, BuiltNettyClientRequest builtNettyClientRequest, Executor httpClientCallbackExecutor) {
 		if (providedHttpSseCallback == null) {
 			providedHttpSseCallback = new EmptyHttpSseCallback();
 		}
+
+		providedHttpSseCallback = new WrappedHttpSseCallback(providedHttpSseCallback);
 
 		this.builtNettyClientRequest = builtNettyClientRequest;
 
@@ -51,13 +52,13 @@ public class SseClientImpl implements SseClient {
 	}
 
 	@Override
-	public void subscribe(String evenName, SseCallback callback) {
-
+	public void subscribe(String eventName, SseCallback callback) {
+		eventCallbackMap.put(eventName, callback);
 	}
 
 	@Override
 	public void subscribe(SseCallback callback) {
-
+		dataCallback = callback;
 	}
 
 	@Override
@@ -82,26 +83,42 @@ public class SseClientImpl implements SseClient {
 		builtNettyClientRequest.execute(httpCallback, responseBodyConsumer, nioCallback, externalEventTrigger);
 	}
 
-	private static class EmptyHttpSseCallback implements HttpSseCallback {
+	private class WrappedHttpSseCallback implements HttpSseCallback {
+		private final HttpSseCallback httpSseCallback;
+
+		private WrappedHttpSseCallback(HttpSseCallback httpSseCallback) {
+			this.httpSseCallback = httpSseCallback;
+		}
+
 		@Override
 		public void onConnect() {
-
+			httpSseCallback.onConnect();
 		}
 
 		@Override
 		public void onDisconnect() {
-
+			httpSseCallback.onDisconnect();
 		}
 
 		@Override
 		public void onError(Throwable throwable) {
-
+			httpSseCallback.onError(throwable);
 		}
 
 		@Override
 		public void onEvent(String lastSentId, String event, String data) {
-
+			httpSseCallback.onEvent(lastSentId, event, data);
+			if (dataCallback != null) {
+				dataCallback.onEvent(new ServerSideEventImpl(lastSentId, event, data));
+			}
+			if (event != null) {
+				SseCallback sseCallback = eventCallbackMap.get(event);
+				if (sseCallback != null) {
+					sseCallback.onEvent(new ServerSideEventImpl(lastSentId, event, data));
+				}
+			}
 		}
+
 	}
 
 	private class DelegatingNioHttpCallback implements NioCallback {
@@ -198,29 +215,10 @@ public class SseClientImpl implements SseClient {
 	}
 
 
-	private static class VoidResponseConsumer implements ResponseBodyConsumer<Void> {
-		@Override
-		public void onBodyStart(String contentType, String charset, long contentLength) throws Exception {
-		}
-
-		@Override
-		public void onReceivedContentPart(ByteBuffer buffer) throws Exception {
-		}
-
-		@Override
-		public void onCompletedBody() throws Exception {
-		}
-
-		@Override
-		public Void getBody() {
-			return null;
-		}
-	}
-
-
 	private enum State {
 		CONNECTED,
 		DISCONNECTED,
 		RECONNECTING,
 	}
+
 }
