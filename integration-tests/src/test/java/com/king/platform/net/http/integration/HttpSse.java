@@ -8,12 +8,8 @@ package com.king.platform.net.http.integration;
 
 import com.king.platform.net.http.FutureResult;
 import com.king.platform.net.http.HttpClient;
-import com.king.platform.net.http.HttpSSECallback;
-import com.king.platform.net.http.NioCallback;
-import com.king.platform.net.http.netty.NettyHttpClient;
-import io.netty.buffer.ByteBuf;
-import io.netty.handler.codec.http.HttpHeaders;
-import io.netty.handler.codec.http.HttpResponseStatus;
+import com.king.platform.net.http.HttpSseCallback;
+import com.king.platform.net.http.SseClient;
 import org.eclipse.jetty.servlets.EventSource;
 import org.eclipse.jetty.servlets.EventSourceServlet;
 import org.junit.After;
@@ -22,13 +18,12 @@ import org.junit.Test;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.assertEquals;
 
-public class HttpSSE {
+public class HttpSse {
 	IntegrationServer integrationServer;
 	private HttpClient httpClient;
 	private int port;
@@ -84,7 +79,7 @@ public class HttpSSE {
 
 		AtomicReference<String> output = new AtomicReference<>();
 
-		Future<FutureResult<Void>> sseResult = httpClient.createSSE("http://localhost:" + port + "/testSSE").build().execute(new HttpSSECallback() {
+		SseClient sseClient = httpClient.createSSE("http://localhost:" + port + "/testSSE").build().execute(new HttpSseCallback() {
 			String buffer = "";
 
 			@Override
@@ -108,7 +103,7 @@ public class HttpSSE {
 			}
 		});
 
-		sseResult.get(); //block until complete
+		sseClient.awaitClose(); //block until complete
 
 		assertEquals("0123456789", output.get());
 

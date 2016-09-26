@@ -17,6 +17,7 @@ public interface Event {
 	Event2<HttpRequestContext, Throwable> ERROR = new Event2<>("Error");
 	Event1<HttpRequestContext> COMPLETED = new Event1<>("Completed");
 	Event1<Void> TOUCH = new Event1<>("Touch");
+	Event1<Void> CLOSE = new Event1<>("Close");
 
 	Event1<HttpRequestContext> EXECUTE_REQUEST = new Event1<>("ExecuteRequest");
 	Event1<ChannelHandlerContext> WRITE_BODY = new Event1<>("WriteDelayedBody");

@@ -1,6 +1,6 @@
 package com.king.platform.net.http.netty.request;
 
-import com.king.platform.net.http.HttpSSECallback;
+import com.king.platform.net.http.HttpSseCallback;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import org.junit.Before;
@@ -15,12 +15,12 @@ import static org.junit.Assert.*;
 
 
 public class ServerEventDecoderTest {
-	private CapturingHttpSSECallback sseCallback;
+	private CapturingHttpSseCallback sseCallback;
 	private Executor executor;
 
 	@Before
 	public void setUp() throws Exception {
-		sseCallback = new CapturingHttpSSECallback();
+		sseCallback = new CapturingHttpSseCallback();
 		executor = new Executor() {
 			@Override
 			public void execute(Runnable command) {
@@ -251,7 +251,7 @@ public class ServerEventDecoderTest {
 
 
 
-	private static class CapturingHttpSSECallback implements HttpSSECallback {
+	private static class CapturingHttpSseCallback implements HttpSseCallback {
 		private Queue<Event> events = new LinkedList<>();
 		int count;
 

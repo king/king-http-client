@@ -1,7 +1,7 @@
 package com.king.platform.net.http;
 
 
-public interface HttpSSECallback {
+public interface HttpSseCallback {
 	void onConnect();
 
 	void onDisconnect();
@@ -9,10 +9,4 @@ public interface HttpSSECallback {
 	void onError(Throwable throwable);
 
 	void onEvent(String lastSentId, String event, String data);
-
-	class ServerSideEvent {
-		private String id;
-		private String event;
-		private String data;
-	}
 }

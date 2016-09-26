@@ -18,18 +18,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.king.platform.net.http.*;
+import com.king.platform.net.http.netty.eventbus.*;
 import org.slf4j.Logger;
 
 import com.king.platform.net.http.netty.backpressure.BackPressure;
-import com.king.platform.net.http.netty.eventbus.Event;
-import com.king.platform.net.http.netty.eventbus.Event1;
-import com.king.platform.net.http.netty.eventbus.Event2;
-import com.king.platform.net.http.netty.eventbus.EventBusCallback1;
-import com.king.platform.net.http.netty.eventbus.EventBusCallback2;
-import com.king.platform.net.http.netty.eventbus.RequestEventBus;
-import com.king.platform.net.http.netty.eventbus.RootEventBus;
-import com.king.platform.net.http.netty.eventbus.RunOnceCallback1;
-import com.king.platform.net.http.netty.eventbus.RunOnceCallback2;
 import com.king.platform.net.http.netty.metric.TimeStampRecorder;
 import com.king.platform.net.http.netty.pool.ChannelPool;
 import com.king.platform.net.http.netty.request.HttpClientRequestHandler;
@@ -154,13 +146,27 @@ public class NettyHttpClient implements HttpClient {
 
 	public <T> Future<FutureResult<T>> execute(final NettyHttpClientRequest<T> nettyHttpClientRequest, HttpCallback<T> httpCallback, final
 	NioCallback nioCallback, ResponseBodyConsumer<T> responseBodyConsumer, int idleTimeoutMillis, int totalRequestTimeoutMillis, boolean followRedirects,
-	                                              boolean keepAlive) {
+	                                              boolean keepAlive, ExternalEventTrigger externalEventTrigger) {
 
 		validateStarted();
 
 		httpCallback = runOnlyOnceWrapper(httpCallback);
 
 		final RequestEventBus requestRequestEventBus = rootEventBus.createRequestEventBus();
+
+		if (externalEventTrigger != null) {
+			externalEventTrigger.registerEventListener(new EventListener() {
+				@Override
+				public <T> void onEvent(Event1<T> event, T payload) {
+					requestRequestEventBus.triggerEvent(event, payload);
+				}
+
+				@Override
+				public <T1, T2> void onEvent(Event2<T1, T2> event, T1 payload1, T2 payload2) {
+					requestRequestEventBus.triggerEvent(event, payload1, payload2);
+				}
+			});
+		}
 
 		subscribeToHttpCallbackEvents(httpCallback, requestRequestEventBus);
 		subscribeToNioCallbackEvents(nioCallback, requestRequestEventBus);
@@ -196,6 +202,7 @@ public class NettyHttpClient implements HttpClient {
 
 		return future;
 	}
+
 
 	private <T> HttpCallback<T> runOnlyOnceWrapper(final HttpCallback<T> httpCallback) {
 		if (httpCallback == null) {

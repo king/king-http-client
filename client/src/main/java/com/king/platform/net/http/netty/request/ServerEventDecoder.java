@@ -1,14 +1,14 @@
 package com.king.platform.net.http.netty.request;
 
 
-import com.king.platform.net.http.HttpSSECallback;
+import com.king.platform.net.http.HttpSseCallback;
 import io.netty.buffer.ByteBuf;
 
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Executor;
 
 public class ServerEventDecoder {
-	private final HttpSSECallback httpSSECallback;
+	private final HttpSseCallback httpSseCallback;
 	private final Executor httpClientCallbackExecutor;
 
 	private StringBuilder buffer = new StringBuilder();
@@ -18,10 +18,17 @@ public class ServerEventDecoder {
 	private String eventName;
 
 
-	public ServerEventDecoder(HttpSSECallback httpSSECallback, Executor httpClientCallbackExecutor) {
-		this.httpSSECallback = httpSSECallback;
+	public ServerEventDecoder(HttpSseCallback httpSseCallback, Executor httpClientCallbackExecutor) {
+		this.httpSseCallback = httpSseCallback;
 		this.httpClientCallbackExecutor = httpClientCallbackExecutor;
 
+	}
+
+	public void reset() {
+		buffer.setLength(0);
+		data.setLength(0);
+		lastEventId = null;
+		eventName = null;
 	}
 
 	public void onReceivedContentPart(ByteBuf content) {
@@ -132,7 +139,7 @@ public class ServerEventDecoder {
 		httpClientCallbackExecutor.execute(new Runnable() {
 			@Override
 			public void run() {
-				httpSSECallback.onEvent(lastEventId, thisEventName, dataString);
+				httpSseCallback.onEvent(lastEventId, thisEventName, dataString);
 			}
 		});
 

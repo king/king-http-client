@@ -6,6 +6,9 @@
 package com.king.platform.net.http;
 
 
+import com.king.platform.net.http.netty.eventbus.ExternalEventTrigger;
+import com.king.platform.net.http.netty.requestbuilder.HttpClientSSERequestBuilderImpl;
+
 import java.util.concurrent.Future;
 
 public interface BuiltClientRequest {
@@ -74,4 +77,15 @@ public interface BuiltClientRequest {
 	 * @return a future with the result of the request
 	 */
 	<T> Future<FutureResult<T>> execute(HttpCallback<T> httpCallback, ResponseBodyConsumer<T> responseBodyConsumer, NioCallback nioCallback);
+
+	/**
+	 * Execute the built request, consume the returned data as the type defined by responseBodyConsumer
+	 * @param httpCallback         the callback object, executed on the HttpCallbackExecutor
+	 * @param responseBodyConsumer the consumer of the read http body
+	 * @param nioCallback          the NioCallback object, executed on the io thread for this request.
+	 * @param externalEventTrigger the trigger for external events to control the client
+	 * @param <T>                  the type defined by the responseBodyConsumer
+	 * @return a future with the result of the request
+	 */
+	<T> Future<FutureResult<T>> execute(HttpCallback<T> httpCallback, ResponseBodyConsumer<T> responseBodyConsumer, NioCallback nioCallback, ExternalEventTrigger externalEventTrigger);
 }
