@@ -43,6 +43,16 @@ public class HttpClientSseRequestBuilderImpl extends HttpClientRequestHeaderBuil
 				sseClient.connect();
 				return sseClient;
 			}
+
+			@Override
+			public SseClient build(SseExecutionCallback sseExecutionCallback) {
+				return new SseClientImpl(sseExecutionCallback, builtNettyClientRequest, httpClientCallbackExecutor);
+			}
+
+			@Override
+			public SseClient build() {
+				return new SseClientImpl(null, builtNettyClientRequest, httpClientCallbackExecutor);
+			}
 		};
 
 	}

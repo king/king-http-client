@@ -169,7 +169,7 @@ public class HttpSse {
 
 		assertEquals("0123456789", output.get());
 
-		sseClient.reconnect();
+		sseClient.connect();
 
 		sseClient.awaitClose();
 		assertEquals("01234567890123456789", output.get());

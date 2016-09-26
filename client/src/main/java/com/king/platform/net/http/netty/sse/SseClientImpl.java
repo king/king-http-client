@@ -74,12 +74,9 @@ public class SseClientImpl implements SseClient {
 		countDownLatch.await();
 	}
 
-	public void connect() {
-		reconnect();
-	}
 
 	@Override
-	public void reconnect() {
+	public void connect() {
 		if (!state.compareAndSet(State.DISCONNECTED, State.RECONNECTING)) {
 			throw new RuntimeException("sse client is not in disconnected state");
 		}

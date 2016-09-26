@@ -27,7 +27,7 @@ public interface SseClient {
 	void awaitClose() throws InterruptedException;
 
 	/**
-	 * Reconnect the client to the server
+	 * Connect the client to the server. Can be used to either establish the initial connection, or reconnect a failed connection.
 	 */
-	void reconnect();
+	void connect();
 }
