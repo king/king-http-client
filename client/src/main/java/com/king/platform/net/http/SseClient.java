@@ -22,7 +22,7 @@ public interface SseClient {
 
 	/**
 	 * Block until the server / client has closed the connection
-	 * @throws InterruptedException
+	 * @throws InterruptedException exception if the thread waiting has been interrupted
 	 */
 	void awaitClose() throws InterruptedException;
 
