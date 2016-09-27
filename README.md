@@ -1,5 +1,11 @@
 # king-http-client
 
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.king.king-http-client/king-http-client/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.king.king-http-client/king-http-client)
+
+## New in Version 2.0.0
+ * Supports Server Side Events.
+ * Support for enabling epoll (set ConfKeys.EPOLL to true)
+
 
 ## Api
 
@@ -83,11 +89,54 @@ httpClient.createGet("http://some.url").build().execute(new HttpCallback<Void>()
 
 ```
 
+## Server Side Events Api
+A server side event connection can be made by callign the createSSE method on the httpClient.
+```java
+SseClient sseClient = httpClient.createSSE(url).build().execute(new SseExecutionCallback() {
+			@Override
+			public void onConnect() {
+
+			}
+
+			@Override
+			public void onDisconnect() {
+
+			}
+
+			@Override
+			public void onError(Throwable throwable) {
+
+			}
+
+			@Override
+			public void onEvent(String lastSentId, String event, String data) {
+
+			}
+		});
+		
+sseClient.awaitClose();
+
+```
+The SseClient also supports reconnecting after a connection has been lost
+```java
+sseClient.connect();
+```
+It is also possible to subscribe specific events
+```java
+sseClient.subscribe("stocks", new SseCallback() {
+			@Override
+			public void onEvent(String lastSentId, String event, String data) {
+				
+			}
+		});
+```
+
 
 ## Thread model
 
 The methods on HttpCallback are called by HttpCallbackExecutor, there can therefore be long running jobs in the callbacks.
 The methods on NioCallback are called by the internal nio threads, they should therefore not be blocking or long running. The same goes for the ResponseBodyConsumer and MetricCallback interfaces.
+
 
 
 ## Limitations
