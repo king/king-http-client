@@ -7,7 +7,7 @@ apply plugin: 'maven'
 apply plugin: 'findbugs'
 apply plugin: 'signing'
 group 'com.king.king-http-client'
-version '1.0.7'
+version '2.0.0'
 
 ext.isReleaseVersion = !version.endsWith("SNAPSHOT")
 
