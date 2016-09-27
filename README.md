@@ -31,63 +31,57 @@ httpClient.createPost("http://someUrl").content("someContentToBePosted".getBytes
 Or using callback objects:
 
 ```java
-httpClient.createGet("http://some.url").build().execute(new StringHttpCallback() {
-            @Override
-            public void onCompleted(HttpResponse<String> httpResponse) {
+httpClient.createGet("http://some.url").build().execute(new HttpCallback<String>() {
+			@Override
+			public void onCompleted(HttpResponse<String> httpResponse) {
+				
+			}
 
-            }
+			@Override
+			public void onError(Throwable throwable) {
 
-            @Override
-            public void onError(Throwable throwable) {
-
-            }
-        });
-
+			}
+		});
 ```
 
 
-For more complex cases or when the result is unfit to handle as a string, a ResponseBodyConsumer can be defined in the HttpCallback object:
+For more complex cases or when the result is unfit to handle as a string, a ResponseBodyConsumer can be defined as the second parameter:
 
 ```java
-httpClient.createGet("http://some.url").build().execute(new HttpCallback<Void>() {
-            @Override
-            public void onCompleted(HttpResponse<Void> httpResponse) {
+httpClient.createGet("http://some.url").build().execute(new HttpCallback<SomeObject>() {
+			@Override
+			public void onCompleted(HttpResponse<SomeObject> httpResponse) {
 
-            }
+			}
 
-            @Override
-            public ResponseBodyConsumer<Void> newResponseBodyConsumer() {
-                return new ResponseBodyConsumer<Void>() {
-                    @Override
-                    public void onBodyStart(String contentType, String charset, long contentLength) throws Exception {
+			@Override
+			public void onError(Throwable throwable) {
 
-                    }
+			}
+		}, new ResponseBodyConsumer<SomeObject>() {
+			@Override
+			public void onBodyStart(String contentType, String charset, long contentLength) throws Exception {
+				
+			}
 
-                    @Override
-                    public void onReceivedContentPart(ByteBuffer buffer) throws Exception {
+			@Override
+			public void onReceivedContentPart(ByteBuffer buffer) throws Exception {
+				//aggregate the content from the server
+			}
 
-                    }
+			@Override
+			public void onCompletedBody() throws Exception {
+				//build the SomeObject from the aggregated data
+			}
 
-                    @Override
-                    public void onCompletedBody() throws Exception {
-
-                    }
-
-                    @Override
-                    public Void getBody() {
-                        return null;
-                    }
-                };
-            }
-
-            @Override
-            public void onError(Throwable throwable) {
-
-            }
-        });
-
-
+			@Override
+			public SomeObject getBody() {
+				return someObject;
+			}
+		});
 ```
+This can also be used to stream the returned body to a file instead of buffer all bytes in memory.
+
 
 ## Server Side Events Api
 A server side event connection can be made by callign the createSSE method on the httpClient.
