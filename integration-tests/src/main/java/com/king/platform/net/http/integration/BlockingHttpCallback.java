@@ -53,9 +53,13 @@ public class BlockingHttpCallback implements HttpCallback<String> {
 	}
 
 	public String getBody() {
+		if (exception != null) {
+			throw new RuntimeException(exception);
+		}
 		if (httpResponse == null) {
 			return null;
 		}
+
 		return httpResponse.getBody();
 	}
 
