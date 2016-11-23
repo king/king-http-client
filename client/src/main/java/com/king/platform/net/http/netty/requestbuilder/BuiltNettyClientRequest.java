@@ -13,10 +13,7 @@ import com.king.platform.net.http.netty.eventbus.ExternalEventTrigger;
 import com.king.platform.net.http.netty.request.HttpBody;
 import com.king.platform.net.http.netty.request.NettyHttpClientRequest;
 import com.king.platform.net.http.netty.util.UriUtil;
-import io.netty.handler.codec.http.DefaultHttpRequest;
-import io.netty.handler.codec.http.HttpHeaders;
-import io.netty.handler.codec.http.HttpMethod;
-import io.netty.handler.codec.http.HttpVersion;
+import io.netty.handler.codec.http.*;
 
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
@@ -137,35 +134,35 @@ public class BuiltNettyClientRequest implements BuiltClientRequest {
 		}
 
 
-		if (acceptCompressedResponse && !headers.contains(HttpHeaders.Names.ACCEPT_ENCODING)) {
-			headers.set(HttpHeaders.Names.ACCEPT_ENCODING, HttpHeaders.Values.GZIP + "," + HttpHeaders.Values.DEFLATE);
+		if (acceptCompressedResponse && !headers.contains(HttpHeaderNames.ACCEPT_ENCODING)) {
+			headers.set(HttpHeaderNames.ACCEPT_ENCODING, HttpHeaderValues.GZIP + "," + HttpHeaderValues.DEFLATE);
 		}
 
 		if (httpBody != null) {
 			if (httpBody.getContentLength() < 0) {
-				headers.set(HttpHeaders.Names.TRANSFER_ENCODING, HttpHeaders.Values.CHUNKED);
+				headers.set(HttpHeaderNames.TRANSFER_ENCODING, HttpHeaderValues.CHUNKED);
 			} else {
-				headers.set(HttpHeaders.Names.CONTENT_LENGTH, String.valueOf(httpBody.getContentLength()));
+				headers.set(HttpHeaderNames.CONTENT_LENGTH, String.valueOf(httpBody.getContentLength()));
 			}
 
 			if (httpBody.getContentType() != null) {
-				headers.set(HttpHeaders.Names.CONTENT_TYPE, httpBody.getContentType());
+				headers.set(HttpHeaderNames.CONTENT_TYPE, httpBody.getContentType());
 			}
 		}
 
 
-		if (!headers.contains(HttpHeaders.Names.ACCEPT)) {
-			headers.set(HttpHeaders.Names.ACCEPT, "*/*");
+		if (!headers.contains(HttpHeaderNames.ACCEPT)) {
+			headers.set(HttpHeaderNames.ACCEPT, "*/*");
 		}
 
-		if (!headers.contains(HttpHeaders.Names.USER_AGENT)) {
-			headers.set(HttpHeaders.Names.USER_AGENT, defaultUserAgent);
+		if (!headers.contains(HttpHeaderNames.USER_AGENT)) {
+			headers.set(HttpHeaderNames.USER_AGENT, defaultUserAgent);
 		}
 
 		if (serverInfo.getPort() == 80 || serverInfo.getPort() == 443) {	//Don't write the ports for default ports: Host = "Host" ":" host [ ":" port ] ;
-			headers.set(HttpHeaders.Names.HOST, serverInfo.getHost());
+			headers.set(HttpHeaderNames.HOST, serverInfo.getHost());
 		} else {
-			headers.set(HttpHeaders.Names.HOST, serverInfo.getHost() + ":" + serverInfo.getPort());
+			headers.set(HttpHeaderNames.HOST, serverInfo.getHost() + ":" + serverInfo.getPort());
 		}
 
 

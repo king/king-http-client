@@ -7,7 +7,6 @@ package com.king.platform.net.http.netty.requestbuilder;
 
 import com.king.platform.net.http.netty.request.ByteArrayHttpBody;
 import com.king.platform.net.http.netty.request.HttpBody;
-import io.netty.handler.codec.http.HttpHeaders;
 
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -34,7 +33,7 @@ class FormParameterBodyBuilder implements RequestBodyBuilder {
 	@Override
 	public HttpBody createHttpBody(String contentType, Charset charset, boolean isSecure) {
 		if (contentType == null) {
-			contentType = HttpHeaders.Values.APPLICATION_X_WWW_FORM_URLENCODED;
+			contentType = "application/x-www-form-urlencoded";
 		}
 
 		StringBuilder content = new StringBuilder();

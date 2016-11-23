@@ -38,7 +38,8 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpContentDecompressor;
-import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.stream.ChunkedWriteHandler;
@@ -295,8 +296,8 @@ public class ChannelManager {
 			if (nettyHttpClientResponse == null || nettyHttpClientResponse.getHttpHeaders() == null) {
 				keepAlive = false;
 			} else {
-				String connection = nettyHttpClientResponse.getHttpHeaders().get(HttpHeaders.Names.CONNECTION);
-				if (connection != null && HttpHeaders.Values.CLOSE.equalsIgnoreCase(connection)) {
+				String connection = nettyHttpClientResponse.getHttpHeaders().get(HttpHeaderNames.CONNECTION);
+				if (connection != null && HttpHeaderValues.CLOSE.contentEqualsIgnoreCase(connection)) {
 					keepAlive = false;
 				}
 			}
