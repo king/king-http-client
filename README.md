@@ -2,6 +2,9 @@
 
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.king.king-http-client/king-http-client/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.king.king-http-client/king-http-client)
 
+## New in Version 2.1.0
+ * Upgraded to use Netty-4.1
+ 
 ## New in Version 2.0.0
  * Supports Server Side Events.
  * Support for enabling epoll (set ConfKeys.EPOLL to true)
