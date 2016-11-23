@@ -7,6 +7,7 @@ package com.king.platform.net.http.integration;
 
 
 import com.king.platform.net.http.HttpClient;
+import com.king.platform.net.http.netty.TimeoutException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -58,10 +59,8 @@ public class Timeout {
 		httpClient.createGet("http://localhost:" + port + "/testOk").totalRequestTimeoutMillis(200).build().execute(httpCallback);
 		httpCallback.waitForCompletion();
 
-		assertNotNull(httpCallback.getException());
-
-		assertEquals(null, httpCallback.getBody());
-
+		Throwable exception = httpCallback.getException();
+		assertTrue(exception instanceof TimeoutException);
 	}
 
 	@Test
@@ -87,7 +86,8 @@ public class Timeout {
 
 		assertNotNull(httpCallback.getException());
 
-		assertEquals(null, httpCallback.getBody());
+		Throwable exception = httpCallback.getException();
+		assertTrue(exception instanceof TimeoutException);
 
 	}
 
