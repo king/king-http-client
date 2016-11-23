@@ -116,7 +116,8 @@ public class ServerPool {
 		PooledChannel remove = channelsMap.remove(channel);
 		if (remove != null) {
 			//pooledChannels.remove(remove); we don't want to do remove since its expensive on a linkedList
-			metricCallback.onServerPoolClosedConnection(server.getHost(), channelsMap.size());
+			//discard should not log an metric call for this since an event is triggerd by the calling method
+			//metricCallback.onServerPoolClosedConnection(server.getHost(), channelsMap.size());
 		}
 
 	}
