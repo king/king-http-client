@@ -6,10 +6,8 @@
 package com.king.platform.net.http.integration;
 
 
-import com.king.platform.net.http.FutureResult;
-import com.king.platform.net.http.HttpCallback;
 import com.king.platform.net.http.HttpClient;
-import com.king.platform.net.http.HttpResponse;
+import com.king.platform.net.http.netty.ServerClosedException;
 import com.king.platform.net.http.netty.eventbus.Event;
 import org.junit.After;
 import org.junit.Before;
@@ -20,7 +18,6 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.Charset;
-import java.util.concurrent.Future;
 
 import static org.junit.Assert.*;
 
@@ -61,7 +58,7 @@ public class HttpGetAndServerClose {
 					outputStream.write("Date: Fri, 31 Dec 1999 23:59:59 GMT\r\n".getBytes(Charset.defaultCharset()));
 					outputStream.write("Server: JavaSocket\r\n".getBytes(Charset.defaultCharset()));
 					outputStream.write("X-Status: OK\r\n".getBytes(Charset.defaultCharset()));
-	                                outputStream.write("Content-Length: 13\r\n".getBytes(Charset.defaultCharset()));
+					outputStream.write("Content-Length: 13\r\n".getBytes(Charset.defaultCharset()));
 					outputStream.write("\r\n".getBytes(Charset.defaultCharset()));
 					outputStream.write("Hello World\r\n".getBytes(Charset.defaultCharset()));
 					outputStream.flush();
@@ -131,6 +128,46 @@ public class HttpGetAndServerClose {
 
 		assertFalse(recordingEventBus.hasTriggered(Event.COMPLETED));
 		assertTrue(recordingEventBus.hasTriggered(Event.ERROR));
+
+	}
+
+	@Test
+	public void serverClosesBeforeAllContentIsSent() throws Exception {
+
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					ServerSocket serverSocket = new ServerSocket(port);
+					Socket clientSocket = serverSocket.accept();
+
+					OutputStream outputStream = clientSocket.getOutputStream();
+
+					outputStream.write("HTTP/1.0 200 OK\r\n".getBytes(Charset.defaultCharset()));
+					outputStream.write("Date: Fri, 31 Dec 1999 23:59:59 GMT\r\n".getBytes(Charset.defaultCharset()));
+					outputStream.write("Server: JavaSocket\r\n".getBytes(Charset.defaultCharset()));
+					outputStream.write("X-Status: OK\r\n".getBytes(Charset.defaultCharset()));
+					outputStream.write("Content-Length: 1024\r\n".getBytes(Charset.defaultCharset()));
+					outputStream.write("\r\n".getBytes(Charset.defaultCharset()));
+					outputStream.write("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Etiam id lobortis lacus, nec ultrices augue.\r\n".getBytes
+						(Charset
+						.defaultCharset()));
+					outputStream.flush();
+					outputStream.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}).start();
+
+
+		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
+		httpClient.createGet("http://localhost:" + port + "/").build().execute(httpCallback);
+		httpCallback.waitForCompletion();
+
+		assertNotNull(httpCallback.getException());
+		assertTrue(httpCallback.getException() instanceof ServerClosedException);
+
 
 	}
 

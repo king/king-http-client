@@ -36,12 +36,17 @@ public class HttpClientHandler extends ChannelDuplexHandler {
 	@Override
 	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
 		httpClientResponseHandler.handleResponse(ctx, msg);
-
 	}
 
 	@Override
 	public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
 		httpClientRequestHandler.handleRequest(ctx, msg, promise);
+	}
+
+	@Override
+	public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+		httpClientResponseHandler.handleChannelInactive(ctx);
+		super.channelReadComplete(ctx);
 	}
 
 	@Override
@@ -54,8 +59,6 @@ public class HttpClientHandler extends ChannelDuplexHandler {
 		if (httpRequestContext != null) {
 			httpRequestContext.getRequestEventBus().triggerEvent(Event.ERROR, httpRequestContext, cause);
 		}
-
-
 	}
 
 }

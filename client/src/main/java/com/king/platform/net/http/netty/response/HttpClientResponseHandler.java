@@ -9,6 +9,7 @@ package com.king.platform.net.http.netty.response;
 import com.king.platform.net.http.ResponseBodyConsumer;
 import com.king.platform.net.http.netty.HttpClientHandler;
 import com.king.platform.net.http.netty.HttpRequestContext;
+import com.king.platform.net.http.netty.ServerClosedException;
 import com.king.platform.net.http.netty.eventbus.Event;
 import com.king.platform.net.http.netty.eventbus.RequestEventBus;
 import com.king.platform.net.http.netty.util.StringUtil;
@@ -94,6 +95,7 @@ public class HttpClientResponseHandler {
 
 				if (contentLength != null) {
 					long length = Long.parseLong(contentLength);
+					httpRequestContext.setExpectedContentLength(length);
 					responseBodyConsumer.onBodyStart(contentType, charset, length);
 				} else {
 					responseBodyConsumer.onBodyStart(contentType, charset, 0);
@@ -110,6 +112,7 @@ public class HttpClientResponseHandler {
 				HttpHeaders httpHeaders = nettyHttpClientResponse.getHttpHeaders();
 
 				if (httpResponseStatus == null || (httpRequestContext.isFollowRedirects() && httpRedirector.isRedirectResponse(httpResponseStatus))) {
+					httpRequestContext.setRedirecting(true);
 					return;
 				}
 
@@ -132,7 +135,7 @@ public class HttpClientResponseHandler {
 
 					responseBodyConsumer.onReceivedContentPart(byteBuffer);
 					requestEventBus.triggerEvent(Event.onReceivedContentPart, readableBytes, content);
-
+					httpRequestContext.addReadBytes(readableBytes);
 				}
 
 
@@ -142,23 +145,13 @@ public class HttpClientResponseHandler {
 
 
 				if (chunk instanceof LastHttpContent) {
+					if (httpRequestContext.getExpectedContentLength() > 0 && httpRequestContext.getReadBytes() != httpRequestContext.getExpectedContentLength
+						()) {
+						triggerServerClosedException(httpRequestContext, requestEventBus);
+						return;
+					}
 
-
-					responseBodyConsumer.onCompletedBody();
-
-					requestEventBus.triggerEvent(Event.onReceivedCompleted, httpResponseStatus, httpHeaders);
-					httpRequestContext.getTimeRecorder().responseBodyCompleted();
-
-					@SuppressWarnings("unchecked")
-					com.king.platform.net.http.HttpResponse httpResponse = new com.king.platform.net.http.HttpResponse(httpResponseStatus.code(),
-						responseBodyConsumer, httpHeaders.entries());
-
-
-					requestEventBus.triggerEvent(Event.onHttpResponseDone, httpResponse);
-
-					requestEventBus.triggerEvent(Event.COMPLETED, httpRequestContext);
-
-
+					handleCompletedTransfer(httpRequestContext, requestEventBus, nettyHttpClientResponse);
 				}
 			}
 		} catch (Throwable e) {
@@ -166,5 +159,65 @@ public class HttpClientResponseHandler {
 		}
 	}
 
+	private void handleCompletedTransfer(HttpRequestContext httpRequestContext, RequestEventBus requestEventBus, NettyHttpClientResponse
+		nettyHttpClientResponse) throws Exception {
+		ResponseBodyConsumer responseBodyConsumer = nettyHttpClientResponse.getResponseBodyConsumer();
+		HttpResponseStatus httpResponseStatus = nettyHttpClientResponse.getHttpResponseStatus();
+		HttpHeaders httpHeaders = nettyHttpClientResponse.getHttpHeaders();
 
+		httpRequestContext.setHasCompleted(true);
+
+		responseBodyConsumer.onCompletedBody();
+
+		requestEventBus.triggerEvent(Event.onReceivedCompleted, httpResponseStatus, httpHeaders);
+		httpRequestContext.getTimeRecorder().responseBodyCompleted();
+
+		@SuppressWarnings("unchecked") com.king.platform.net.http.HttpResponse httpResponse = new com.king.platform.net.http.HttpResponse(httpResponseStatus
+			.code(), responseBodyConsumer, httpHeaders
+			.entries());
+
+		requestEventBus.triggerEvent(Event.onHttpResponseDone, httpResponse);
+
+		requestEventBus.triggerEvent(Event.COMPLETED, httpRequestContext);
+	}
+
+
+	public void handleChannelInactive(ChannelHandlerContext ctx) {
+		HttpRequestContext httpRequestContext = ctx.channel().attr(HttpRequestContext.HTTP_REQUEST_ATTRIBUTE_KEY).get();
+
+		if (httpRequestContext == null) {
+			return;
+		}
+
+		if (ctx.channel().attr(HttpClientHandler.HTTP_CLIENT_HANDLER_TRIGGERED_ERROR).get()) {
+			return;
+		}
+
+		if (httpRequestContext.hasCompletedContent()) {
+			return;
+		}
+
+		if (httpRequestContext.isRedirecting()) {
+			return;
+		}
+
+		NettyHttpClientResponse nettyHttpClientResponse = httpRequestContext.getNettyHttpClientResponse();
+		RequestEventBus requestEventBus = nettyHttpClientResponse.getRequestEventBus();
+
+		if (httpRequestContext.getExpectedContentLength() > 0 && httpRequestContext.getReadBytes() != httpRequestContext.getExpectedContentLength()) {
+			triggerServerClosedException(httpRequestContext, requestEventBus);
+			return;
+		}
+
+		try {
+			handleCompletedTransfer(httpRequestContext, requestEventBus, nettyHttpClientResponse);
+		} catch (Exception e) {
+			requestEventBus.triggerEvent(Event.ERROR, httpRequestContext, e);
+		}
+
+	}
+
+	private void triggerServerClosedException(HttpRequestContext httpRequestContext, RequestEventBus requestEventBus) {
+		requestEventBus.triggerEvent(Event.ERROR, httpRequestContext, new ServerClosedException("Server closed connection before all data was read!"));
+	}
 }

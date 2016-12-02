@@ -7,18 +7,19 @@ package com.king.platform.net.http.integration;
 
 
 import com.king.platform.net.http.HttpClient;
-import com.king.platform.net.http.HttpClient;
+import com.king.platform.net.http.netty.ServerClosedException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import javax.servlet.ServletException;
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 public class HttpGet {
 	IntegrationServer integrationServer;
@@ -40,6 +41,28 @@ public class HttpGet {
 
 
 	@Test
+	public void get200WithClose() throws Exception {
+
+		integrationServer.addServlet(new HttpServlet() {
+			@Override
+			protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+				resp.addHeader("Connection", "close");
+				resp.getWriter().write(okBody);
+				resp.getWriter().flush();
+			}
+		}, "/testOk");
+
+		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
+		httpClient.createGet("http://localhost:" + port + "/testOk").build().execute(httpCallback);
+		httpCallback.waitForCompletion();
+
+		assertEquals(okBody, httpCallback.getBody());
+		assertEquals(200, httpCallback.getStatusCode());
+
+
+	}
+
+	@Test
 	public void get200() throws Exception {
 
 		integrationServer.addServlet(new HttpServlet() {
@@ -57,8 +80,62 @@ public class HttpGet {
 		assertEquals(okBody, httpCallback.getBody());
 		assertEquals(200, httpCallback.getStatusCode());
 
+	}
+
+	@Test
+	public void get200WithContentLength() throws Exception {
+		integrationServer.addServlet(new HttpServlet() {
+			@Override
+			protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+				resp.addHeader("Connection", "close");
+
+				ServletOutputStream outputStream = resp.getOutputStream();
+				byte[] bytes = okBody.getBytes();
+
+				resp.setContentLength(bytes.length);
+
+				outputStream.write(bytes);
+				outputStream.flush();
+			}
+		}, "/testOk");
+
+		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
+		httpClient.createGet("http://localhost:" + port + "/testOk").build().execute(httpCallback);
+		httpCallback.waitForCompletion();
+
+		assertEquals(okBody, httpCallback.getBody());
+		assertEquals(200, httpCallback.getStatusCode());
 
 	}
+
+
+	@Test
+	public void get200WithIncorrectContentLength() throws Exception {
+		integrationServer.addServlet(new HttpServlet() {
+			@Override
+			protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+				resp.addHeader("Connection", "close");
+
+				ServletOutputStream outputStream = resp.getOutputStream();
+				byte[] bytes = okBody.getBytes();
+
+				resp.setContentLength(2000);
+
+				outputStream.write(bytes);
+				outputStream.flush();
+			}
+		}, "/testOk");
+
+		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
+		httpClient.createGet("http://localhost:" + port + "/testOk").build().execute(httpCallback);
+		httpCallback.waitForCompletion();
+
+		assertNotNull(httpCallback.getException());
+		assertTrue(httpCallback.getException() instanceof ServerClosedException);
+
+
+	}
+
 
 	@Test
 	public void get404() throws Exception {

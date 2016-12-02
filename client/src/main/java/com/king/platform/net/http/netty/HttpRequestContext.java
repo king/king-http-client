@@ -31,6 +31,10 @@ public class HttpRequestContext<T> {
 	private NettyHttpClientResponse<T> nettyHttpClientResponse;
 	private int redirectionCount;
 	private Channel attachedChannel;
+	private boolean hasCompleted;
+	private long expectedContentLength;
+	private long readBytes;
+	private boolean isRedirecting;
 
 
 	public HttpRequestContext(NettyHttpClientRequest<T> nettyHttpClientRequest, RequestEventBus requestEventBus, ResponseBodyConsumer<T> responseBodyConsumer,
@@ -116,5 +120,37 @@ public class HttpRequestContext<T> {
 
 	public TimeStampRecorder getTimeRecorder() {
 		return timeStampRecorder;
+	}
+
+	public void setHasCompleted(boolean hasCompleted) {
+		this.hasCompleted = hasCompleted;
+	}
+
+	public boolean hasCompletedContent() {
+		return hasCompleted;
+	}
+
+	public void setExpectedContentLength(long expectedContentLength) {
+		this.expectedContentLength = expectedContentLength;
+	}
+
+	public long getExpectedContentLength() {
+		return expectedContentLength;
+	}
+
+	public void addReadBytes(int readBytes) {
+		this.readBytes += readBytes;
+	}
+
+	public long getReadBytes() {
+		return readBytes;
+	}
+
+	public boolean isRedirecting() {
+		return isRedirecting;
+	}
+
+	public void setRedirecting(boolean isRedirecting) {
+		this.isRedirecting = isRedirecting;
 	}
 }

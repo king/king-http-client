@@ -6,8 +6,8 @@
 package com.king.platform.net.http.integration;
 
 
-import com.king.platform.net.http.HttpClientRequestWithBodyBuilder;
 import com.king.platform.net.http.HttpClient;
+import com.king.platform.net.http.HttpClientRequestWithBodyBuilder;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
