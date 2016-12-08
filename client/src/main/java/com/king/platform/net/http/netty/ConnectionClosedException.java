@@ -8,19 +8,19 @@ package com.king.platform.net.http.netty;
 
 import java.io.IOException;
 
-public class ServerClosedException extends IOException {
-	public ServerClosedException() {
+public class ConnectionClosedException extends IOException {
+	public ConnectionClosedException() {
 	}
 
-	public ServerClosedException(String message) {
+	public ConnectionClosedException(String message) {
 		super(message);
 	}
 
-	public ServerClosedException(String message, Throwable cause) {
+	public ConnectionClosedException(String message, Throwable cause) {
 		super(message, cause);
 	}
 
-	public ServerClosedException(Throwable cause) {
+	public ConnectionClosedException(Throwable cause) {
 		super(cause);
 	}
 }

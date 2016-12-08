@@ -6,22 +6,25 @@
 package com.king.platform.net.http.integration;
 
 
+import com.king.platform.net.http.FutureResult;
 import com.king.platform.net.http.HttpClient;
-import com.king.platform.net.http.netty.ServerClosedException;
+import com.king.platform.net.http.netty.ConnectionClosedException;
 import com.king.platform.net.http.netty.eventbus.Event;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.Charset;
+import java.util.concurrent.Future;
 
 import static org.junit.Assert.*;
 
-public class HttpGetAndServerClose {
+public class ServerCloses {
 	private HttpClient httpClient;
 	private int port;
 
@@ -133,7 +136,7 @@ public class HttpGetAndServerClose {
 
 	@Test
 	public void serverClosesBeforeAllContentIsSent() throws Exception {
-
+ 
 		new Thread(new Runnable() {
 			@Override
 			public void run() {
@@ -166,8 +169,43 @@ public class HttpGetAndServerClose {
 		httpCallback.waitForCompletion();
 
 		assertNotNull(httpCallback.getException());
-		assertTrue(httpCallback.getException() instanceof ServerClosedException);
+		assertTrue(httpCallback.getException() instanceof ConnectionClosedException);
 
+
+	}
+
+	@Test
+	public void serverClosesWhileClientSends() throws Exception {
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					ServerSocket serverSocket = new ServerSocket(port);
+					Socket clientSocket = serverSocket.accept();
+					InputStream inputStream = clientSocket.getInputStream();
+					inputStream.read(new byte[10]);
+					OutputStream outputStream = clientSocket.getOutputStream();
+					outputStream.flush();
+					outputStream.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+
+		}).start();
+
+
+		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
+
+		httpClient.createPost("http://localhost:" + port + "/")
+			.content("some data that needs to be sent to server".getBytes())
+			.build()
+			.execute(httpCallback);
+
+		httpCallback.waitForCompletion();
+
+		assertNotNull(httpCallback.getException());
+		assertTrue(httpCallback.getException() instanceof IOException);
 
 	}
 

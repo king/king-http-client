@@ -7,7 +7,7 @@ package com.king.platform.net.http.integration;
 
 
 import com.king.platform.net.http.HttpClient;
-import com.king.platform.net.http.netty.ServerClosedException;
+import com.king.platform.net.http.netty.ConnectionClosedException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -131,7 +131,7 @@ public class HttpGet {
 		httpCallback.waitForCompletion();
 
 		assertNotNull(httpCallback.getException());
-		assertTrue(httpCallback.getException() instanceof ServerClosedException);
+		assertTrue(httpCallback.getException() instanceof ConnectionClosedException);
 
 
 	}

@@ -9,7 +9,7 @@ package com.king.platform.net.http.netty.response;
 import com.king.platform.net.http.ResponseBodyConsumer;
 import com.king.platform.net.http.netty.HttpClientHandler;
 import com.king.platform.net.http.netty.HttpRequestContext;
-import com.king.platform.net.http.netty.ServerClosedException;
+import com.king.platform.net.http.netty.ConnectionClosedException;
 import com.king.platform.net.http.netty.eventbus.Event;
 import com.king.platform.net.http.netty.eventbus.RequestEventBus;
 import com.king.platform.net.http.netty.util.StringUtil;
@@ -145,9 +145,8 @@ public class HttpClientResponseHandler {
 
 
 				if (chunk instanceof LastHttpContent) {
-					if (httpRequestContext.getExpectedContentLength() > 0 && httpRequestContext.getReadBytes() != httpRequestContext.getExpectedContentLength
-						()) {
-						triggerServerClosedException(httpRequestContext, requestEventBus);
+					if (incomnpleteReadOfData(httpRequestContext)) {
+						triggerServerClosedException(httpRequestContext, requestEventBus, "Connection closed before all response data was read!");
 						return;
 					}
 
@@ -201,11 +200,18 @@ public class HttpClientResponseHandler {
 			return;
 		}
 
+
 		NettyHttpClientResponse nettyHttpClientResponse = httpRequestContext.getNettyHttpClientResponse();
 		RequestEventBus requestEventBus = nettyHttpClientResponse.getRequestEventBus();
 
-		if (httpRequestContext.getExpectedContentLength() > 0 && httpRequestContext.getReadBytes() != httpRequestContext.getExpectedContentLength()) {
-			triggerServerClosedException(httpRequestContext, requestEventBus);
+		if (nettyHttpClientResponse.getHttpResponseStatus() == null || nettyHttpClientResponse.getHttpHeaders() == null) {  //the connection has closed before response headers has been read
+			triggerServerClosedException(httpRequestContext, requestEventBus, "Connection closed before response http headers was read!");
+			return;
+		}
+
+
+		if (incomnpleteReadOfData(httpRequestContext)) {  //the connection has closed before all body was read
+			triggerServerClosedException(httpRequestContext, requestEventBus, "Connection closed before all response data was read!");
 			return;
 		}
 
@@ -217,7 +223,11 @@ public class HttpClientResponseHandler {
 
 	}
 
-	private void triggerServerClosedException(HttpRequestContext httpRequestContext, RequestEventBus requestEventBus) {
-		requestEventBus.triggerEvent(Event.ERROR, httpRequestContext, new ServerClosedException("Server closed connection before all data was read!"));
+	private boolean incomnpleteReadOfData(HttpRequestContext httpRequestContext) {
+		return httpRequestContext.getExpectedContentLength() > 0 && httpRequestContext.getReadBytes() != httpRequestContext.getExpectedContentLength();
+	}
+
+	private void triggerServerClosedException(HttpRequestContext httpRequestContext, RequestEventBus requestEventBus, String message) {
+		requestEventBus.triggerEvent(Event.ERROR, httpRequestContext, new ConnectionClosedException(message));
 	}
 }
