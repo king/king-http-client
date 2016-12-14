@@ -21,13 +21,18 @@ public class StringUtilTest {
 	public void substringBefore() throws Exception {
 		assertEquals("text/html", StringUtil.substringBefore("text/html; charset=utf-8", ';'));
 
+		assertEquals("", StringUtil.substringBefore(";charset=utf-8", ';'));
+
 		assertEquals("text/html", StringUtil.substringBefore("text/html", ';'));
+
+
+
 	}
 
 	@Test
 	public void substringAfter() throws Exception {
 		assertEquals("utf-8", StringUtil.substringAfter("text/html; charset=utf-8", '='));
-
+		assertEquals("", StringUtil.substringAfter("text/html; charset=", '='));
 
 		assertNull(StringUtil.substringAfter("text/html", '='));
 	}
