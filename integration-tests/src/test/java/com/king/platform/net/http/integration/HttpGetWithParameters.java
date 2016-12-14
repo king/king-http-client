@@ -17,6 +17,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.assertEquals;
@@ -184,6 +186,41 @@ public class HttpGetWithParameters {
 			assertEquals(values[i], result[i]);
 		}
 
+
+	}
+
+	@Test
+	public void getWithParameterMap() throws Exception {
+		final AtomicReference<String> value1 = new AtomicReference<>();
+		final AtomicReference<String> value2 = new AtomicReference<>();
+
+		integrationServer.addServlet(new HttpServlet() {
+			@Override
+			protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+				value1.set(req.getParameter("param1"));
+				value2.set(req.getParameter("param2"));
+				resp.getWriter().write(okBody);
+				resp.getWriter().flush();
+			}
+		}, "/testOk");
+
+		Map<String, String> parameterMap = new HashMap<>();
+		parameterMap.put("param1", "value1");
+		parameterMap.put("param2", "value2");
+
+		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
+		httpClient
+			.createGet("http://localhost:" + port + "/testOk")
+			.withQueryParameters(parameterMap)
+			.build().execute(httpCallback);
+
+		httpCallback.waitForCompletion();
+
+
+		assertEquals(okBody, httpCallback.getBody());
+		assertEquals(200, httpCallback.getStatusCode());
+		assertEquals("value1", value1.get());
+		assertEquals("value2", value2.get());
 
 	}
 
