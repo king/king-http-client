@@ -68,11 +68,11 @@ public class ResponseBodyStream implements ResponseBodyConsumer<WritableByteChan
 
 		public void updateReceivedContent(int remaining) {
 			if (progressCallback != null) {
-				int prev = (int) (((float) readLength / (float) contentLength) * 100f);
+				int prev = Math.round (((float) readLength / (float) contentLength) * 100f);
 
 				readLength += remaining;
 
-				int current = (int) (((float) readLength / (float) contentLength) * 100f);
+				int current = Math.round(((float) readLength / (float) contentLength) * 100f);
 
 				if (current != prev) {
 					progressCallback.onProgress(current, readLength, contentLength);
