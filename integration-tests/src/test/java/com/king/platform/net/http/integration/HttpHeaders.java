@@ -16,6 +16,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.assertEquals;
@@ -92,6 +93,38 @@ public class HttpHeaders {
 		assertEquals(headerValue, httpCallback.getHeader(headerName));
 		assertEquals(200, httpCallback.getStatusCode());
 
+
+	}
+
+	@Test
+	public void getWithProvidedHeaderMap() throws Exception {
+
+		final AtomicReference<String> headerValueReference = new AtomicReference<>();
+		integrationServer.addServlet(new HttpServlet() {
+			@Override
+			protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+				headerValueReference.set(req.getHeader(headerName));
+
+				resp.getWriter().write(okBody);
+				resp.getWriter().flush();
+			}
+		}, "/testOk");
+
+		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
+
+		HashMap<String, String> headers = new HashMap<>();
+		headers.put(headerName, headerValue);
+
+		httpClient
+			.createGet("http://localhost:" + port + "/testOk")
+			.withHeaders(headers)
+			.build().execute(httpCallback);
+
+		httpCallback.waitForCompletion();
+
+		assertEquals(okBody, httpCallback.getBody());
+		assertEquals(200, httpCallback.getStatusCode());
+		assertEquals(headerValue, headerValueReference.get());
 
 	}
 
