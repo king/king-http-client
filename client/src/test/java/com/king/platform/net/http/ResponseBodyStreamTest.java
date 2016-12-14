@@ -10,10 +10,13 @@ import org.junit.Test;
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
+import java.nio.channels.WritableByteChannel;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 
 public class ResponseBodyStreamTest {
@@ -25,7 +28,8 @@ public class ResponseBodyStreamTest {
 		AtomicLong readLengthRef = new AtomicLong();
 		AtomicLong contentLengthRef = new AtomicLong();
 
-		ResponseBodyStream responseBodyStream = new ResponseBodyStream(Channels.newChannel(buffer), new ResponseBodyStream.ProgressCallback() {
+		WritableByteChannel channel = Channels.newChannel(new ByteArrayOutputStream());
+		ResponseBodyStream responseBodyStream = new ResponseBodyStream(channel, new ResponseBodyStream.ProgressCallback() {
 			@Override
 			public void onProgress(int percentageCompleted, long readLength, long contentLength) {
 				percentageRef.set(percentageCompleted);
@@ -42,9 +46,25 @@ public class ResponseBodyStreamTest {
 			assertEquals(i + 1, readLengthRef.longValue());
 			assertEquals(i + 1, percentageRef.intValue());
 		}
-
-		assertEquals(100, buffer.size());
-
 	}
 
+	@Test
+	public void bodyShouldWriteToChannelAndCloseIt() throws Exception {
+		ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+		WritableByteChannel channel = Channels.newChannel(buffer);
+
+		ResponseBodyStream responseBodyStream = new ResponseBodyStream(channel, null);
+
+		responseBodyStream.onBodyStart("content/type", "charset", 100);
+
+		for (int i = 0; i < 100; i++) {
+			responseBodyStream.onReceivedContentPart((ByteBuffer) ByteBuffer.allocate(1).put((byte) i).flip());
+		}
+
+		responseBodyStream.onCompletedBody();
+
+		assertEquals(100, buffer.size());
+		assertFalse(channel.isOpen());
+
+	}
 }
