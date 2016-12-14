@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 @SuppressWarnings("unchecked")
 public class HttpResponseTest {
@@ -45,6 +46,12 @@ public class HttpResponseTest {
 		}
 	}
 
+	@Test
+	public void getUnknownHeaderShouldReturnNull() throws Exception {
+		HttpResponse httpResponse = new HttpResponse(200, null, new ArrayList<>());
+		String value = httpResponse.getHeader("undefined");
+		assertNull(value);
+	}
 
 	@Test
 	public void getAllHeaders() throws Exception {
