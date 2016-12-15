@@ -105,18 +105,32 @@ public class TimeStampRecorder implements RecordedTimeStamps {
 		return responseBodyCompleted;
 	}
 
+
+	@Override
+	public long getCompleteRequestTime() {
+		return responseBodyCompleted - createdRequest;
+	}
+
+	@Override
+	public long getRequestTime() {
+		return completedWriteLastBody - startWriteHeaders;
+	}
+
+	@Override
+	public long getResponseTime() {
+		return responseBodyCompleted - readResponseHttpHeaders;
+	}
+
+	@Override
+	public long getServerProcessTime() {
+		return readResponseHttpHeaders - completedWriteLastBody;
+	}
+
 	@Override
 	public String toString() {
-		return "TimeStampRecorder{" +
-			"createdRequest=" + createdRequest +
-			", startWriteHeaders=" + startWriteHeaders +
-			", completedWriteHeaders=" + completedWriteHeaders +
-			", startWriteBody=" + startWriteBody +
-			", completedWriteBody=" + completedWriteBody +
-			", completedWriteLastBody=" + completedWriteLastBody +
-			", readResponseHttpHeaders=" + readResponseHttpHeaders +
-			", responseBodyStart=" + responseBodyStart +
-			", responseBodyCompleted=" + responseBodyCompleted +
-			'}';
+		return "TimeStampRecorder{" + "createdRequest=" + createdRequest + ", startWriteHeaders=" + startWriteHeaders + ", completedWriteHeaders=" +
+			completedWriteHeaders + ", startWriteBody=" + startWriteBody + ", completedWriteBody=" + completedWriteBody + ", completedWriteLastBody=" +
+			completedWriteLastBody + ", readResponseHttpHeaders=" + readResponseHttpHeaders + ", responseBodyStart=" + responseBodyStart + ", " +
+			"responseBodyCompleted=" + responseBodyCompleted + '}';
 	}
 }
