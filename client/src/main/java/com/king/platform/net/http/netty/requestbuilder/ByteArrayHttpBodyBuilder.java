@@ -18,11 +18,6 @@ class ByteArrayHttpBodyBuilder implements RequestBodyBuilder {
 	}
 
 	@Override
-	public String getName() {
-		return "Byte array body";
-	}
-
-	@Override
 	public HttpBody createHttpBody(String contentType, Charset charset, boolean isSecure) {
 		return new ByteArrayHttpBody(content, contentType);
 	}

@@ -17,11 +17,6 @@ class CustomHttpBodyBuilder implements RequestBodyBuilder {
 	}
 
 	@Override
-	public String getName() {
-		return "Custom Http Body";
-	}
-
-	@Override
 	public HttpBody createHttpBody(String contentType, Charset charset, boolean isSecure) {
 		return httpBody;
 	}

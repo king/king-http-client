@@ -26,11 +26,6 @@ class FormParameterBodyBuilder implements RequestBodyBuilder {
 	}
 
 	@Override
-	public String getName() {
-		return "Form parameter body";
-	}
-
-	@Override
 	public HttpBody createHttpBody(String contentType, Charset charset, boolean isSecure) {
 		if (contentType == null) {
 			contentType = "application/x-www-form-urlencoded";

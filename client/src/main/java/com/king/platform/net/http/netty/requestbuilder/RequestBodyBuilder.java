@@ -11,7 +11,6 @@ import com.king.platform.net.http.netty.request.HttpBody;
 import java.nio.charset.Charset;
 
 interface RequestBodyBuilder {
-	String getName();
 
 	HttpBody createHttpBody(String contentType, Charset charset, boolean isSecure);
 }

@@ -37,7 +37,7 @@ public class HttpClientRequestWithBodyBuilderImpl extends HttpClientRequestHeade
 	@Override
 	public HttpClientRequestWithBodyBuilder content(byte[] content) {
 		if (requestBodyBuilder != null) {
-			throw new RuntimeException("Already defined request body as " + requestBodyBuilder.getName());
+			throw new RuntimeException("Already defined request body as type " + requestBodyBuilder.getClass());
 		}
 		requestBodyBuilder = new ByteArrayHttpBodyBuilder(content);
 
@@ -47,7 +47,7 @@ public class HttpClientRequestWithBodyBuilderImpl extends HttpClientRequestHeade
 	@Override
 	public HttpClientRequestWithBodyBuilder content(File file) {
 		if (requestBodyBuilder != null) {
-			throw new RuntimeException("Already defined request body as " + requestBodyBuilder.getName());
+			throw new RuntimeException("Already defined request body as type  " + requestBodyBuilder.getClass());
 		}
 
 		requestBodyBuilder = new FileHttpBodyBuilder(file);
@@ -58,7 +58,7 @@ public class HttpClientRequestWithBodyBuilderImpl extends HttpClientRequestHeade
 	@Override
 	public HttpClientRequestWithBodyBuilder content(HttpBody httpBody) {
 		if (requestBodyBuilder != null) {
-			throw new RuntimeException("Already defined request body as " + requestBodyBuilder.getName());
+			throw new RuntimeException("Already defined request body as type  " + requestBodyBuilder.getClass());
 		}
 
 		requestBodyBuilder = new CustomHttpBodyBuilder(httpBody);
@@ -112,18 +112,18 @@ public class HttpClientRequestWithBodyBuilderImpl extends HttpClientRequestHeade
 		}
 
 		if (allowedTypes == null) {
-			throw new RuntimeException("Already defined request body as " + requestBodyBuilder.getName());
+			throw new RuntimeException("Already defined request body as type  " + requestBodyBuilder.getClass());
 		}
 
 		if (!(requestBodyBuilder instanceof FormParameterBodyBuilder)) {
-			throw new RuntimeException("Already defined request body as " + requestBodyBuilder.getName());
+			throw new RuntimeException("Already defined request body as type  " + requestBodyBuilder.getClass());
 		}
 	}
 
 	@Override
 	public HttpClientRequestWithBodyBuilder content(InputStream inputStream) {
 		if (requestBodyBuilder != null) {
-			throw new RuntimeException("Already defined request body as " + requestBodyBuilder.getName());
+			throw new RuntimeException("Already defined request body as type  " + requestBodyBuilder.getClass());
 		}
 
 		requestBodyBuilder = new InputStreamHttpBodyBuilder(inputStream);

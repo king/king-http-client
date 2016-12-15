@@ -20,11 +20,6 @@ class FileHttpBodyBuilder implements RequestBodyBuilder {
 	}
 
 	@Override
-	public String getName() {
-		return "File " + file + " body";
-	}
-
-	@Override
 	public HttpBody createHttpBody(String contentType, Charset charset, boolean isSecure) {
 		if (isSecure) {
 			return new ChunkedFileHttpBody(file, contentType);

@@ -19,11 +19,6 @@ class InputStreamHttpBodyBuilder implements RequestBodyBuilder {
 	}
 
 	@Override
-	public String getName() {
-		return "Input stream body";
-	}
-
-	@Override
 	public HttpBody createHttpBody(String contentType, Charset charset, boolean isSecure) {
 		return new InputStreamHttpBody(inputStream, contentType);
 	}
