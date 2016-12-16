@@ -6,22 +6,9 @@
 package com.king.platform.net.http.netty;
 
 
-import static org.slf4j.LoggerFactory.getLogger;
-
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import com.king.platform.net.http.*;
-import com.king.platform.net.http.netty.eventbus.*;
-import org.slf4j.Logger;
-
 import com.king.platform.net.http.netty.backpressure.BackPressure;
+import com.king.platform.net.http.netty.eventbus.*;
 import com.king.platform.net.http.netty.metric.TimeStampRecorder;
 import com.king.platform.net.http.netty.pool.ChannelPool;
 import com.king.platform.net.http.netty.request.HttpClientRequestHandler;
@@ -32,7 +19,6 @@ import com.king.platform.net.http.netty.requestbuilder.HttpClientSseRequestBuild
 import com.king.platform.net.http.netty.response.HttpClientResponseHandler;
 import com.king.platform.net.http.netty.response.HttpRedirector;
 import com.king.platform.net.http.netty.util.TimeProvider;
-
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.epoll.Epoll;
@@ -43,6 +29,18 @@ import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.util.Timer;
+import org.slf4j.Logger;
+
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import static org.slf4j.LoggerFactory.getLogger;
 
 public class NettyHttpClient implements HttpClient {
 	private final AtomicBoolean started = new AtomicBoolean();

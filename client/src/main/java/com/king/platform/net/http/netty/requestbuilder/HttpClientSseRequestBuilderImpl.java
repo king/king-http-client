@@ -8,8 +8,8 @@ package com.king.platform.net.http.netty.requestbuilder;
 
 import com.king.platform.net.http.BuiltSseClientRequest;
 import com.king.platform.net.http.HttpClientSseRequestBuilder;
-import com.king.platform.net.http.SseExecutionCallback;
 import com.king.platform.net.http.SseClient;
+import com.king.platform.net.http.SseExecutionCallback;
 import com.king.platform.net.http.netty.ConfMap;
 import com.king.platform.net.http.netty.NettyHttpClient;
 import com.king.platform.net.http.netty.sse.SseClientImpl;

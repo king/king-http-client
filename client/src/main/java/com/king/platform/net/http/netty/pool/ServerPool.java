@@ -6,8 +6,11 @@
 package com.king.platform.net.http.netty.pool;
 
 
-import static org.slf4j.LoggerFactory.getLogger;
+import com.king.platform.net.http.netty.ServerInfo;
+import com.king.platform.net.http.netty.metric.MetricCallback;
+import com.king.platform.net.http.netty.util.TimeProvider;
 import io.netty.channel.Channel;
+import org.slf4j.Logger;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -15,15 +18,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.slf4j.Logger;
-
-import com.king.platform.net.http.netty.ServerInfo;
-import com.king.platform.net.http.netty.metric.MetricCallback;
-import com.king.platform.net.http.netty.util.TimeProvider;
+import static org.slf4j.LoggerFactory.getLogger;
 
 public class ServerPool {
 	private final Logger logger = getLogger(getClass());

@@ -10,7 +10,7 @@ import org.junit.Test;
 
 import java.nio.charset.Charset;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertSame;
 import static se.mockachino.Mockachino.mock;
 
 

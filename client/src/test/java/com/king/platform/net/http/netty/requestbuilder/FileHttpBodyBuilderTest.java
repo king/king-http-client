@@ -14,7 +14,7 @@ import org.junit.Test;
 import java.io.File;
 import java.nio.charset.Charset;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 
 public class FileHttpBodyBuilderTest {

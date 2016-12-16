@@ -8,7 +8,8 @@ package com.king.platform.net.http.netty.backpressure;
 import com.king.platform.net.http.netty.ServerInfo;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 
 public class EvictingBackPressureTest {
