@@ -12,10 +12,7 @@ import com.king.platform.net.http.FutureResult;
 import com.king.platform.net.http.HttpClient;
 import io.netty.util.ResourceLeakDetector;
 import org.eclipse.jetty.server.HttpOutput;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.TemporaryFolder;
 
 import javax.servlet.AsyncContext;
@@ -34,6 +31,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 
+@Ignore
 public class HttpGetFile {
 
 	@Rule
