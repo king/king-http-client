@@ -50,7 +50,7 @@ public class HttpSse {
 
 		integrationServer.addServlet(new CountingEventSourceServlet(), "/testSSE");
 
-		AtomicReference<String> output = new AtomicReference<>();
+		final AtomicReference<String> output = new AtomicReference<>();
 
 		SseClient sseClient = httpClient.createSSE("http://localhost:" + port + "/testSSE").build().execute(new SseExecutionCallback() {
 			String buffer = "";
@@ -89,11 +89,11 @@ public class HttpSse {
 	public void getSseAndClose() throws Exception {
 		integrationServer.addServlet(new CountingEventSourceServlet(), "/testSSE");
 
-		CountDownLatch countDownLatch = new CountDownLatch(2);
-		AtomicInteger counter = new AtomicInteger();
-		AtomicBoolean onError = new AtomicBoolean();
-		AtomicBoolean onConnect = new AtomicBoolean();
-		AtomicBoolean onDisconnect = new AtomicBoolean();
+		final CountDownLatch countDownLatch = new CountDownLatch(2);
+		final AtomicInteger counter = new AtomicInteger();
+		final AtomicBoolean onError = new AtomicBoolean();
+		final AtomicBoolean onConnect = new AtomicBoolean();
+		final AtomicBoolean onDisconnect = new AtomicBoolean();
 
 		SseClient sseClient = httpClient.createSSE("http://localhost:" + port + "/testSSE").build().execute(new SseExecutionCallback() {
 
@@ -139,7 +139,7 @@ public class HttpSse {
 	public void reconnect() throws Exception {
 		integrationServer.addServlet(new CountingEventSourceServlet(), "/testSSE");
 
-		AtomicReference<String> output = new AtomicReference<>();
+		final AtomicReference<String> output = new AtomicReference<>();
 
 		SseClient sseClient = httpClient.createSSE("http://localhost:" + port + "/testSSE").build().execute(new SseExecutionCallback() {
 			String buffer = "";
@@ -191,7 +191,7 @@ public class HttpSse {
 		SseClient sseClient = httpClient.createSSE("http://localhost:" + port + "/testSSE").build().execute();
 
 
-		List<EventData> receivedEvents = new ArrayList<>();
+		final List<EventData> receivedEvents = new ArrayList<>();
 
 		SseCallback callback = new SseCallback() {
 			@Override
@@ -225,7 +225,7 @@ public class HttpSse {
 
 		SseClient sseClient = httpClient.createSSE("http://localhost:" + port + "/testSSE").build().execute();
 
-		List<EventData> receivedEvents1 = new ArrayList<>();
+		final List<EventData> receivedEvents1 = new ArrayList<>();
 		sseClient.subscribe("event1", new SseCallback() {
 			@Override
 			public void onEvent(String lastSentId, String event, String data) {
@@ -235,7 +235,7 @@ public class HttpSse {
 		});
 
 
-		List<EventData> receivedEvents2 = new ArrayList<>();
+		final List<EventData> receivedEvents2 = new ArrayList<>();
 		sseClient.subscribe("event1", new SseCallback() {
 			@Override
 			public void onEvent(String lastSentId, String event, String data) {
@@ -326,7 +326,7 @@ public class HttpSse {
 		protected EventSource newEventSource(HttpServletRequest request) {
 			return new EventSource() {
 				@Override
-				public void onOpen(Emitter emitter) throws IOException {
+				public void onOpen(final Emitter emitter) throws IOException {
 					new Thread(new Runnable() {
 						@Override
 						public void run() {

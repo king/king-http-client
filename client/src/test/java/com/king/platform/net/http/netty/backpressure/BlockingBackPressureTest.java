@@ -19,15 +19,15 @@ public class BlockingBackPressureTest {
 
 	@Test
 	public void shouldBlockIfTooManyConnections() throws Exception {
-		BlockingBackPressure blockingBackPressure = new BlockingBackPressure(1);
-		ServerInfo serverInfo = new ServerInfo("http", "localhost", 8008);
+		final BlockingBackPressure blockingBackPressure = new BlockingBackPressure(1);
+		final ServerInfo serverInfo = new ServerInfo("http", "localhost", 8008);
 
 		assertTrue(blockingBackPressure.acquireSlot(serverInfo));
 
-		CountDownLatch latch1 = new CountDownLatch(1);
-		CountDownLatch latch2 = new CountDownLatch(1);
+		final CountDownLatch latch1 = new CountDownLatch(1);
+		final CountDownLatch latch2 = new CountDownLatch(1);
 
-		AtomicBoolean acquired = new AtomicBoolean();
+		final AtomicBoolean acquired = new AtomicBoolean();
 
 		new Thread(new Runnable() {
 			@Override

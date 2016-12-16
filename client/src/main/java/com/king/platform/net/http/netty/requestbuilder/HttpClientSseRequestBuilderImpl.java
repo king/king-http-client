@@ -32,7 +32,7 @@ public class HttpClientSseRequestBuilderImpl extends HttpClientRequestHeaderBuil
 			idleTimeoutMillis, totalRequestTimeoutMillis, followRedirects, acceptCompressedResponse, keepAlive, null, null, null, queryParameters,
 			headerParameters);
 
-		Executor httpClientCallbackExecutor = nettyHttpClient.getHttpClientCallbackExecutor();
+		final Executor httpClientCallbackExecutor = nettyHttpClient.getHttpClientCallbackExecutor();
 
 		return new BuiltSseClientRequest() {
 			@Override

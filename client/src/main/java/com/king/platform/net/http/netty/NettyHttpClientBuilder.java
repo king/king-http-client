@@ -204,7 +204,7 @@ public class NettyHttpClientBuilder {
 			if (httpCallbackExecutorThreads == 0) {
 				httpCallbackExecutorThreads = 2;
 			}
-			ExecutorService executorService = Executors.newFixedThreadPool(httpCallbackExecutorThreads, newThreadFactory("HttpClient-HttpCallback"));
+			final ExecutorService executorService = Executors.newFixedThreadPool(httpCallbackExecutorThreads, newThreadFactory("HttpClient-HttpCallback"));
 			httpCallbackExecutor = executorService;
 
 			shutdownJobs.add(new NettyHttpClient.ShutdownJob() {
@@ -219,7 +219,7 @@ public class NettyHttpClientBuilder {
 			if (httpExecuteExecutorThreads == 0) {
 				httpExecuteExecutorThreads = 2;
 			}
-			ExecutorService executorService = Executors.newFixedThreadPool(httpExecuteExecutorThreads, newThreadFactory("HttpClient-Executor"));
+			final ExecutorService executorService = Executors.newFixedThreadPool(httpExecuteExecutorThreads, newThreadFactory("HttpClient-Executor"));
 			httpExecuteExecutor = executorService;
 
 			shutdownJobs.add(new NettyHttpClient.ShutdownJob() {

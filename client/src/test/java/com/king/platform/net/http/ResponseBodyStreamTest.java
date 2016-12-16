@@ -21,9 +21,9 @@ import static org.junit.Assert.assertFalse;
 public class ResponseBodyStreamTest {
 	@Test
 	public void callbackShouldBeCalledForEachPercentage() throws Exception {
-		AtomicInteger percentageRef = new AtomicInteger();
-		AtomicLong readLengthRef = new AtomicLong();
-		AtomicLong contentLengthRef = new AtomicLong();
+		final AtomicInteger percentageRef = new AtomicInteger();
+		final AtomicLong readLengthRef = new AtomicLong();
+		final AtomicLong contentLengthRef = new AtomicLong();
 
 		WritableByteChannel channel = Channels.newChannel(new ByteArrayOutputStream());
 		ResponseBodyStream responseBodyStream = new ResponseBodyStream(channel, new ResponseBodyStream.ProgressCallback() {

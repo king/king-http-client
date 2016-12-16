@@ -127,7 +127,7 @@ public class ServerEventDecoder {
 	}
 
 	private void dispatchEvent() {
-		String thisEventName = eventName;
+		final String thisEventName = eventName;
 		eventName = null;
 
 		if (data.length() == 0) {
@@ -138,7 +138,7 @@ public class ServerEventDecoder {
 			data.setLength(data.length() - 1);
 		}
 
-		String dataString = data.toString();
+		final String dataString = data.toString();
 		data.setLength(0);
 
 		httpClientCallbackExecutor.execute(new Runnable() {
