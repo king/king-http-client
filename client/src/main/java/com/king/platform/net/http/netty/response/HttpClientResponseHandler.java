@@ -109,7 +109,6 @@ public class HttpClientResponseHandler {
 
 
 				HttpResponseStatus httpResponseStatus = nettyHttpClientResponse.getHttpResponseStatus();
-				HttpHeaders httpHeaders = nettyHttpClientResponse.getHttpHeaders();
 
 				if (httpResponseStatus == null || (httpRequestContext.isFollowRedirects() && httpRedirector.isRedirectResponse(httpResponseStatus))) {
 					httpRequestContext.setRedirecting(true);
