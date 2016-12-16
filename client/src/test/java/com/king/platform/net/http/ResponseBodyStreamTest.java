@@ -22,8 +22,6 @@ import static org.junit.Assert.assertTrue;
 public class ResponseBodyStreamTest {
 	@Test
 	public void callbackShouldBeCalledForEachPercentage() throws Exception {
-		ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-
 		AtomicInteger percentageRef = new AtomicInteger();
 		AtomicLong readLengthRef = new AtomicLong();
 		AtomicLong contentLengthRef = new AtomicLong();
