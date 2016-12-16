@@ -6,6 +6,7 @@
 package com.king.platform.net.http.integration;
 
 
+import com.king.platform.net.http.ConfKeys;
 import com.king.platform.net.http.HttpClient;
 import org.junit.After;
 import org.junit.Before;
@@ -36,6 +37,8 @@ public class HttpPut {
 		port = integrationServer.getPort();
 
 		httpClient = new TestingHttpClientFactory().create();
+		httpClient.setConf(ConfKeys.TOTAL_REQUEST_TIMEOUT_MILLIS, 0);
+		httpClient.setConf(ConfKeys.IDLE_TIMEOUT_MILLIS, 1000);
 		httpClient.start();
 
 	}

@@ -56,7 +56,8 @@ public class HttpPutChunkedFile {
 
 		httpClient = new TestingHttpClientFactory().create();
 
-		httpClient.setConf(ConfKeys.IDLE_TIMEOUT_MILLIS, 300);
+		httpClient.setConf(ConfKeys.TOTAL_REQUEST_TIMEOUT_MILLIS, 0);
+		httpClient.setConf(ConfKeys.IDLE_TIMEOUT_MILLIS, 1000);
 
 		httpClient.start();
 

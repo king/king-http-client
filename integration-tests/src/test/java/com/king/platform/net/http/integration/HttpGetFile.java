@@ -57,7 +57,7 @@ public class HttpGetFile {
 
 		httpClient = new TestingHttpClientFactory().create();
 		httpClient.setConf(ConfKeys.TOTAL_REQUEST_TIMEOUT_MILLIS, 0);
-		httpClient.setConf(ConfKeys.IDLE_TIMEOUT_MILLIS, 100);
+		httpClient.setConf(ConfKeys.IDLE_TIMEOUT_MILLIS, 1000);
 
 		httpClient.start();
 
