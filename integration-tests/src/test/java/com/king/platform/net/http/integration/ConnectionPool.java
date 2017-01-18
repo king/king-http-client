@@ -69,7 +69,7 @@ public class ConnectionPool {
 
 		ChannelPool pool = new NoChannelPool();
 		if (useConnectionPool) {
-			pool = new PoolingChannelPool(cleanupTimer, timeProvider, 15, mock(MetricCallback.class));
+			pool = new PoolingChannelPool(cleanupTimer, timeProvider, 15000, mock(MetricCallback.class));
 		}
 
 		NettyHttpClientBuilder nettyHttpClientBuilder = new NettyHttpClientBuilder()

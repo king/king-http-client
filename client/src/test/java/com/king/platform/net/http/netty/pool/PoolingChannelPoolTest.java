@@ -49,7 +49,7 @@ public class PoolingChannelPoolTest {
 		timeProvider = new TimeProviderForTesting();
 		timer = new TestTimer();
 
-		poolingChannelPool = new PoolingChannelPool(timer, timeProvider, 15, mock(MetricCallback.class));
+		poolingChannelPool = new PoolingChannelPool(timer, timeProvider, 15*1000, mock(MetricCallback.class));
 
 		serverInfo = ServerInfo.buildFromUri("http://somehost:8081/foo/bar");
 
