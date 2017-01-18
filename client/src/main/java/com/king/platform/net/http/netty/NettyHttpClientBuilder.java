@@ -47,6 +47,7 @@ public class NettyHttpClientBuilder {
 	private ChannelPool channelPool;
 
 	private MetricCallback metricCallback;
+	private int keepAliveTimeoutMS = 30_000;
 
 	/**
 	 * Set the amount of nio threads used for netty io reactor - defaults to two.
@@ -194,6 +195,19 @@ public class NettyHttpClientBuilder {
 	}
 
 	/**
+	 * Set the timeout time in ms for keep alive connections. Defaults to 30000 ms
+	 * @param ms the time after which the connection will be closed (in ms)
+	 * @return the builder
+	 */
+	public NettyHttpClientBuilder setKeepAliveTimeoutMs(int ms) {
+		if (channelPool != null) {
+			throw new IllegalStateException("Can't set keep-alive timeout when a non-default channel pool has already been set.");
+		}
+		this.keepAliveTimeoutMS = ms;
+		return this;
+	}
+
+	/**
 	 * Create a HttpClient instance with the current settings.
 	 * @return the built HttpClient
 	 */
@@ -260,7 +274,7 @@ public class NettyHttpClientBuilder {
 		}
 
 		if (channelPool == null) {
-			channelPool = new PoolingChannelPool(cleanupTimer, timeProvider, 30, metricCallback);
+			channelPool = new PoolingChannelPool(cleanupTimer, timeProvider, keepAliveTimeoutMS, metricCallback);
 		}
 
 		if (executionBackPressure == null) {

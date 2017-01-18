@@ -30,11 +30,11 @@ public class PoolingChannelPool implements ChannelPool {
 	private final TimeProvider timeProvider;
 	private final MetricCallback metricCallback;
 
-	public PoolingChannelPool(final Timer cleanupTimer, TimeProvider timeProvider, long timeoutInSeconds, final MetricCallback metricCallback) {
+	public PoolingChannelPool(final Timer cleanupTimer, TimeProvider timeProvider, long timeoutInMilliseconds, final MetricCallback metricCallback) {
 		this.timeProvider = timeProvider;
 		this.metricCallback = metricCallback;
 
-		maxTtl = TimeUnit.SECONDS.toMillis(timeoutInSeconds);
+		maxTtl = timeoutInMilliseconds;
 
 		cleanupTimer.newTimeout(new TimerTask() {
 			@Override
