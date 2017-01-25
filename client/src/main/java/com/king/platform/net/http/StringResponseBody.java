@@ -8,7 +8,7 @@ package com.king.platform.net.http;
 import java.nio.ByteBuffer;
 
 public class StringResponseBody implements ResponseBodyConsumer<String> {
-	private String content;
+	private String content = "";
 	private String charset;
 
 	private ByteAggregator byteAggregator;
@@ -27,7 +27,9 @@ public class StringResponseBody implements ResponseBodyConsumer<String> {
 
 	@Override
 	public void onCompletedBody() throws Exception {
-		content = new String(byteAggregator.getBytes(), charset);
+		if (byteAggregator != null) {
+			content = new String(byteAggregator.getBytes(), charset);
+		}
 	}
 
 	@Override

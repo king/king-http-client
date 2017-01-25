@@ -76,6 +76,12 @@ public class HttpClientResponseHandler {
 					return;
 				}
 
+				if (httpRequestContext.getHttpMethod() == HttpMethod.HEAD) {
+					httpRequestContext.getTimeRecorder().responseBodyStart();
+					httpRequestContext.getTimeRecorder().responseBodyCompleted();
+					handleCompletedTransfer(httpRequestContext, requestEventBus, nettyHttpClientResponse);
+					return;
+				}
 
 				if (response.status().code() == 100) {
 					requestEventBus.triggerEvent(Event.WRITE_BODY, ctx);

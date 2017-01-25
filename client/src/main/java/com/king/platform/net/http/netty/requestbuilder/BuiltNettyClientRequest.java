@@ -168,7 +168,7 @@ public class BuiltNettyClientRequest implements BuiltClientRequest {
 
 		nettyHttpClientRequest.setKeepAlive(keepAlive);
 
-		return nettyHttpClient.execute(nettyHttpClientRequest, httpCallback, nioCallback, responseBodyConsumer, idleTimeoutMillis, totalRequestTimeoutMillis,
+		return nettyHttpClient.execute(httpMethod, nettyHttpClientRequest, httpCallback, nioCallback, responseBodyConsumer, idleTimeoutMillis, totalRequestTimeoutMillis,
 			followRedirects, keepAlive, externalEventTrigger);
 	}
 }

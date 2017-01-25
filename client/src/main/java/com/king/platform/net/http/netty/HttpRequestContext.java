@@ -12,11 +12,13 @@ import com.king.platform.net.http.netty.request.NettyHttpClientRequest;
 import com.king.platform.net.http.netty.response.NettyHttpClientResponse;
 import io.netty.channel.Channel;
 import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpMethod;
 import io.netty.util.AttributeKey;
 
 public class HttpRequestContext<T> {
 	public static final AttributeKey<HttpRequestContext> HTTP_REQUEST_ATTRIBUTE_KEY = AttributeKey.valueOf("__HttpRequestContext");
 
+	private final HttpMethod httpMethod;
 	private final NettyHttpClientRequest<T> nettyHttpClientRequest;
 
 	private final int idleTimeoutMillis;
@@ -37,9 +39,8 @@ public class HttpRequestContext<T> {
 	private boolean isRedirecting;
 
 
-	public HttpRequestContext(NettyHttpClientRequest<T> nettyHttpClientRequest, RequestEventBus requestEventBus, ResponseBodyConsumer<T> responseBodyConsumer,
-							  int idleTimeoutMillis, int totalRequestTimeoutMillis, boolean followRedirects, boolean keepAlive, TimeStampRecorder
-								  timeStampRecorder) {
+	public HttpRequestContext(HttpMethod httpMethod, NettyHttpClientRequest<T> nettyHttpClientRequest, RequestEventBus requestEventBus, ResponseBodyConsumer<T> responseBodyConsumer, int idleTimeoutMillis, int totalRequestTimeoutMillis, boolean followRedirects, boolean keepAlive, TimeStampRecorder timeStampRecorder) {
+		this.httpMethod = httpMethod;
 		this.nettyHttpClientRequest = nettyHttpClientRequest;
 		this.requestEventBus = requestEventBus;
 		this.responseBodyConsumer = responseBodyConsumer;
@@ -53,7 +54,7 @@ public class HttpRequestContext<T> {
 
 	public HttpRequestContext createRedirectRequest(ServerInfo redirectServerInfo, String redirectLocation) {
 		NettyHttpClientRequest redirectRequest = nettyHttpClientRequest.createRedirectRequest(redirectServerInfo, redirectLocation);
-		HttpRequestContext httpRequestContext = new HttpRequestContext(redirectRequest, requestEventBus, responseBodyConsumer,
+		HttpRequestContext httpRequestContext = new HttpRequestContext(httpMethod, redirectRequest, requestEventBus, responseBodyConsumer,
 			idleTimeoutMillis, totalRequestTimeoutMillis, followRedirects, keepAlive, timeStampRecorder);
 		httpRequestContext.redirectionCount = this.redirectionCount + 1;
 
@@ -152,5 +153,9 @@ public class HttpRequestContext<T> {
 
 	public void setRedirecting(boolean isRedirecting) {
 		this.isRedirecting = isRedirecting;
+	}
+
+	public HttpMethod getHttpMethod() {
+		return httpMethod;
 	}
 }

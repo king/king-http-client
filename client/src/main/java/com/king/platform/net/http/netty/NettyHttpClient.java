@@ -143,9 +143,7 @@ public class NettyHttpClient implements HttpClient {
 	}
 
 
-	public <T> Future<FutureResult<T>> execute(final NettyHttpClientRequest<T> nettyHttpClientRequest, HttpCallback<T> httpCallback, final
-	NioCallback nioCallback, ResponseBodyConsumer<T> responseBodyConsumer, int idleTimeoutMillis, int totalRequestTimeoutMillis, boolean followRedirects,
-	                                              boolean keepAlive, ExternalEventTrigger externalEventTrigger) {
+	public <T> Future<FutureResult<T>> execute(HttpMethod httpMethod, final NettyHttpClientRequest<T> nettyHttpClientRequest, HttpCallback<T> httpCallback, final NioCallback nioCallback, ResponseBodyConsumer<T> responseBodyConsumer, int idleTimeoutMillis, int totalRequestTimeoutMillis, boolean followRedirects, boolean keepAlive, ExternalEventTrigger externalEventTrigger) {
 
 		validateStarted();
 
@@ -176,7 +174,7 @@ public class NettyHttpClient implements HttpClient {
 		}
 
 
-		final HttpRequestContext<T> httpRequestContext = new HttpRequestContext<>(nettyHttpClientRequest, requestRequestEventBus, responseBodyConsumer,
+		final HttpRequestContext<T> httpRequestContext = new HttpRequestContext<>(httpMethod, nettyHttpClientRequest, requestRequestEventBus, responseBodyConsumer,
 			idleTimeoutMillis, totalRequestTimeoutMillis, followRedirects, keepAlive, new TimeStampRecorder(timeProvider));
 
 		ResponseFuture<T> future = new ResponseFuture<>(requestRequestEventBus, httpRequestContext);
@@ -256,6 +254,11 @@ public class NettyHttpClient implements HttpClient {
 	@Override
 	public HttpClientRequestBuilder createDelete(String uri) {
 		return new HttpClientRequestBuilderImpl(this, HttpVersion.HTTP_1_1, HttpMethod.DELETE, uri, confMap);
+	}
+
+	@Override
+	public HttpClientRequestBuilder createHead(String uri) {
+		return new HttpClientRequestBuilderImpl(this, HttpVersion.HTTP_1_1, HttpMethod.HEAD, uri, confMap);
 	}
 
 	@Override
