@@ -19,7 +19,7 @@ Use the different set methods on the NettyHttpClientBuilder to tweak how HttpCli
 
 ```java
 NettyHttpClientBuilder nettyHttpClientBuilder = new NettyHttpClientBuilder();
-NettyHttpClient httpClient = nettyHttpClientBuilder.createHttpClient();
+HttpClient httpClient = nettyHttpClientBuilder.createHttpClient();
 httpClient.start();
 ```
 
@@ -132,10 +132,13 @@ sseClient.subscribe("stocks", new SseCallback() {
 
 ## Thread model
 
-The methods on HttpCallback are called by HttpCallbackExecutor, there can therefore be long running jobs in the callbacks.
-The methods on NioCallback are called by the internal nio threads, they should therefore not be blocking or long running. The same goes for the ResponseBodyConsumer and MetricCallback interfaces.
+The methods in HttpCallback are only invoked from the threads in HttpCallbackExecutor.
+This means that you can have long running jobs without blocking IO operations for other requests. The executor will of course
+need to be resized accordingly to prevent excessive queues.  
 
+The methods in NioCallback are always invoked from the internal nio threads. They should therefore not be blocking nor long running. 
+The same goes for implementations of the ResponseBodyConsumer and MetricCallback interfaces.
 
 
 ## Limitations
-Does not support complex authentication (basic should work using the headers). Does not support proxys. Does not support http2 (yet).
+Does not support complex authentication (basic should work using the headers). Does not support proxys. Does not support http2.
