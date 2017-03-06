@@ -91,19 +91,15 @@ public class NettyHttpClient implements HttpClient {
 				executionBackPressure.releaseSlot(httpRequestContext.getServerInfo());
 			}
 		});
-
 	}
 
 	@Override
 	public void start() {
-		if (started.get()) {
-			throw new IllegalStateException("Http client already started!");
+		if (started.compareAndSet(false, true)) {
+			throw new IllegalStateException("Http client has already been started!");
 		}
 
-		started.set(true);
-
 		executeOnCallingThread = confMap.get(ConfKeys.EXECUTE_ON_CALLING_THREAD);
-
 
 		if (Epoll.isAvailable() && confMap.get(ConfKeys.USE_EPOLL)) {
 		    group = new EpollEventLoopGroup(nioThreads, nioThreadFactory);
@@ -118,10 +114,11 @@ public class NettyHttpClient implements HttpClient {
 		channelManager = new ChannelManager(group, clientHandler, cleanupTimer, timeProvider, channelPool, confMap, rootEventBus);
 	}
 
-
 	@Override
 	public void shutdown() {
-		started.set(false);
+		if (!started.compareAndSet(true, false)) {
+			throw new IllegalStateException("Http client is not running!");
+		}
 
 		if (group != null) {
 			group.shutdownGracefully(0, 10, TimeUnit.SECONDS);
@@ -136,7 +133,7 @@ public class NettyHttpClient implements HttpClient {
 	@Override
 	public <T> void setConf(ConfKeys<T> key, T value) {
 		if (started.get()) {
-			throw new RuntimeException("Can't set global config keys after the client has been started");
+			throw new IllegalStateException("Can't set global config keys after the client has been started!");
 		}
 
 		confMap.set(key, value);
@@ -144,8 +141,9 @@ public class NettyHttpClient implements HttpClient {
 
 
 	public <T> Future<FutureResult<T>> execute(HttpMethod httpMethod, final NettyHttpClientRequest<T> nettyHttpClientRequest, HttpCallback<T> httpCallback, final NioCallback nioCallback, ResponseBodyConsumer<T> responseBodyConsumer, int idleTimeoutMillis, int totalRequestTimeoutMillis, boolean followRedirects, boolean keepAlive, ExternalEventTrigger externalEventTrigger) {
-
-		validateStarted();
+		if (!started.get()) {
+			throw new IllegalStateException("The client must be started before anything can be executed.");
+		}
 
 		httpCallback = runOnlyOnceWrapper(httpCallback);
 
@@ -266,12 +264,6 @@ public class NettyHttpClient implements HttpClient {
 		return new HttpClientSseRequestBuilderImpl(this, HttpVersion.HTTP_1_1, HttpMethod.GET, uri, confMap);
 	}
 
-	private void validateStarted() {
-		if (!started.get()) {
-			throw new IllegalStateException("Http client is not started!");
-		}
-	}
-
 	private <T> void subscribeToHttpCallbackEvents(final HttpCallback<T> httpCallback, RequestEventBus requestRequestEventBus) {
 		if (httpCallback == null) {
 			return;
@@ -300,8 +292,6 @@ public class NettyHttpClient implements HttpClient {
 				});
 			}
 		});
-
-
 	}
 
 	public <T> Future<FutureResult<T>> dispatchError(final HttpCallback<T> httpCallback, final Throwable throwable) {

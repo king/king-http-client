@@ -15,25 +15,32 @@ public interface HttpClient {
 	/**
 	 * Start the http client.
 	 * Make sure that all {@link ConfKeys} is set before.
+	 *
+	 * @throws IllegalStateException If the client is already started when this method is invoked.
 	 */
 	void start();
 
 	/**
 	 * Stop the http client. The client can't be restarted after it has been shutdown.
+	 *
+	 * @throws IllegalStateException If the client isn't running when this method is invoked.
 	 */
 	void shutdown();
 
 	/**
 	 * Configure global settings for the http client. Most of the settings can be overridden on each request. <br>
 	 * Settings can not be set after the client has been started.
-	 * @param key The {@link ConfKeys} field
+	 *
+	 * @param key   The {@link ConfKeys} field
 	 * @param value The value
-	 * @param <T> Option value type - Defined by the {@link ConfKeys} field.
+	 * @param <T>   Option value type - Defined by the {@link ConfKeys} field.
+	 * @throws IllegalStateException If the client is started when this method is invoked.
 	 */
 	<T> void setConf(ConfKeys<T> key, T value);
 
 	/**
 	 * Create reusable builder for http get requests. The client has to be started before this method is called.
+	 *
 	 * @param uri Http uri to call
 	 * @return The reusable {@link HttpClientRequestBuilder}
 	 */
@@ -41,6 +48,7 @@ public interface HttpClient {
 
 	/**
 	 * Create reusable builder for http post requests. The client has to be started before this method is called.
+	 *
 	 * @param uri Http uri to call
 	 * @return The reusable {@link HttpClientRequestWithBodyBuilder}
 	 */
@@ -48,6 +56,7 @@ public interface HttpClient {
 
 	/**
 	 * Create reusable builder for http put requests. The client has to be started before this method is called.
+	 *
 	 * @param uri Http uri to call
 	 * @return The reusable {@link HttpClientRequestWithBodyBuilder}
 	 */
@@ -55,14 +64,15 @@ public interface HttpClient {
 
 	/**
 	 * Create reusable builder for http delete requests. The client has to be started before this method is called.
+	 *
 	 * @param uri Http uri to call
 	 * @return The reusable {@link HttpClientRequestBuilder}
 	 */
 	HttpClientRequestBuilder createDelete(String uri);
 
-
 	/**
 	 * Create reusable builder for http head requests. The client has to be started before this method is called.
+	 *
 	 * @param uri Http uri to call
 	 * @return The reusable {@link HttpClientRequestBuilder}
 	 */
@@ -70,10 +80,9 @@ public interface HttpClient {
 
 	/**
 	 * Create reusable builder for http server side events.The client has to be started before this method is called.
+	 *
 	 * @param uri Http uri to call
 	 * @return The reusable {@link HttpClientSseRequestBuilder}
 	 */
 	HttpClientSseRequestBuilder createSSE(String uri);
-
-
 }
