@@ -28,7 +28,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 
 /**
- * Builder for creating netty implementation of HttpClient
+ * Builder for creating a Netty implementation of HttpClient.
+ *
+ * <p>Example on how to use this builder.
+ * <pre>{@code
+ * NettyHttpClientBuilder nettyHttpClientBuilder = new NettyHttpClientBuilder();
+ * HttpClient httpClient = nettyHttpClientBuilder.createHttpClient();
+ * httpClient.start();
+ * }</pre>
  */
 public class NettyHttpClientBuilder {
 	private int nioThreads = 2;
