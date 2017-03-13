@@ -10,7 +10,9 @@ import com.king.platform.net.http.*;
 import com.king.platform.net.http.netty.eventbus.Event;
 import com.king.platform.net.http.netty.eventbus.ExternalEventTrigger;
 import com.king.platform.net.http.netty.requestbuilder.BuiltNettyClientRequest;
+import com.king.platform.net.http.netty.response.HttpRedirector;
 import io.netty.buffer.ByteBuf;
+import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
@@ -19,6 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class SseClientImpl implements SseClient {
@@ -149,6 +152,8 @@ public class SseClientImpl implements SseClient {
 		private final ServerEventDecoder serverEventDecoder;
 		private final SseExecutionCallback providedSseExecutionCallback;
 		private final Executor httpClientCallbackExecutor;
+		private final AtomicBoolean isRedirecting = new AtomicBoolean();
+		private final AtomicReference<HttpResponseStatus> httpResponseStatus = new AtomicReference<>();
 
 		public DelegatingNioHttpCallback(ServerEventDecoder serverEventDecoder, SseExecutionCallback providedSseExecutionCallback, Executor httpClientCallbackExecutor) {
 			this.serverEventDecoder = serverEventDecoder;
@@ -158,23 +163,16 @@ public class SseClientImpl implements SseClient {
 
 		@Override
 		public void onConnecting() {
-
+			isRedirecting.set(false);
+			httpResponseStatus.set(null);
 		}
 
 		@Override
 		public void onConnected() {
-			state.set(State.CONNECTED);
-			httpClientCallbackExecutor.execute(new Runnable() {
-				@Override
-				public void run() {
-					providedSseExecutionCallback.onConnect();
-				}
-			});
 		}
 
 		@Override
 		public void onWroteHeaders() {
-
 		}
 
 		@Override
@@ -188,18 +186,61 @@ public class SseClientImpl implements SseClient {
 		}
 
 		@Override
-		public void onReceivedStatus(HttpResponseStatus httpResponseStatus) {
+		public void onReceivedStatus(final HttpResponseStatus httpResponseStatus) {
+			if (HttpRedirector.isRedirectResponse(httpResponseStatus) && builtNettyClientRequest.isFollowRedirects()) {
+				isRedirecting.set(true);
+			} else {
+				this.httpResponseStatus.set(httpResponseStatus);
+			}
 
 		}
 
 		@Override
 		public void onReceivedHeaders(HttpHeaders httpHeaders) {
+			if (isRedirecting.get()) {
+				return;
+			}
 
+			final int httpStatus = httpResponseStatus.get().code();
+
+
+			if (httpStatus != 200) {
+				httpClientCallbackExecutor.execute(new Runnable() {
+					@Override
+					public void run() {
+						providedSseExecutionCallback.onError(new KingHttpException("Invalid http status "+httpStatus + " reason was " + httpResponseStatus.get().reasonPhrase()));
+					}
+				});
+				return;
+			}
+
+
+			final String contentType = httpHeaders.get(HttpHeaderNames.CONTENT_TYPE, "null");
+			if (!contentType.toLowerCase().contains("text/event-stream")) {
+				httpClientCallbackExecutor.execute(new Runnable() {
+					@Override
+					public void run() {
+						providedSseExecutionCallback.onError(new KingHttpException("Invalid content-type:" + contentType));
+					}
+				});
+				return;
+			}
+
+
+			state.set(State.CONNECTED);
+			httpClientCallbackExecutor.execute(new Runnable() {
+				@Override
+				public void run() {
+					providedSseExecutionCallback.onConnect();
+				}
+			});
 		}
 
 		@Override
 		public void onReceivedContentPart(int len, ByteBuf buffer) {
-			serverEventDecoder.onReceivedContentPart(buffer);
+			if (state.get() == State.CONNECTED) {
+				serverEventDecoder.onReceivedContentPart(buffer);
+			}
 		}
 
 		@Override
@@ -209,7 +250,6 @@ public class SseClientImpl implements SseClient {
 
 		@Override
 		public void onError(Throwable throwable) {
-
 		}
 	}
 

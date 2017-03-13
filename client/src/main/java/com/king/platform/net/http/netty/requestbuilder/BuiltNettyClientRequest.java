@@ -171,4 +171,24 @@ public class BuiltNettyClientRequest implements BuiltClientRequest {
 		return nettyHttpClient.execute(httpMethod, nettyHttpClientRequest, httpCallback, nioCallback, responseBodyConsumer, idleTimeoutMillis, totalRequestTimeoutMillis,
 			followRedirects, keepAlive, externalEventTrigger);
 	}
+
+	public int getIdleTimeoutMillis() {
+		return idleTimeoutMillis;
+	}
+
+	public int getTotalRequestTimeoutMillis() {
+		return totalRequestTimeoutMillis;
+	}
+
+	public boolean isFollowRedirects() {
+		return followRedirects;
+	}
+
+	public boolean isAcceptCompressedResponse() {
+		return acceptCompressedResponse;
+	}
+
+	public boolean isKeepAlive() {
+		return keepAlive;
+	}
 }

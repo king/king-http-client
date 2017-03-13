@@ -23,12 +23,12 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 public class HttpRedirector {
 
-	private final Logger logger = getLogger(getClass());
+	private final static Logger logger = getLogger(HttpRedirector.class);
 
-	private final int[] REDIRECTABLE_STATUS_CODES = {301, 302, 303, 307, 308};
+	private static final int[] REDIRECTABLE_STATUS_CODES = {301, 302, 303, 307, 308};
 
 
-	public boolean isRedirectResponse(HttpResponseStatus httpResponseStatus) {
+	public static boolean isRedirectResponse(HttpResponseStatus httpResponseStatus) {
 		int statusCode = httpResponseStatus.code();
 		boolean redirect = Arrays.binarySearch(REDIRECTABLE_STATUS_CODES, statusCode) >= 0;
 		if (redirect) {

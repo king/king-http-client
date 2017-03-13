@@ -14,7 +14,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -83,7 +86,97 @@ public class HttpSse {
 
 	}
 
+	@Test
+	public void getSSEThatReturns500() throws Exception {
 
+		integrationServer.addServlet(new HttpServlet() {
+			@Override
+			protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+				resp.sendError(500, "Internal Error");
+			}
+		}, "/test500");
+
+
+		final AtomicReference<String> errorMessage = new AtomicReference<>();
+
+		SseClient sseClient = httpClient.createSSE("http://localhost:" + port + "/test500").build().execute(new SseExecutionCallback() {
+			@Override
+			public void onConnect() {
+			}
+
+			public void onDisconnect() {
+			}
+
+			@Override
+			public void onError(Throwable throwable) {
+				errorMessage.set(throwable.getMessage());
+			}
+
+			@Override
+			public void onEvent(String lastSentId, String event, String data) {
+
+			}
+		});
+
+		sseClient.awaitClose(); //block until complete
+		assertTrue(errorMessage.get().contains("Internal Error"));
+
+	}
+
+	@Test
+	public void getSSeThatRedirects() throws Exception {
+		integrationServer.addServlet(new HttpServlet() {
+			@Override
+			protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+				resp.sendRedirect("/sse2");
+			}
+		}, "/sse1");
+
+		integrationServer.addServlet(new CountingEventSourceServlet(), "/sse2");
+
+		final CountDownLatch countDownLatch = new CountDownLatch(2);
+		final AtomicInteger counter = new AtomicInteger();
+		final AtomicBoolean onError = new AtomicBoolean();
+		final AtomicInteger onConnectCounter = new AtomicInteger();
+		final AtomicInteger onDisconnectCounter = new AtomicInteger();
+
+		SseClient sseClient = httpClient.createSSE("http://localhost:" + port + "/sse1").followRedirects(true).build().execute(new SseExecutionCallback() {
+
+			@Override
+			public void onConnect() {
+				onConnectCounter.incrementAndGet();
+			}
+
+			@Override
+			public void onDisconnect() {
+				onDisconnectCounter.incrementAndGet();
+			}
+
+			@Override
+			public void onError(Throwable throwable) {
+				throwable.printStackTrace();
+				onError.set(true);
+			}
+
+			@Override
+			public void onEvent(String lastSentId, String event, String data) {
+				counter.incrementAndGet();
+				countDownLatch.countDown();
+
+			}
+		});
+
+		countDownLatch.await();
+
+		sseClient.close();
+		Thread.sleep(400);
+
+		assertEquals(2, counter.get());
+		assertEquals(1, onConnectCounter.get());
+		assertEquals(1, onDisconnectCounter.get());
+		assertFalse(onError.get());
+
+	}
 
 	@Test
 	public void getSseAndClose() throws Exception {
