@@ -95,7 +95,7 @@ public class NettyHttpClient implements HttpClient {
 
 	@Override
 	public void start() {
-		if (started.compareAndSet(false, true)) {
+		if (!started.compareAndSet(false, true)) {
 			throw new IllegalStateException("Http client has already been started!");
 		}
 
