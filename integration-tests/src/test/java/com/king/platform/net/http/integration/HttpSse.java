@@ -20,8 +20,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -120,6 +123,49 @@ public class HttpSse {
 
 		sseClient.awaitClose(); //block until complete
 		assertTrue(errorMessage.get().contains("Internal Error"));
+
+	}
+
+	@Test
+	public void getSSEWithCustomExecutor() throws Exception {
+		integrationServer.addServlet(new CountingEventSourceServlet(), "/sse");
+
+
+		final CountDownLatch countDownLatch = new CountDownLatch(4);
+		final Set<String> threadNames = new HashSet<>();
+
+		SseClient sseClient = httpClient.createSSE("http://localhost:" + port + "/sse")
+			.executingOn(Executors.newFixedThreadPool(1)).build().execute(new SseExecutionCallback() {
+
+			@Override
+			public void onConnect() {
+				threadNames.add(Thread.currentThread().getName());
+			}
+
+			@Override
+			public void onDisconnect() {
+				threadNames.add(Thread.currentThread().getName());
+
+			}
+
+			@Override
+			public void onError(Throwable throwable) {
+			}
+
+			@Override
+			public void onEvent(String lastSentId, String event, String data) {
+				threadNames.add(Thread.currentThread().getName());
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException ignored) {
+				}
+				countDownLatch.countDown();
+			}
+		});
+
+		countDownLatch.await();
+
+		assertEquals(1, threadNames.size());
 
 	}
 
