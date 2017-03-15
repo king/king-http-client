@@ -141,19 +141,16 @@ public class ServerPool {
 			}
 
 		}
-		long now = timeProvider.currentTimeInMillis();
 
-		for (Map.Entry<Channel, PooledChannel> entry : channelsMap.entrySet()) {
-			Channel channel = entry.getKey();
-			PooledChannel pooledChannel = entry.getValue();
-			if (pooledChannel.lastUsedTimeStamp + ttlTimeUnit.toMillis(maxTTL) > now) {
+
+		for (Channel channel : channelsMap.keySet()) {
+			if (channel.isActive() && channel.isOpen()) {
 				continue;
 			}
 
-			if (!currentPooledChannels.contains(pooledChannel)) {
-				channel.close();
-				channelsMap.remove(channel);
-			}
+			channelsMap.remove(channel);
+			channel.close();
+			metricCallback.onServerPoolClosedConnection(server.getHost(), channelsMap.size());
 		}
 	}
 

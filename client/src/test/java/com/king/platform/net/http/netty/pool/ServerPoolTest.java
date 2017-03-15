@@ -110,12 +110,26 @@ public class ServerPoolTest {
 	}
 
 	@Test
-	public void cleanShouldRemovePolledChannelIfTheyAreOverMaxTTL() throws Exception {
+	public void cleanShouldNotRemovePolledChannelIfTheyAreOverMaxTTLButTheyArePolled() throws Exception {
 		Channel channel = createStateFullChannel();
 		serverPool.offer(channel);
 		serverPool.poll();
 		assertEquals(1, serverPool.getChannelSize());
 		assertEquals(0, serverPool.getPoolSize());
+
+		timeProvider.forwardSeconds(101);
+		serverPool.cleanExpiredConnections();
+		assertEquals(1, serverPool.getChannelSize());
+		assertEquals(0, serverPool.getPoolSize());
+		verifyNever().on(channel).close();
+	}
+
+	@Test
+	public void cleanShouldRemovePolledChannelIfTheyAreOverMaxTTL() throws Exception {
+		Channel channel = createStateFullChannel();
+		serverPool.offer(channel);
+		assertEquals(1, serverPool.getChannelSize());
+		assertEquals(1, serverPool.getPoolSize());
 
 		timeProvider.forwardSeconds(101);
 		serverPool.cleanExpiredConnections();
