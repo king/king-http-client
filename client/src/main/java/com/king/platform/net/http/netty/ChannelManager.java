@@ -23,12 +23,16 @@ import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import io.netty.util.Timer;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import org.slf4j.Logger;
 
+import javax.net.ssl.SSLException;
 import java.util.concurrent.TimeUnit;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -77,16 +81,15 @@ public class ChannelManager {
 		});
 
 
+		final SslContext sslContext = getSslContext(confMap);
 		secureBootstrap = new Bootstrap().channel(socketChannelClass).group(eventLoopGroup);
 		secureBootstrap.handler(new ChannelInitializer() {
 			@Override
 			protected void initChannel(Channel ch) throws Exception {
 				ChannelPipeline pipeline = ch.pipeline();
 
-				SslInitializer sslInitializer = new SslInitializer(new SSLFactory(confMap.get(ConfKeys.SSL_ALLOW_ALL_CERTIFICATES)), confMap.get(ConfKeys
-					.SSL_HANDSHAKE_TIMEOUT_MILLIS));
+				pipeline.addLast(sslContext.newHandler(ch.alloc()));
 
-				pipeline.addLast(SslInitializer.NAME, sslInitializer);
 				addLoggingIfDesired(pipeline, confMap.get(ConfKeys.NETTY_TRACE_LOGS));
 				pipeline.addLast("http-codec", newHttpClientCodec());
 				pipeline.addLast("inflater", new HttpContentDecompressor());
@@ -109,6 +112,22 @@ public class ChannelManager {
 		rootEventBus.subscribePermanently(Event.ERROR, new ErrorCallback());
 		rootEventBus.subscribePermanently(Event.COMPLETED, new CompletedCallback());
 		rootEventBus.subscribePermanently(Event.EXECUTE_REQUEST, new ExecuteRequestCallback());
+	}
+
+	private SslContext getSslContext(ConfMap confMap) {
+		SslContextBuilder sslContextBuilder = SslContextBuilder.forClient();
+
+		if (confMap.get(ConfKeys.SSL_ALLOW_ALL_CERTIFICATES)) {
+			sslContextBuilder.trustManager(InsecureTrustManagerFactory.INSTANCE);
+		}
+
+		sslContextBuilder.sessionTimeout(confMap.get(ConfKeys.SSL_HANDSHAKE_TIMEOUT_MILLIS));
+		try {
+			return sslContextBuilder.build();
+		} catch (SSLException e) {
+			throw new RuntimeException("Failed to create SslContext", e);
+		}
+
 	}
 
 	private void addLoggingIfDesired(ChannelPipeline pipeline, boolean desired) {
