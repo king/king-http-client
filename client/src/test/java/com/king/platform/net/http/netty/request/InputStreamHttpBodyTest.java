@@ -13,6 +13,7 @@ import se.mockachino.CallHandler;
 import se.mockachino.MethodCall;
 
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
 import static se.mockachino.Mockachino.*;
 import static se.mockachino.matchers.Matchers.any;
@@ -25,7 +26,7 @@ public class InputStreamHttpBodyTest {
 	@Before
 	public void setUp() throws Exception {
 		inputStream = mock(InputStream.class);
-		inputStreamHttpBody = new InputStreamHttpBody(inputStream, "test/content", characterEncoding);
+		inputStreamHttpBody = new InputStreamHttpBody(inputStream, "test/content", StandardCharsets.ISO_8859_1);
 
 	}
 
