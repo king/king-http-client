@@ -10,15 +10,18 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 
+import java.nio.charset.Charset;
 import java.util.Arrays;
 
 public class ByteArrayHttpBody implements HttpBody {
 	private final byte[] content;
 	private final String contentType;
+	private final Charset characterEncoding;
 
-	public ByteArrayHttpBody(byte[] content, String contentType) {
+	public ByteArrayHttpBody(byte[] content, String contentType, Charset characterEncoding) {
 		this.content = Arrays.copyOf(content, content.length);
 		this.contentType = contentType;
+		this.characterEncoding = characterEncoding;
 	}
 
 	@Override
@@ -35,5 +38,10 @@ public class ByteArrayHttpBody implements HttpBody {
 	@Override
 	public String getContentType() {
 		return contentType;
+	}
+
+	@Override
+	public Charset getCharacterEncoding() {
+		return characterEncoding;
 	}
 }

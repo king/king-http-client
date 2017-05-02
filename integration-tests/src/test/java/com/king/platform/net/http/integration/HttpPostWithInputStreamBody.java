@@ -23,11 +23,14 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class HttpPostWithInputStreamBody {
 	IntegrationServer integrationServer;
@@ -145,6 +148,11 @@ public class HttpPostWithInputStreamBody {
 			}
 
 			@Override
+			public Charset getCharacterEncoding() {
+                return StandardCharsets.ISO_8859_1;
+            }
+
+			@Override
 			public ChannelFuture writeContent(final ChannelHandlerContext ctx) throws IOException {
 				final ChannelProgressivePromise promise = ctx.newProgressivePromise();
 				promise.setProgress(0, content.length);
@@ -204,7 +212,7 @@ public class HttpPostWithInputStreamBody {
 
 		assertEquals(okBody, httpCallback.getBody());
 		assertEquals(200, httpCallback.getStatusCode());
-		assertEquals(contentType, contentTypeValue.get());
+		assertTrue(contentTypeValue.get().startsWith(contentType));
 
 	}
 

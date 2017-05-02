@@ -12,16 +12,19 @@ import io.netty.handler.stream.ChunkedFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 
 public class ChunkedFileHttpBody implements HttpBody {
 	private final File file;
 	private final String contentType;
 	private final long contentLength;
+	private Charset characterEncoding;
 
-	public ChunkedFileHttpBody(File file, String contentType) {
+	public ChunkedFileHttpBody(File file, String contentType, Charset characterEncoding) {
 		this.file = file;
 		this.contentType = contentType;
 		this.contentLength = file.length();
+		this.characterEncoding = characterEncoding;
 	}
 
 
@@ -36,6 +39,11 @@ public class ChunkedFileHttpBody implements HttpBody {
 			return contentType;
 		}
 		return "application/binary";
+	}
+
+	@Override
+	public Charset getCharacterEncoding() {
+		return characterEncoding;
 	}
 
 	@Override

@@ -1,3 +1,8 @@
+// Copyright (C) king.com Ltd 2016
+// https://github.com/king/king-http-client
+// Author: Magnus Gustafsson
+// License: Apache 2.0, https://raw.github.com/king/king-http-client/LICENSE-APACHE
+
 // Copyright (C) king.com Ltd 2015
 // https://github.com/king/king-http-client
 // Author: Magnus Gustafsson
@@ -19,11 +24,12 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
-public class HttpPost {
+public class HttpPostConteType {
 	IntegrationServer integrationServer;
 	private HttpClient httpClient;
 	private int port;
@@ -33,6 +39,7 @@ public class HttpPost {
 
 	private AtomicReference<byte[]> readBodyContent;
 	private AtomicReference<String> contentTypeValue;
+	private AtomicReference<String> characterEncoding;
 
 	private HttpClientRequestWithBodyBuilder post;
 	private BlockingHttpCallback httpCallback;
@@ -50,12 +57,13 @@ public class HttpPost {
 
 		readBodyContent = new AtomicReference<>();
 		contentTypeValue = new AtomicReference<>();
-
+		characterEncoding = new AtomicReference<>();
 
 		integrationServer.addServlet(new HttpServlet() {
 			@Override
 			protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 				contentTypeValue.set(req.getContentType());
+				characterEncoding.set(req.getCharacterEncoding());
 
 				byte[] body = readPostBody(req);
 				readBodyContent.set(body);
@@ -70,41 +78,75 @@ public class HttpPost {
 
 	}
 
+
 	@Test
-	public void post200() throws Exception {
-		post.build().execute(httpCallback);
+	public void postBodyWithContentTypeAndNoEncoding() throws Exception {
+		String contentType = "text/unitTest";
+
+		post.content(content.getBytes()).contentType(contentType).build().execute(httpCallback);
 
 		httpCallback.waitForCompletion();
 
-		assertEquals(okBody, httpCallback.getBody());
-		assertEquals(200, httpCallback.getStatusCode());
+		assertTrue(contentTypeValue.get().startsWith(contentType));
+		assertEquals(StandardCharsets.ISO_8859_1.displayName(), characterEncoding.get());
+
 	}
 
 
 	@Test
-	public void postBodyWithByteArray() throws Exception {
+	public void postBodyWithContentTypeAndEncodingInContentType() throws Exception {
+		String contentType = "text/unitTest;charset=utf-8";
 
-		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		post.content(content.getBytes()).build().execute(httpCallback);
+		post.content(content.getBytes()).contentType(contentType).build().execute(httpCallback);
 
 		httpCallback.waitForCompletion();
 
-		assertEquals(content, new String(readBodyContent.get()));
-		assertEquals(200, httpCallback.getStatusCode());
 
+		assertTrue(contentTypeValue.get().startsWith(contentType));
+		assertEquals("UTF-8", characterEncoding.get());
 	}
 
 	@Test
-	public void postBodyWithInputStream() throws Exception {
-		post.content(new ByteArrayInputStream(content.getBytes())).build().execute(httpCallback);
+	public void postBodyWithContentTypeAndEncoding() throws Exception {
+		String contentType = "text/unitTest";
 
+		post.content(content.getBytes())
+			.bodyCharset(StandardCharsets.UTF_8)
+			.contentType(contentType)
+			.build()
+			.execute(httpCallback);
 		httpCallback.waitForCompletion();
 
-		assertEquals(content, new String(readBodyContent.get()));
-		assertEquals(200, httpCallback.getStatusCode());
-
+		assertTrue(contentTypeValue.get().startsWith(contentType));
+		assertEquals("UTF-8", characterEncoding.get());
 	}
 
+	@Test
+	public void postBodyWithNoContentTypeAndEncoding() throws Exception {
+		post.content(content.getBytes())
+			.bodyCharset(StandardCharsets.UTF_8)
+			//.contentType(null)
+			.build()
+			.execute(httpCallback);
+		httpCallback.waitForCompletion();
+
+		assertNull(contentTypeValue.get());
+		assertNull( characterEncoding.get());
+	}
+
+	@Test
+	public void postBodyWithContentTypeAndDualEncoding() throws Exception {
+		String contentType = "text/unitTest;charset=utf-8";
+		post.content(content.getBytes())
+			.bodyCharset(StandardCharsets.US_ASCII)
+			.contentType(contentType)
+			.build()
+			.execute(httpCallback);
+		httpCallback.waitForCompletion();
+
+		assertTrue(contentTypeValue.get().startsWith(contentType));
+		assertEquals("UTF-8", characterEncoding.get());
+	}
 
 	private byte[] readPostBody(HttpServletRequest req) throws IOException {
 		try {

@@ -25,7 +25,7 @@ public class InputStreamHttpBodyTest {
 	@Before
 	public void setUp() throws Exception {
 		inputStream = mock(InputStream.class);
-		inputStreamHttpBody = new InputStreamHttpBody(inputStream, "test/content");
+		inputStreamHttpBody = new InputStreamHttpBody(inputStream, "test/content", characterEncoding);
 
 	}
 

@@ -145,9 +145,15 @@ public class BuiltNettyClientRequest implements BuiltClientRequest {
 				headers.set(HttpHeaderNames.CONTENT_LENGTH, String.valueOf(httpBody.getContentLength()));
 			}
 
-			if (httpBody.getContentType() != null) {
-				headers.set(HttpHeaderNames.CONTENT_TYPE, httpBody.getContentType());
+			String contentType = httpBody.getContentType();
+			if (contentType != null) {
+				Charset characterEncoding = httpBody.getCharacterEncoding();
+				if (characterEncoding != null && !contentType.contains("charset=")) {
+					contentType = contentType + ";charset=" + characterEncoding.name();
+				}
+				headers.set(HttpHeaderNames.CONTENT_TYPE, contentType);
 			}
+
 		}
 
 

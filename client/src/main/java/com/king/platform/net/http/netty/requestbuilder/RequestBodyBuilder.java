@@ -12,5 +12,5 @@ import java.nio.charset.Charset;
 
 interface RequestBodyBuilder {
 
-	HttpBody createHttpBody(String contentType, Charset charset, boolean isSecure);
+	HttpBody createHttpBody(String contentType, Charset characterEncoding, boolean isSecure);
 }

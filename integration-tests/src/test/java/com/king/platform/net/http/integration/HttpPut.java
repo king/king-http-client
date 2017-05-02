@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class HttpPut {
 	IntegrationServer integrationServer;
@@ -147,7 +148,7 @@ public class HttpPut {
 
 		assertEquals(okBody, httpCallback.getBody());
 		assertEquals(200, httpCallback.getStatusCode());
-		assertEquals(contentType, contentTypeValue.get());
+		assertTrue(contentTypeValue.get().startsWith(contentType));
 
 	}
 

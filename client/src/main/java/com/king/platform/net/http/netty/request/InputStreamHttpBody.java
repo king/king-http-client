@@ -14,14 +14,17 @@ import io.netty.handler.stream.ChunkedStream;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 
 public class InputStreamHttpBody implements HttpBody {
 	private final InputStream inputStream;
 	private final String contentType;
+	private final Charset characterEncoding;
 
-	public InputStreamHttpBody(InputStream inputStream, String contentType) {
+	public InputStreamHttpBody(InputStream inputStream, String contentType, Charset characterEncoding) {
 		this.inputStream = inputStream;
 		this.contentType = contentType;
+		this.characterEncoding = characterEncoding;
 	}
 
 	@Override
@@ -32,6 +35,11 @@ public class InputStreamHttpBody implements HttpBody {
 	@Override
 	public String getContentType() {
 		return contentType;
+	}
+
+	@Override
+	public Charset getCharacterEncoding() {
+		return characterEncoding;
 	}
 
 	@Override

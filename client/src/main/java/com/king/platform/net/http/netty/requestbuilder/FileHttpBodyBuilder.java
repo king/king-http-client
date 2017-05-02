@@ -20,11 +20,11 @@ class FileHttpBodyBuilder implements RequestBodyBuilder {
 	}
 
 	@Override
-	public HttpBody createHttpBody(String contentType, Charset charset, boolean isSecure) {
+	public HttpBody createHttpBody(String contentType, Charset characterEncoding, boolean isSecure) {
 		if (isSecure) {
-			return new ChunkedFileHttpBody(file, contentType);
+			return new ChunkedFileHttpBody(file, contentType, characterEncoding);
 		} else {
-			return new FileRegionHttpBody(file, contentType);
+			return new FileRegionHttpBody(file, contentType, characterEncoding);
 		}
 	}
 }

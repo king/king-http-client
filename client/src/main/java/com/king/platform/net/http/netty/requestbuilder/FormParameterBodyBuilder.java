@@ -26,7 +26,7 @@ class FormParameterBodyBuilder implements RequestBodyBuilder {
 	}
 
 	@Override
-	public HttpBody createHttpBody(String contentType, Charset charset, boolean isSecure) {
+	public HttpBody createHttpBody(String contentType, Charset characterEncoding, boolean isSecure) {
 		if (contentType == null) {
 			contentType = "application/x-www-form-urlencoded";
 		}
@@ -38,7 +38,7 @@ class FormParameterBodyBuilder implements RequestBodyBuilder {
 		content.setLength(content.length() - 1);
 
 
-		return new ByteArrayHttpBody(content.toString().getBytes(charset), contentType);
+		return new ByteArrayHttpBody(content.toString().getBytes(characterEncoding), contentType, characterEncoding);
 	}
 
 	public void addParameter(String name, String value) {

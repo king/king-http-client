@@ -17,7 +17,7 @@ class CustomHttpBodyBuilder implements RequestBodyBuilder {
 	}
 
 	@Override
-	public HttpBody createHttpBody(String contentType, Charset charset, boolean isSecure) {
+	public HttpBody createHttpBody(String contentType, Charset characterEncoding, boolean isSecure) {
 		return httpBody;
 	}
 }

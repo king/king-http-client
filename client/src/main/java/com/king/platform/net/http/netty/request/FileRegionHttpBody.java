@@ -12,16 +12,19 @@ import io.netty.channel.DefaultFileRegion;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 
 public class FileRegionHttpBody implements HttpBody {
 	private final File file;
 	private final String contentType;
 	private final long contentLength;
+	private Charset characterEncoding;
 
-	public FileRegionHttpBody(File file, String contentType) {
+	public FileRegionHttpBody(File file, String contentType, Charset characterEncoding) {
 		this.file = file;
 		this.contentType = contentType;
 		this.contentLength = file.length();
+		this.characterEncoding = characterEncoding;
 	}
 
 
@@ -36,6 +39,11 @@ public class FileRegionHttpBody implements HttpBody {
 			return contentType;
 		}
 		return "application/binary";
+	}
+
+	@Override
+	public Charset getCharacterEncoding() {
+		return characterEncoding;
 	}
 
 	@Override

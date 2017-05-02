@@ -10,11 +10,14 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 
 public interface HttpBody {
 	long getContentLength();
 
 	String getContentType();
+
+	Charset getCharacterEncoding();
 
 	ChannelFuture writeContent(ChannelHandlerContext ctx) throws IOException;
 }

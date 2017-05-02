@@ -19,7 +19,7 @@ class InputStreamHttpBodyBuilder implements RequestBodyBuilder {
 	}
 
 	@Override
-	public HttpBody createHttpBody(String contentType, Charset charset, boolean isSecure) {
-		return new InputStreamHttpBody(inputStream, contentType);
+	public HttpBody createHttpBody(String contentType, Charset characterEncoding, boolean isSecure) {
+		return new InputStreamHttpBody(inputStream, contentType, characterEncoding);
 	}
 }
