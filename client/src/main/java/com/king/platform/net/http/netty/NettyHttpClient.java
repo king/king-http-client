@@ -42,7 +42,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-public class NettyHttpClient implements HttpClient {
+public class NettyHttpClient implements HttpClient, HttpClientCaller {
 	private final AtomicBoolean started = new AtomicBoolean();
 
 	private final ConfMap confMap = new ConfMap();
@@ -139,6 +139,7 @@ public class NettyHttpClient implements HttpClient {
 	}
 
 
+	@Override
 	public <T> Future<FutureResult<T>> execute(HttpMethod httpMethod, final NettyHttpClientRequest<T> nettyHttpClientRequest, HttpCallback<T> httpCallback,
 											   final NioCallback nioCallback, ResponseBodyConsumer<T> responseBodyConsumer, int idleTimeoutMillis,
 											   int totalRequestTimeoutMillis, boolean followRedirects, boolean keepAlive,
@@ -292,19 +293,6 @@ public class NettyHttpClient implements HttpClient {
 		});
 	}
 
-	public <T> Future<FutureResult<T>> dispatchError(final Executor callbackExecutor, final HttpCallback<T> httpCallback, final Throwable throwable) {
-		if (httpCallback != null) {
-			callbackExecutor.execute(new Runnable() {
-				@Override
-				public void run() {
-					httpCallback.onError(throwable);
-				}
-			});
-		}
-
-		return ResponseFuture.error(throwable);
-
-	}
 
 	public void addShutdownJob(ShutdownJob shutdownJob) {
 		shutdownJobs.add(shutdownJob);

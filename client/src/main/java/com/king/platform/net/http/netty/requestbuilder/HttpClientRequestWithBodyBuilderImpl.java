@@ -10,7 +10,7 @@ import com.king.platform.net.http.BuiltClientRequest;
 import com.king.platform.net.http.ConfKeys;
 import com.king.platform.net.http.HttpClientRequestWithBodyBuilder;
 import com.king.platform.net.http.netty.ConfMap;
-import com.king.platform.net.http.netty.NettyHttpClient;
+import com.king.platform.net.http.netty.HttpClientCaller;
 import com.king.platform.net.http.netty.request.HttpBody;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpVersion;
@@ -27,9 +27,9 @@ public class HttpClientRequestWithBodyBuilderImpl extends HttpClientRequestHeade
 	private String contentType;
 	private Charset bodyCharset;
 
-	public HttpClientRequestWithBodyBuilderImpl(NettyHttpClient nettyHttpClient, HttpVersion httpVersion, HttpMethod httpMethod, String uri, ConfMap confMap,
+	public HttpClientRequestWithBodyBuilderImpl(HttpClientCaller httpClientCaller, HttpVersion httpVersion, HttpMethod httpMethod, String uri, ConfMap confMap,
 												Executor callbackExecutor) {
-		super(HttpClientRequestWithBodyBuilder.class, nettyHttpClient, httpVersion, httpMethod, uri, confMap, callbackExecutor);
+		super(HttpClientRequestWithBodyBuilder.class, httpClientCaller, httpVersion, httpMethod, uri, confMap, callbackExecutor);
 
 		bodyCharset = confMap.get(ConfKeys.REQUEST_BODY_CHARSET);
 
@@ -140,7 +140,7 @@ public class HttpClientRequestWithBodyBuilderImpl extends HttpClientRequestHeade
 			immutableBodyBuilder = new FormParameterBodyBuilder((FormParameterBodyBuilder)requestBodyBuilder);
 		}
 
-		return new BuiltNettyClientRequest(nettyHttpClient, httpVersion, httpMethod, uri, defaultUserAgent, idleTimeoutMillis, totalRequestTimeoutMillis, followRedirects,
+		return new BuiltNettyClientRequest(httpClientCaller, httpVersion, httpMethod, uri, defaultUserAgent, idleTimeoutMillis, totalRequestTimeoutMillis, followRedirects,
 			acceptCompressedResponse, keepAlive, immutableBodyBuilder, contentType, bodyCharset, queryParameters, headerParameters, callbackExecutor);
 	}
 }

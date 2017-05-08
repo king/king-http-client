@@ -9,7 +9,7 @@ package com.king.platform.net.http.netty.requestbuilder;
 import com.king.platform.net.http.BuiltClientRequest;
 import com.king.platform.net.http.HttpClientRequestBuilder;
 import com.king.platform.net.http.netty.ConfMap;
-import com.king.platform.net.http.netty.NettyHttpClient;
+import com.king.platform.net.http.netty.HttpClientCaller;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpVersion;
 
@@ -17,14 +17,14 @@ import java.util.concurrent.Executor;
 
 public class HttpClientRequestBuilderImpl extends HttpClientRequestHeaderBuilderImpl<HttpClientRequestBuilder> implements HttpClientRequestBuilder {
 
-	public HttpClientRequestBuilderImpl(NettyHttpClient nettyHttpClient, HttpVersion httpVersion, HttpMethod httpMethod, String uri, ConfMap confMap, Executor
+	public HttpClientRequestBuilderImpl(HttpClientCaller httpClientCaller, HttpVersion httpVersion, HttpMethod httpMethod, String uri, ConfMap confMap, Executor
 		callbackExecutor) {
-		super(HttpClientRequestBuilder.class, nettyHttpClient, httpVersion, httpMethod, uri, confMap, callbackExecutor);
+		super(HttpClientRequestBuilder.class, httpClientCaller, httpVersion, httpMethod, uri, confMap, callbackExecutor);
 	}
 
 	@Override
 	public BuiltClientRequest build() {
-		return new BuiltNettyClientRequest(nettyHttpClient, httpVersion, httpMethod, uri, defaultUserAgent, idleTimeoutMillis, totalRequestTimeoutMillis,
+		return new BuiltNettyClientRequest(httpClientCaller, httpVersion, httpMethod, uri, defaultUserAgent, idleTimeoutMillis, totalRequestTimeoutMillis,
 			followRedirects, acceptCompressedResponse, keepAlive, null, null, null, queryParameters, headerParameters, callbackExecutor);
 	}
 }

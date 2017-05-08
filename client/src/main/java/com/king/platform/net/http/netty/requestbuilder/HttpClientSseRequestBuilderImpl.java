@@ -11,7 +11,7 @@ import com.king.platform.net.http.HttpClientSseRequestBuilder;
 import com.king.platform.net.http.SseClient;
 import com.king.platform.net.http.SseExecutionCallback;
 import com.king.platform.net.http.netty.ConfMap;
-import com.king.platform.net.http.netty.NettyHttpClient;
+import com.king.platform.net.http.netty.HttpClientCaller;
 import com.king.platform.net.http.netty.sse.SseClientImpl;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpVersion;
@@ -19,9 +19,9 @@ import io.netty.handler.codec.http.HttpVersion;
 import java.util.concurrent.Executor;
 
 public class HttpClientSseRequestBuilderImpl extends HttpClientRequestHeaderBuilderImpl<HttpClientSseRequestBuilder> implements HttpClientSseRequestBuilder {
-	public HttpClientSseRequestBuilderImpl(NettyHttpClient nettyHttpClient, HttpVersion httpVersion, HttpMethod httpMethod, String uri, ConfMap confMap,
+	public HttpClientSseRequestBuilderImpl(HttpClientCaller httpClientCaller, HttpVersion httpVersion, HttpMethod httpMethod, String uri, ConfMap confMap,
 										   Executor callbackExecutor) {
-		super(HttpClientSseRequestBuilder.class, nettyHttpClient, httpVersion, httpMethod, uri, confMap, callbackExecutor);
+		super(HttpClientSseRequestBuilder.class, httpClientCaller, httpVersion, httpMethod, uri, confMap, callbackExecutor);
 	}
 
 	@Override
@@ -29,7 +29,7 @@ public class HttpClientSseRequestBuilderImpl extends HttpClientRequestHeaderBuil
 
 		withHeader("Accept", "text/event-stream");
 
-		final BuiltNettyClientRequest builtNettyClientRequest = new BuiltNettyClientRequest(nettyHttpClient, httpVersion, httpMethod, uri, defaultUserAgent,
+		final BuiltNettyClientRequest builtNettyClientRequest = new BuiltNettyClientRequest(httpClientCaller, httpVersion, httpMethod, uri, defaultUserAgent,
 			idleTimeoutMillis, totalRequestTimeoutMillis, followRedirects, acceptCompressedResponse, keepAlive, null, null, null, queryParameters,
 			headerParameters, callbackExecutor);
 

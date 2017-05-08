@@ -7,7 +7,8 @@ package com.king.platform.net.http.netty.requestbuilder;
 
 
 import com.king.platform.net.http.*;
-import com.king.platform.net.http.netty.NettyHttpClient;
+import com.king.platform.net.http.netty.HttpClientCaller;
+import com.king.platform.net.http.netty.ResponseFuture;
 import com.king.platform.net.http.netty.ServerInfo;
 import com.king.platform.net.http.netty.eventbus.ExternalEventTrigger;
 import com.king.platform.net.http.netty.request.HttpBody;
@@ -24,7 +25,7 @@ import java.util.concurrent.Future;
 
 public class BuiltNettyClientRequest implements BuiltClientRequest {
 
-	private final NettyHttpClient nettyHttpClient;
+	private final HttpClientCaller httpClientCaller;
 	private final HttpVersion httpVersion;
 	private final HttpMethod httpMethod;
 	private final String uri;
@@ -48,8 +49,8 @@ public class BuiltNettyClientRequest implements BuiltClientRequest {
 	private final Executor callbackExecutor;
 
 
-	public BuiltNettyClientRequest(NettyHttpClient nettyHttpClient, HttpVersion httpVersion, HttpMethod httpMethod, String uri, String defaultUserAgent, int idleTimeoutMillis, int totalRequestTimeoutMillis, boolean followRedirects, boolean acceptCompressedResponse, boolean keepAlive, RequestBodyBuilder requestBodyBuilder, String contentType, Charset bodyCharset, List<Param> queryParameters, List<Param> headerParameters, Executor callbackExecutor) {
-		this.nettyHttpClient = nettyHttpClient;
+	public BuiltNettyClientRequest(HttpClientCaller httpClientCaller, HttpVersion httpVersion, HttpMethod httpMethod, String uri, String defaultUserAgent, int idleTimeoutMillis, int totalRequestTimeoutMillis, boolean followRedirects, boolean acceptCompressedResponse, boolean keepAlive, RequestBodyBuilder requestBodyBuilder, String contentType, Charset bodyCharset, List<Param> queryParameters, List<Param> headerParameters, Executor callbackExecutor) {
+		this.httpClientCaller = httpClientCaller;
 		this.httpVersion = httpVersion;
 		this.httpMethod = httpMethod;
 		this.uri = uri;
@@ -114,7 +115,7 @@ public class BuiltNettyClientRequest implements BuiltClientRequest {
 		try {
 			serverInfo = ServerInfo.buildFromUri(completeUri);
 		} catch (URISyntaxException e) {
-			return nettyHttpClient.dispatchError(callbackExecutor, httpCallback, e);
+			return dispatchError(httpCallback, e);
 		}
 
 		String relativePath = UriUtil.getRelativeUri(completeUri);
@@ -177,8 +178,21 @@ public class BuiltNettyClientRequest implements BuiltClientRequest {
 
 		nettyHttpClientRequest.setKeepAlive(keepAlive);
 
-		return nettyHttpClient.execute(httpMethod, nettyHttpClientRequest, httpCallback, nioCallback, responseBodyConsumer, idleTimeoutMillis, totalRequestTimeoutMillis,
+		return httpClientCaller.execute(httpMethod, nettyHttpClientRequest, httpCallback, nioCallback, responseBodyConsumer, idleTimeoutMillis, totalRequestTimeoutMillis,
 			followRedirects, keepAlive, externalEventTrigger, callbackExecutor);
+	}
+
+	private <T> Future<FutureResult<T>> dispatchError(final HttpCallback<T> httpCallback, final URISyntaxException e) {
+		if (httpCallback != null) {
+            callbackExecutor.execute(new Runnable() {
+                @Override
+                public void run() {
+                    httpCallback.onError(e);
+                }
+            });
+        }
+
+		return ResponseFuture.error(e);
 	}
 
 	public int getIdleTimeoutMillis() {

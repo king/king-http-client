@@ -82,7 +82,7 @@ public class ResponseFuture<T> implements Future<FutureResult<T>> {
 		return result;
 	}
 
-	protected static <T> ResponseFuture<T> error(Throwable error) {
+	public static <T> ResponseFuture<T> error(Throwable error) {
 		ResponseFuture<T> future = new ResponseFuture<>(new NoopRequestEventBus(), null);
 		future.result = new FutureResult<T>(error);
 		future.done.set(true);

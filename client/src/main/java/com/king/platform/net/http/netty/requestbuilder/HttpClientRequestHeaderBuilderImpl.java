@@ -9,7 +9,7 @@ package com.king.platform.net.http.netty.requestbuilder;
 import com.king.platform.net.http.ConfKeys;
 import com.king.platform.net.http.HttpClientRequestHeaderBuilder;
 import com.king.platform.net.http.netty.ConfMap;
-import com.king.platform.net.http.netty.NettyHttpClient;
+import com.king.platform.net.http.netty.HttpClientCaller;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpVersion;
 
@@ -20,7 +20,7 @@ import java.util.concurrent.Executor;
 
 public abstract class HttpClientRequestHeaderBuilderImpl<T extends HttpClientRequestHeaderBuilder> implements HttpClientRequestHeaderBuilder<T> {
 	private final Class<T> implClass;
-	protected final NettyHttpClient nettyHttpClient;
+	protected final HttpClientCaller httpClientCaller;
 	protected final HttpVersion httpVersion;
 	protected final HttpMethod httpMethod;
 	protected final String uri;
@@ -39,9 +39,9 @@ public abstract class HttpClientRequestHeaderBuilderImpl<T extends HttpClientReq
 	protected Executor callbackExecutor;
 
 
-	protected HttpClientRequestHeaderBuilderImpl(Class<T> implClass, NettyHttpClient nettyHttpClient, HttpVersion httpVersion, HttpMethod httpMethod, String uri, ConfMap confMap, Executor callbackExecutor) {
+	protected HttpClientRequestHeaderBuilderImpl(Class<T> implClass, HttpClientCaller httpClientCaller, HttpVersion httpVersion, HttpMethod httpMethod, String uri, ConfMap confMap, Executor callbackExecutor) {
 		this.implClass = implClass;
-		this.nettyHttpClient = nettyHttpClient;
+		this.httpClientCaller = httpClientCaller;
 		this.httpVersion = httpVersion;
 		this.httpMethod = httpMethod;
 		this.uri = uri;
