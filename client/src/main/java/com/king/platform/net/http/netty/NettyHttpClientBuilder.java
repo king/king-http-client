@@ -43,7 +43,6 @@ public class NettyHttpClientBuilder {
 
 	private ThreadFactory nioThreadFactory;
 	private Executor httpCallbackExecutor;
-	private Executor httpExecuteExecutor;
 
 	private Timer cleanupTimer;
 	private TimeProvider timeProvider;
