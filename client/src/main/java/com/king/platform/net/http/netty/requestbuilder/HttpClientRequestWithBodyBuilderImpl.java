@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.Map;
+import java.util.concurrent.Executor;
 
 public class HttpClientRequestWithBodyBuilderImpl extends HttpClientRequestHeaderBuilderImpl<HttpClientRequestWithBodyBuilder> implements HttpClientRequestWithBodyBuilder {
 
@@ -26,8 +27,9 @@ public class HttpClientRequestWithBodyBuilderImpl extends HttpClientRequestHeade
 	private String contentType;
 	private Charset bodyCharset;
 
-	public HttpClientRequestWithBodyBuilderImpl(NettyHttpClient nettyHttpClient, HttpVersion httpVersion, HttpMethod httpMethod, String uri, ConfMap confMap) {
-		super(HttpClientRequestWithBodyBuilder.class, nettyHttpClient, httpVersion, httpMethod, uri, confMap);
+	public HttpClientRequestWithBodyBuilderImpl(NettyHttpClient nettyHttpClient, HttpVersion httpVersion, HttpMethod httpMethod, String uri, ConfMap confMap,
+												Executor callbackExecutor) {
+		super(HttpClientRequestWithBodyBuilder.class, nettyHttpClient, httpVersion, httpMethod, uri, confMap, callbackExecutor);
 
 		bodyCharset = confMap.get(ConfKeys.REQUEST_BODY_CHARSET);
 
@@ -139,6 +141,6 @@ public class HttpClientRequestWithBodyBuilderImpl extends HttpClientRequestHeade
 		}
 
 		return new BuiltNettyClientRequest(nettyHttpClient, httpVersion, httpMethod, uri, defaultUserAgent, idleTimeoutMillis, totalRequestTimeoutMillis, followRedirects,
-			acceptCompressedResponse, keepAlive, immutableBodyBuilder, contentType, bodyCharset, queryParameters, headerParameters);
+			acceptCompressedResponse, keepAlive, immutableBodyBuilder, contentType, bodyCharset, queryParameters, headerParameters, callbackExecutor);
 	}
 }

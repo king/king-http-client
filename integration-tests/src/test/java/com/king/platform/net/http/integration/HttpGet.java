@@ -6,8 +6,11 @@
 package com.king.platform.net.http.integration;
 
 
+import com.king.platform.net.http.HttpCallback;
 import com.king.platform.net.http.HttpClient;
+import com.king.platform.net.http.HttpResponse;
 import com.king.platform.net.http.netty.ConnectionClosedException;
+import io.netty.util.concurrent.DefaultThreadFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -18,6 +21,10 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.*;
 
@@ -156,6 +163,38 @@ public class HttpGet {
 
 	}
 
+	@Test
+	public void getWithCustomExecutor() throws Exception {
+		String poolName = "unit-test-executors";
+		ExecutorService executorService = Executors.newFixedThreadPool(1, new DefaultThreadFactory(poolName));
+
+		integrationServer.addServlet(new HttpServlet() {
+			@Override
+			protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+				resp.addHeader("Connection", "close");
+				resp.getWriter().write(okBody);
+				resp.getWriter().flush();
+			}
+		}, "/testOk");
+
+		final AtomicReference<String> threadName = new AtomicReference<>();
+		final CountDownLatch countDownLatch = new CountDownLatch(1);
+		httpClient.createGet("http://localhost:" + port + "/testOk").executingOn(executorService).build().execute(new HttpCallback<String>() {
+			@Override
+			public void onCompleted(HttpResponse<String> httpResponse) {
+				threadName.set(Thread.currentThread().getName());
+				countDownLatch.countDown();
+			}
+
+			@Override
+			public void onError(Throwable throwable) {
+				countDownLatch.countDown();
+			}
+		});
+		countDownLatch.await();
+
+		assertTrue(threadName.get().startsWith(poolName));
+	}
 
 	@After
 	public void tearDown() throws Exception {

@@ -40,8 +40,6 @@ import java.util.concurrent.ThreadFactory;
 public class NettyHttpClientBuilder {
 	private int nioThreads = 2;
 	private int httpCallbackExecutorThreads;
-	private int httpExecuteExecutorThreads;
-
 
 	private ThreadFactory nioThreadFactory;
 	private Executor httpCallbackExecutor;
@@ -102,38 +100,6 @@ public class NettyHttpClientBuilder {
 		}
 
 		this.httpCallbackExecutor = executor;
-		return this;
-	}
-
-
-	/**
-	 * Set the amount of threads used for executor used for executing http requests. Defaults to two.
-	 * Not used if {@link com.king.platform.net.http.ConfKeys#EXECUTE_ON_CALLING_THREAD} is set to true.
-	 * Can only be set if httpExecuteExecutor has not been set.
-	 * @param httpExecuteExecutorThreads the amount of threads
-	 * @return the builder
-	 */
-	public NettyHttpClientBuilder setHttpExecuteExecutorThreads(int httpExecuteExecutorThreads) {
-		if (httpExecuteExecutor != null) {
-			throw new IllegalStateException("Can't set httpExecuteExecutorThreads  when httpExecuteExecutor has already been set.");
-		}
-		this.httpExecuteExecutorThreads = httpExecuteExecutorThreads;
-		return this;
-	}
-
-	/**
-	 * Set a custom executor used for executing http requests.
-	 * Not used if {@link com.king.platform.net.http.ConfKeys#EXECUTE_ON_CALLING_THREAD} is set to true.
-	 * Can only be set if httpExecuteExecutorThreads has not been set.
-	 * @param httpExecuteExecutor the executor used for executing requests
-	 * @return the builder
-	 */
-	public NettyHttpClientBuilder setHttpExecuteExecutor(Executor httpExecuteExecutor) {
-		if (httpExecuteExecutorThreads != 0) {
-			throw new IllegalStateException("Can't set httpExecuteExecutor when httpExecuteExecutorThreads has already been set.");
-		}
-
-		this.httpExecuteExecutor = httpExecuteExecutor;
 		return this;
 	}
 
@@ -236,20 +202,7 @@ public class NettyHttpClientBuilder {
 			});
 		}
 
-		if (httpExecuteExecutor == null) {
-			if (httpExecuteExecutorThreads == 0) {
-				httpExecuteExecutorThreads = 2;
-			}
-			final ExecutorService executorService = Executors.newFixedThreadPool(httpExecuteExecutorThreads, newThreadFactory("HttpClient-Executor"));
-			httpExecuteExecutor = executorService;
 
-			shutdownJobs.add(new NettyHttpClient.ShutdownJob() {
-				@Override
-				public void onShutdown() {
-					executorService.shutdown();
-				}
-			});
-		}
 
 		if (nioThreadFactory == null) {
 			this.nioThreadFactory = newThreadFactory("HttpClient-nio-event-loop");
@@ -288,7 +241,7 @@ public class NettyHttpClientBuilder {
 			executionBackPressure = new NoBackPressure();
 		}
 
-		NettyHttpClient nettyHttpClient = new NettyHttpClient(nioThreads, nioThreadFactory, httpCallbackExecutor, httpExecuteExecutor, cleanupTimer, timeProvider, executionBackPressure,
+		NettyHttpClient nettyHttpClient = new NettyHttpClient(nioThreads, nioThreadFactory, httpCallbackExecutor, cleanupTimer, timeProvider, executionBackPressure,
 			rootEventBus, channelPool);
 
 		for (NettyHttpClient.ShutdownJob shutdownJob : shutdownJobs) {

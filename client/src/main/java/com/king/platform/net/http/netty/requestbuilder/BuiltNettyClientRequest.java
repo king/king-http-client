@@ -19,6 +19,7 @@ import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 
 public class BuiltNettyClientRequest implements BuiltClientRequest {
@@ -44,8 +45,10 @@ public class BuiltNettyClientRequest implements BuiltClientRequest {
 
 	private final List<Param> queryParameters;
 	private final List<Param> headerParameters;
+	private final Executor callbackExecutor;
 
-	public BuiltNettyClientRequest(NettyHttpClient nettyHttpClient, HttpVersion httpVersion, HttpMethod httpMethod, String uri, String defaultUserAgent, int idleTimeoutMillis, int totalRequestTimeoutMillis, boolean followRedirects, boolean acceptCompressedResponse, boolean keepAlive, RequestBodyBuilder requestBodyBuilder, String contentType, Charset bodyCharset, List<Param> queryParameters, List<Param> headerParameters) {
+
+	public BuiltNettyClientRequest(NettyHttpClient nettyHttpClient, HttpVersion httpVersion, HttpMethod httpMethod, String uri, String defaultUserAgent, int idleTimeoutMillis, int totalRequestTimeoutMillis, boolean followRedirects, boolean acceptCompressedResponse, boolean keepAlive, RequestBodyBuilder requestBodyBuilder, String contentType, Charset bodyCharset, List<Param> queryParameters, List<Param> headerParameters, Executor callbackExecutor) {
 		this.nettyHttpClient = nettyHttpClient;
 		this.httpVersion = httpVersion;
 		this.httpMethod = httpMethod;
@@ -61,57 +64,57 @@ public class BuiltNettyClientRequest implements BuiltClientRequest {
 		this.bodyCharset = bodyCharset;
 		this.queryParameters = new ArrayList<>(queryParameters);
 		this.headerParameters = new ArrayList<>(headerParameters);
+		this.callbackExecutor = callbackExecutor;
 	}
 
 	@Override
 	public Future<FutureResult<String>> execute() {
-		return internalExecute(null, new StringResponseBody(), null, null);
+		return internalExecute(new StringResponseBody(), null, null, null);
 	}
 
 	@Override
 	public Future<FutureResult<String>> execute(HttpCallback<String> httpCallback) {
-		return internalExecute(httpCallback, new StringResponseBody(), null, null);
+		return internalExecute(new StringResponseBody(), null, null, httpCallback);
 	}
 
 	@Override
 	public Future<FutureResult<String>> execute(HttpCallback<String> httpCallback, NioCallback nioCallback) {
-		return internalExecute(httpCallback, new StringResponseBody(), nioCallback, null);
+		return internalExecute(new StringResponseBody(), nioCallback, null, httpCallback);
 	}
 
 	@Override
 	public <T> Future<FutureResult<T>> execute(HttpCallback<T> httpCallback, ResponseBodyConsumer<T> responseBodyConsumer) {
-		return internalExecute(httpCallback, responseBodyConsumer, null, null);
+		return internalExecute(responseBodyConsumer, null, null, httpCallback);
 	}
 
 	@Override
 	public Future<FutureResult<String>> execute(NioCallback nioCallback) {
-		return internalExecute(null, null, nioCallback, null);
+		return internalExecute(null, nioCallback, null, null);
 	}
 
 	@Override
 	public <T> Future<FutureResult<T>> execute(HttpCallback<T> httpCallback, ResponseBodyConsumer<T> responseBodyConsumer, NioCallback nioCallback) {
-		return internalExecute(httpCallback, responseBodyConsumer, nioCallback, null);
+		return internalExecute(responseBodyConsumer, nioCallback, null, httpCallback);
 	}
 
 	@Override
 	public <T> Future<FutureResult<T>> execute(HttpCallback<T> httpCallback, ResponseBodyConsumer<T> responseBodyConsumer, NioCallback nioCallback, ExternalEventTrigger externalEventTrigger) {
-		return internalExecute(httpCallback, responseBodyConsumer, nioCallback, externalEventTrigger);
+		return internalExecute(responseBodyConsumer, nioCallback, externalEventTrigger, httpCallback);
 	}
 
 	@Override
 	public <T> Future<FutureResult<T>> execute(ResponseBodyConsumer<T> responseBodyConsumer) {
-		return internalExecute(null, responseBodyConsumer, null, null);
+		return internalExecute(responseBodyConsumer, null, null, null);
 	}
 
-	private <T> Future<FutureResult<T>> internalExecute(HttpCallback<T> httpCallback, ResponseBodyConsumer<T> responseBodyConsumer, NioCallback nioCallback,
-														ExternalEventTrigger externalEventTrigger) {
+	private <T> Future<FutureResult<T>> internalExecute(ResponseBodyConsumer<T> responseBodyConsumer, NioCallback nioCallback, ExternalEventTrigger externalEventTrigger, HttpCallback<T> httpCallback) {
 		String completeUri = UriUtil.getUriWithParameters(uri, queryParameters);
 
 		ServerInfo serverInfo = null;
 		try {
 			serverInfo = ServerInfo.buildFromUri(completeUri);
 		} catch (URISyntaxException e) {
-			return nettyHttpClient.dispatchError(httpCallback, e);
+			return nettyHttpClient.dispatchError(callbackExecutor, httpCallback, e);
 		}
 
 		String relativePath = UriUtil.getRelativeUri(completeUri);
@@ -175,7 +178,7 @@ public class BuiltNettyClientRequest implements BuiltClientRequest {
 		nettyHttpClientRequest.setKeepAlive(keepAlive);
 
 		return nettyHttpClient.execute(httpMethod, nettyHttpClientRequest, httpCallback, nioCallback, responseBodyConsumer, idleTimeoutMillis, totalRequestTimeoutMillis,
-			followRedirects, keepAlive, externalEventTrigger);
+			followRedirects, keepAlive, externalEventTrigger, callbackExecutor);
 	}
 
 	public int getIdleTimeoutMillis() {

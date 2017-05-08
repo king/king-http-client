@@ -16,6 +16,7 @@ import io.netty.handler.codec.http.HttpVersion;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executor;
 
 public abstract class HttpClientRequestHeaderBuilderImpl<T extends HttpClientRequestHeaderBuilder> implements HttpClientRequestHeaderBuilder<T> {
 	private final Class<T> implClass;
@@ -35,9 +36,10 @@ public abstract class HttpClientRequestHeaderBuilderImpl<T extends HttpClientReq
 	protected boolean followRedirects;
 	protected boolean acceptCompressedResponse;
 	protected boolean keepAlive;
+	protected Executor callbackExecutor;
 
 
-	protected HttpClientRequestHeaderBuilderImpl(Class<T> implClass, NettyHttpClient nettyHttpClient, HttpVersion httpVersion, HttpMethod httpMethod, String uri, ConfMap confMap) {
+	protected HttpClientRequestHeaderBuilderImpl(Class<T> implClass, NettyHttpClient nettyHttpClient, HttpVersion httpVersion, HttpMethod httpMethod, String uri, ConfMap confMap, Executor callbackExecutor) {
 		this.implClass = implClass;
 		this.nettyHttpClient = nettyHttpClient;
 		this.httpVersion = httpVersion;
@@ -54,6 +56,8 @@ public abstract class HttpClientRequestHeaderBuilderImpl<T extends HttpClientReq
 		keepAlive = confMap.get(ConfKeys.KEEP_ALIVE);
 
 		defaultUserAgent = confMap.get(ConfKeys.USER_AGENT);
+
+		this.callbackExecutor = callbackExecutor;
 	}
 
 
@@ -116,4 +120,9 @@ public abstract class HttpClientRequestHeaderBuilderImpl<T extends HttpClientReq
 		return implClass.cast(this);
 	}
 
+	@Override
+	public T executingOn(Executor executor) {
+		this.callbackExecutor = executor;
+		return implClass.cast(this);
+	}
 }

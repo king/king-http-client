@@ -7,6 +7,7 @@ package com.king.platform.net.http;
 
 
 import java.util.Map;
+import java.util.concurrent.Executor;
 
 public interface HttpClientRequestHeaderBuilder<T extends HttpClientRequestHeaderBuilder> {
 
@@ -85,5 +86,13 @@ public interface HttpClientRequestHeaderBuilder<T extends HttpClientRequestHeade
 	 * @return the builder
 	 */
 	T withQueryParameters(Map<String, String> parameters);
+
+	/**
+	 * Provide a custom executor that will be used for this request.
+	 * For example an single threaded executor can be used to guarantee the order of the events.
+	 * @param executor the executor
+	 * @return the builder
+	 */
+	T executingOn(Executor executor);
 
 }

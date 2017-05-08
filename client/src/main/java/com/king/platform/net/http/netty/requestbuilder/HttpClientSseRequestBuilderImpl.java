@@ -19,16 +19,9 @@ import io.netty.handler.codec.http.HttpVersion;
 import java.util.concurrent.Executor;
 
 public class HttpClientSseRequestBuilderImpl extends HttpClientRequestHeaderBuilderImpl<HttpClientSseRequestBuilder> implements HttpClientSseRequestBuilder {
-	private Executor executor;
-
-	public HttpClientSseRequestBuilderImpl(NettyHttpClient nettyHttpClient, HttpVersion httpVersion, HttpMethod httpMethod, String uri, ConfMap confMap) {
-		super(HttpClientSseRequestBuilder.class, nettyHttpClient, httpVersion, httpMethod, uri, confMap);
-	}
-
-	@Override
-	public HttpClientSseRequestBuilder executingOn(Executor executor) {
-		this.executor = executor;
-		return this;
+	public HttpClientSseRequestBuilderImpl(NettyHttpClient nettyHttpClient, HttpVersion httpVersion, HttpMethod httpMethod, String uri, ConfMap confMap,
+										   Executor callbackExecutor) {
+		super(HttpClientSseRequestBuilder.class, nettyHttpClient, httpVersion, httpMethod, uri, confMap, callbackExecutor);
 	}
 
 	@Override
@@ -38,35 +31,32 @@ public class HttpClientSseRequestBuilderImpl extends HttpClientRequestHeaderBuil
 
 		final BuiltNettyClientRequest builtNettyClientRequest = new BuiltNettyClientRequest(nettyHttpClient, httpVersion, httpMethod, uri, defaultUserAgent,
 			idleTimeoutMillis, totalRequestTimeoutMillis, followRedirects, acceptCompressedResponse, keepAlive, null, null, null, queryParameters,
-			headerParameters);
+			headerParameters, callbackExecutor);
 
-		if (executor == null) {
-			executor = nettyHttpClient.getHttpClientCallbackExecutor();
-		}
 
 		return new BuiltSseClientRequest() {
 			@Override
 			public SseClient execute(SseExecutionCallback providedSseExecutionCallback) {
-				SseClientImpl sseClient = new SseClientImpl(providedSseExecutionCallback, builtNettyClientRequest, executor);
+				SseClientImpl sseClient = new SseClientImpl(providedSseExecutionCallback, builtNettyClientRequest, callbackExecutor);
 				sseClient.connect();
 				return sseClient;
 			}
 
 			@Override
 			public SseClient execute() {
-				SseClientImpl sseClient = new SseClientImpl(null, builtNettyClientRequest, executor);
+				SseClientImpl sseClient = new SseClientImpl(null, builtNettyClientRequest, callbackExecutor);
 				sseClient.connect();
 				return sseClient;
 			}
 
 			@Override
 			public SseClient build(SseExecutionCallback sseExecutionCallback) {
-				return new SseClientImpl(sseExecutionCallback, builtNettyClientRequest, executor);
+				return new SseClientImpl(sseExecutionCallback, builtNettyClientRequest, callbackExecutor);
 			}
 
 			@Override
 			public SseClient build() {
-				return new SseClientImpl(null, builtNettyClientRequest, executor);
+				return new SseClientImpl(null, builtNettyClientRequest, callbackExecutor);
 			}
 		};
 

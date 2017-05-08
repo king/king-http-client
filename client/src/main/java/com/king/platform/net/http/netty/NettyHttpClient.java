@@ -46,8 +46,7 @@ public class NettyHttpClient implements HttpClient {
 	private final AtomicBoolean started = new AtomicBoolean();
 
 	private final ConfMap confMap = new ConfMap();
-	private final Executor httpClientCallbackExecutor;
-	private final Executor httpClientExecuteExecutor;
+	private final Executor defaultHttpClientCallbackExecutor;
 	private final Timer cleanupTimer;
 	private final TimeProvider timeProvider;
 
@@ -65,10 +64,10 @@ public class NettyHttpClient implements HttpClient {
 
 	private List<ShutdownJob> shutdownJobs = new ArrayList<>();
 
-	public NettyHttpClient(int nioThreads, ThreadFactory nioThreadFactory, Executor httpClientCallbackExecutor, Executor httpClientExecuteExecutor, Timer
+	public NettyHttpClient(int nioThreads, ThreadFactory nioThreadFactory, Executor defaultHttpClientCallbackExecutor, Timer
 		cleanupTimer, TimeProvider timeProvider, final BackPressure executionBackPressure, RootEventBus rootEventBus, ChannelPool channelPool) {
-		this.httpClientCallbackExecutor = httpClientCallbackExecutor;
-		this.httpClientExecuteExecutor = httpClientExecuteExecutor;
+		this.defaultHttpClientCallbackExecutor = defaultHttpClientCallbackExecutor;
+
 		this.cleanupTimer = cleanupTimer;
 		this.timeProvider = timeProvider;
 		this.nioThreads = nioThreads;
@@ -140,7 +139,10 @@ public class NettyHttpClient implements HttpClient {
 	}
 
 
-	public <T> Future<FutureResult<T>> execute(HttpMethod httpMethod, final NettyHttpClientRequest<T> nettyHttpClientRequest, HttpCallback<T> httpCallback, final NioCallback nioCallback, ResponseBodyConsumer<T> responseBodyConsumer, int idleTimeoutMillis, int totalRequestTimeoutMillis, boolean followRedirects, boolean keepAlive, ExternalEventTrigger externalEventTrigger) {
+	public <T> Future<FutureResult<T>> execute(HttpMethod httpMethod, final NettyHttpClientRequest<T> nettyHttpClientRequest, HttpCallback<T> httpCallback,
+											   final NioCallback nioCallback, ResponseBodyConsumer<T> responseBodyConsumer, int idleTimeoutMillis,
+											   int totalRequestTimeoutMillis, boolean followRedirects, boolean keepAlive,
+											   ExternalEventTrigger externalEventTrigger, Executor callbackExecutor) {
 		if (!started.get()) {
 			throw new IllegalStateException("The client must be started before anything can be executed.");
 		}
@@ -163,7 +165,7 @@ public class NettyHttpClient implements HttpClient {
 			});
 		}
 
-		subscribeToHttpCallbackEvents(httpCallback, requestRequestEventBus);
+		subscribeToHttpCallbackEvents(callbackExecutor, httpCallback, requestRequestEventBus);
 		subscribeToNioCallbackEvents(nioCallback, requestRequestEventBus);
 
 
@@ -187,7 +189,7 @@ public class NettyHttpClient implements HttpClient {
 		if (executeOnCallingThread) {
 			sendRequest(requestRequestEventBus, httpRequestContext);
 		} else {
-			httpClientExecuteExecutor.execute(new Runnable() {
+			callbackExecutor.execute(new Runnable() {
 				@Override
 				public void run() {
 					sendRequest(requestRequestEventBus, httpRequestContext);
@@ -230,41 +232,37 @@ public class NettyHttpClient implements HttpClient {
 		}
 	}
 
-	public Executor getHttpClientCallbackExecutor() {
-		return httpClientCallbackExecutor;
-	}
-
 	@Override
 	public HttpClientRequestBuilder createGet(String uri) {
-		return new HttpClientRequestBuilderImpl(this, HttpVersion.HTTP_1_1, HttpMethod.GET, uri, confMap);
+		return new HttpClientRequestBuilderImpl(this, HttpVersion.HTTP_1_1, HttpMethod.GET, uri, confMap, defaultHttpClientCallbackExecutor);
 	}
 
 	@Override
 	public HttpClientRequestWithBodyBuilder createPost(String uri) {
-		return new HttpClientRequestWithBodyBuilderImpl(this, HttpVersion.HTTP_1_1, HttpMethod.POST, uri, confMap);
+		return new HttpClientRequestWithBodyBuilderImpl(this, HttpVersion.HTTP_1_1, HttpMethod.POST, uri, confMap, defaultHttpClientCallbackExecutor);
 	}
 
 	@Override
 	public HttpClientRequestWithBodyBuilder createPut(String uri) {
-		return new HttpClientRequestWithBodyBuilderImpl(this, HttpVersion.HTTP_1_1, HttpMethod.PUT, uri, confMap);
+		return new HttpClientRequestWithBodyBuilderImpl(this, HttpVersion.HTTP_1_1, HttpMethod.PUT, uri, confMap, defaultHttpClientCallbackExecutor);
 	}
 
 	@Override
 	public HttpClientRequestBuilder createDelete(String uri) {
-		return new HttpClientRequestBuilderImpl(this, HttpVersion.HTTP_1_1, HttpMethod.DELETE, uri, confMap);
+		return new HttpClientRequestBuilderImpl(this, HttpVersion.HTTP_1_1, HttpMethod.DELETE, uri, confMap, defaultHttpClientCallbackExecutor);
 	}
 
 	@Override
 	public HttpClientRequestBuilder createHead(String uri) {
-		return new HttpClientRequestBuilderImpl(this, HttpVersion.HTTP_1_1, HttpMethod.HEAD, uri, confMap);
+		return new HttpClientRequestBuilderImpl(this, HttpVersion.HTTP_1_1, HttpMethod.HEAD, uri, confMap, defaultHttpClientCallbackExecutor);
 	}
 
 	@Override
 	public HttpClientSseRequestBuilder createSSE(String uri) {
-		return new HttpClientSseRequestBuilderImpl(this, HttpVersion.HTTP_1_1, HttpMethod.GET, uri, confMap);
+		return new HttpClientSseRequestBuilderImpl(this, HttpVersion.HTTP_1_1, HttpMethod.GET, uri, confMap, defaultHttpClientCallbackExecutor);
 	}
 
-	private <T> void subscribeToHttpCallbackEvents(final HttpCallback<T> httpCallback, RequestEventBus requestRequestEventBus) {
+	private <T> void subscribeToHttpCallbackEvents(final Executor callbackExecutor, final HttpCallback<T> httpCallback, RequestEventBus requestRequestEventBus) {
 		if (httpCallback == null) {
 			return;
 		}
@@ -272,7 +270,7 @@ public class NettyHttpClient implements HttpClient {
 		requestRequestEventBus.subscribePermanently(Event.onHttpResponseDone, new RunOnceCallback1<HttpResponse>() {
 			@Override
 			public void onFirstEvent(Event1 event, final HttpResponse httpResponse) {
-				httpClientCallbackExecutor.execute(new Runnable() {
+				callbackExecutor.execute(new Runnable() {
 					@Override
 					public void run() {
 						httpCallback.onCompleted(httpResponse);
@@ -284,7 +282,7 @@ public class NettyHttpClient implements HttpClient {
 		requestRequestEventBus.subscribePermanently(Event.ERROR, new RunOnceCallback2<HttpRequestContext, Throwable>() {
 			@Override
 			public void onFirstEvent(Event2 event, HttpRequestContext httpRequestContext, final Throwable throwable) {
-				httpClientCallbackExecutor.execute(new Runnable() {
+				callbackExecutor.execute(new Runnable() {
 					@Override
 					public void run() {
 						httpCallback.onError(throwable);
@@ -294,9 +292,9 @@ public class NettyHttpClient implements HttpClient {
 		});
 	}
 
-	public <T> Future<FutureResult<T>> dispatchError(final HttpCallback<T> httpCallback, final Throwable throwable) {
+	public <T> Future<FutureResult<T>> dispatchError(final Executor callbackExecutor, final HttpCallback<T> httpCallback, final Throwable throwable) {
 		if (httpCallback != null) {
-			httpClientCallbackExecutor.execute(new Runnable() {
+			callbackExecutor.execute(new Runnable() {
 				@Override
 				public void run() {
 					httpCallback.onError(throwable);

@@ -13,15 +13,18 @@ import com.king.platform.net.http.netty.NettyHttpClient;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpVersion;
 
+import java.util.concurrent.Executor;
+
 public class HttpClientRequestBuilderImpl extends HttpClientRequestHeaderBuilderImpl<HttpClientRequestBuilder> implements HttpClientRequestBuilder {
 
-	public HttpClientRequestBuilderImpl(NettyHttpClient nettyHttpClient, HttpVersion httpVersion, HttpMethod httpMethod, String uri, ConfMap confMap) {
-		super(HttpClientRequestBuilder.class, nettyHttpClient, httpVersion, httpMethod, uri, confMap);
+	public HttpClientRequestBuilderImpl(NettyHttpClient nettyHttpClient, HttpVersion httpVersion, HttpMethod httpMethod, String uri, ConfMap confMap, Executor
+		callbackExecutor) {
+		super(HttpClientRequestBuilder.class, nettyHttpClient, httpVersion, httpMethod, uri, confMap, callbackExecutor);
 	}
 
 	@Override
 	public BuiltClientRequest build() {
 		return new BuiltNettyClientRequest(nettyHttpClient, httpVersion, httpMethod, uri, defaultUserAgent, idleTimeoutMillis, totalRequestTimeoutMillis,
-			followRedirects, acceptCompressedResponse, keepAlive, null, null, null, queryParameters, headerParameters);
+			followRedirects, acceptCompressedResponse, keepAlive, null, null, null, queryParameters, headerParameters, callbackExecutor);
 	}
 }

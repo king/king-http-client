@@ -25,7 +25,7 @@ public class TestingHttpClientFactory {
 		HttpClient httpClient = new NettyHttpClientBuilder()
 			.setNioThreads(2)
 			.setHttpCallbackExecutorThreads(2)
-			.setHttpExecuteExecutorThreads(2).setRootEventBus(recordingEventBus)
+			.setRootEventBus(recordingEventBus)
 			.setChannelPool(new NoChannelPool())
 			.createHttpClient();
 

@@ -6,19 +6,10 @@
 package com.king.platform.net.http;
 
 
-import java.util.concurrent.Executor;
-
-public interface HttpClientSseRequestBuilder extends HttpClientRequestHeaderBuilder<HttpClientSseRequestBuilder>  {
-	/**
-	 * Provide a custom executor that will be used for the sse request.
-	 * For example an single threaded executor can be used to guarantee the order of the events.
-	 * @param executor the executor
-	 * @return the builder
-	 */
-	HttpClientSseRequestBuilder executingOn(Executor executor);
-
+public interface HttpClientSseRequestBuilder extends HttpClientRequestHeaderBuilder<HttpClientSseRequestBuilder> {
 	/**
 	 * Build the request
+	 *
 	 * @return the built request
 	 */
 	BuiltSseClientRequest build();
