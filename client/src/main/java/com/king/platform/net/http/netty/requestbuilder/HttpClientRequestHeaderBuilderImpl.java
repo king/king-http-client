@@ -10,6 +10,7 @@ import com.king.platform.net.http.ConfKeys;
 import com.king.platform.net.http.HttpClientRequestHeaderBuilder;
 import com.king.platform.net.http.netty.ConfMap;
 import com.king.platform.net.http.netty.HttpClientCaller;
+import com.king.platform.net.http.util.Param;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpVersion;
 

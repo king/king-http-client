@@ -5,9 +5,6 @@
 package com.king.platform.net.http.util;
 
 
-import com.king.platform.net.http.netty.requestbuilder.Param;
-import com.king.platform.net.http.util.UriQueryBuilder;
-
 import java.util.List;
 
 public class UriUtil {

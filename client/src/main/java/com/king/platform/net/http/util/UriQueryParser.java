@@ -9,6 +9,7 @@ package com.king.platform.net.http.util;
 import io.netty.handler.codec.http.QueryStringDecoder;
 
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -40,6 +41,16 @@ public class UriQueryParser {
 
 	public boolean hasKey(String key) {
 		return parameters.containsKey(key);
+	}
+
+	public List<Param> params() {
+		List<Param> params = new ArrayList<>();
+		for (Map.Entry<String, List<String>> entry : parameters.entrySet()) {
+			for (String value : entry.getValue()) {
+				params.add(new Param(entry.getKey(), value));
+			}
+		}
+		return params;
 	}
 
 }

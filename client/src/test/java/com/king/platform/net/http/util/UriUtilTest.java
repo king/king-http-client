@@ -5,8 +5,6 @@
 
 package com.king.platform.net.http.util;
 
-import com.king.platform.net.http.netty.requestbuilder.Param;
-import com.king.platform.net.http.util.UriUtil;
 import org.junit.Test;
 
 import java.util.ArrayList;

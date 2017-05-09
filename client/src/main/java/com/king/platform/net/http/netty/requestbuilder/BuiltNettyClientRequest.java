@@ -13,6 +13,7 @@ import com.king.platform.net.http.netty.ServerInfo;
 import com.king.platform.net.http.netty.eventbus.ExternalEventTrigger;
 import com.king.platform.net.http.netty.request.HttpBody;
 import com.king.platform.net.http.netty.request.NettyHttpClientRequest;
+import com.king.platform.net.http.util.Param;
 import com.king.platform.net.http.util.UriUtil;
 import io.netty.handler.codec.http.*;
 
