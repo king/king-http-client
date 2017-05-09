@@ -7,7 +7,7 @@ package com.king.platform.net.http.netty.request;
 
 
 import com.king.platform.net.http.netty.ServerInfo;
-import com.king.platform.net.http.netty.util.UriUtil;
+import com.king.platform.net.http.util.UriUtil;
 import io.netty.handler.codec.http.*;
 
 public class NettyHttpClientRequest<T> {

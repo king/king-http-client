@@ -1,13 +1,12 @@
-// Copyright (C) king.com Ltd 2015
+// Copyright (C) king.com Ltd 2016
 // https://github.com/king/king-http-client
 // Author: Magnus Gustafsson
 // License: Apache 2.0, https://raw.github.com/king/king-http-client/LICENSE-APACHE
-
-package com.king.platform.net.http.netty.util;
+package com.king.platform.net.http.util;
 
 
 import com.king.platform.net.http.netty.requestbuilder.Param;
-import com.king.platform.net.http.netty.requestbuilder.UriQueryBuilder;
+import com.king.platform.net.http.util.UriQueryBuilder;
 
 import java.util.List;
 
@@ -48,4 +47,6 @@ public class UriUtil {
 
 		return "/";
 	}
+
+
 }

@@ -7,6 +7,7 @@ package com.king.platform.net.http.netty.requestbuilder;
 
 import com.king.platform.net.http.netty.request.ByteArrayHttpBody;
 import com.king.platform.net.http.netty.request.HttpBody;
+import com.king.platform.net.http.netty.util.ParameterEncoder;
 
 import java.nio.charset.Charset;
 import java.util.ArrayList;

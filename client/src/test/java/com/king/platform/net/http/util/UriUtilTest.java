@@ -3,9 +3,10 @@
 // Author: Magnus Gustafsson
 // License: Apache 2.0, https://raw.github.com/king/king-http-client/LICENSE-APACHE
 
-package com.king.platform.net.http.netty.util;
+package com.king.platform.net.http.util;
 
 import com.king.platform.net.http.netty.requestbuilder.Param;
+import com.king.platform.net.http.util.UriUtil;
 import org.junit.Test;
 
 import java.util.ArrayList;

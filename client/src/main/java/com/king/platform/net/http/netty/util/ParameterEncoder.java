@@ -3,7 +3,7 @@
 // Author: Magnus Gustafsson
 // License: Apache 2.0, https://raw.github.com/king/king-http-client/LICENSE-APACHE
 
-package com.king.platform.net.http.netty.requestbuilder;
+package com.king.platform.net.http.netty.util;
 
 
 import java.io.UnsupportedEncodingException;
