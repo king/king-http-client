@@ -25,6 +25,13 @@ public interface SseClient {
 	 */
 	void subscribe(SseCallback callback);
 
+
+	/**
+	 * Subscribe to all events and info
+	 * @param callback the callback object
+	 */
+	void subscribe(SseExecutionCallback callback);
+
 	/**
 	 * Block until the server / client has closed the connection
 	 * @throws InterruptedException exception if the thread waiting has been interrupted
@@ -35,4 +42,6 @@ public interface SseClient {
 	 * Connect the client to the server. Can be used to either establish the initial connection, or reconnect a failed connection.
 	 */
 	void connect();
+
+
 }

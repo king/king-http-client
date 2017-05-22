@@ -316,6 +316,68 @@ public class HttpSse {
 	}
 
 	@Test
+	public void addCallbackToClient() throws Exception {
+		integrationServer.addServlet(new CountingEventSourceServlet(), "/testSSE");
+
+
+		SseClient sseClient = httpClient.createSSE("http://localhost:" + port + "/testSSE").build().build();
+		final AtomicInteger connected = new AtomicInteger();
+		final AtomicInteger disconnected = new AtomicInteger();
+		final AtomicInteger events = new AtomicInteger();
+
+		final CountDownLatch countDownLatch = new CountDownLatch(3);
+
+		SseExecutionCallback callback = new SseExecutionCallback() {
+			@Override
+			public void onConnect() {
+				System.out.println("On Connect");
+				connected.incrementAndGet();
+			}
+
+			@Override
+			public void onDisconnect() {
+				disconnected.incrementAndGet();
+			}
+
+			@Override
+			public void onError(Throwable throwable) {
+				fail(throwable.getMessage());
+			}
+
+			@Override
+			public void onEvent(String lastSentId, String event, String data) {
+				events.incrementAndGet();
+			}
+		};
+
+		sseClient.subscribe(callback);
+		sseClient.subscribe(callback);
+		sseClient.subscribe(callback);
+
+		sseClient.subscribe(new SseCallback() {
+			@Override
+			public void onEvent(String lastSentId, String event, String data) {
+				countDownLatch.countDown();
+			}
+		});
+
+		sseClient.connect();
+
+		countDownLatch.await();
+
+		sseClient.close();
+
+		sseClient.awaitClose();
+
+		assertEquals(3, connected.get());
+		assertEquals(3, disconnected.get());
+		assertEquals(9, events.get());
+
+
+
+	}
+
+	@Test
 	public void addEventTypeSubscriptions() throws Exception {
 
 		List<EventData> events = new ArrayList<>();

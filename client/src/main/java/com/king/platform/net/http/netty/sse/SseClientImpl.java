@@ -39,21 +39,24 @@ public class SseClientImpl implements SseClient {
 
 	private CountDownLatch countDownLatch;
 
-	public SseClientImpl(SseExecutionCallback providedSseExecutionCallback, BuiltNettyClientRequest builtNettyClientRequest, Executor httpClientCallbackExecutor) {
-		if (providedSseExecutionCallback == null) {
-			providedSseExecutionCallback = new EmptySseExecutionCallback();
+	private DelegatingSseExecutionCallback delegatingSseExecutionCallback;
+
+	public SseClientImpl(SseExecutionCallback callback, BuiltNettyClientRequest builtNettyClientRequest, Executor httpClientCallbackExecutor) {
+
+		delegatingSseExecutionCallback = new DelegatingSseExecutionCallback();
+		if (callback != null) {
+			delegatingSseExecutionCallback.addCallback(callback);
 		}
 
-		providedSseExecutionCallback = new WrappedSseExecutionCallback(providedSseExecutionCallback);
 
 		this.builtNettyClientRequest = builtNettyClientRequest;
 
 		externalEventTrigger = new ExternalEventTrigger();
 
-		httpCallback = new DelegatingHttpCallback(providedSseExecutionCallback);
+		httpCallback = new DelegatingHttpCallback(delegatingSseExecutionCallback);
 		responseBodyConsumer = new VoidResponseConsumer();
-		serverEventDecoder = new ServerEventDecoder(providedSseExecutionCallback, httpClientCallbackExecutor);
-		nioCallback = new DelegatingNioHttpCallback(serverEventDecoder, providedSseExecutionCallback, httpClientCallbackExecutor);
+		serverEventDecoder = new ServerEventDecoder(delegatingSseExecutionCallback, httpClientCallbackExecutor);
+		nioCallback = new DelegatingNioHttpCallback(serverEventDecoder, delegatingSseExecutionCallback, httpClientCallbackExecutor);
 	}
 
 
@@ -81,6 +84,11 @@ public class SseClientImpl implements SseClient {
 	}
 
 	@Override
+	public void subscribe(SseExecutionCallback callback) {
+		delegatingSseExecutionCallback.addCallback(callback);
+	}
+
+	@Override
 	public void awaitClose() throws  InterruptedException {
 		countDownLatch.await();
 	}
@@ -103,31 +111,38 @@ public class SseClientImpl implements SseClient {
 		builtNettyClientRequest.execute(httpCallback, responseBodyConsumer, nioCallback, externalEventTrigger);
 	}
 
-	private class WrappedSseExecutionCallback implements SseExecutionCallback {
-		private final SseExecutionCallback sseExecutionCallback;
+	private class DelegatingSseExecutionCallback implements SseExecutionCallback {
+		private final CopyOnWriteArrayList<SseExecutionCallback> callbacks = new CopyOnWriteArrayList<>();
 
-		private WrappedSseExecutionCallback(SseExecutionCallback sseExecutionCallback) {
-			this.sseExecutionCallback = sseExecutionCallback;
+		private DelegatingSseExecutionCallback() {
 		}
 
 		@Override
 		public void onConnect() {
-			sseExecutionCallback.onConnect();
+			for (SseExecutionCallback callback : callbacks) {
+				callback.onConnect();
+			}
 		}
 
 		@Override
 		public void onDisconnect() {
-			sseExecutionCallback.onDisconnect();
+			for (SseExecutionCallback callback : callbacks) {
+				callback.onDisconnect();
+			}
 		}
 
 		@Override
 		public void onError(Throwable throwable) {
-			sseExecutionCallback.onError(throwable);
+			for (SseExecutionCallback callback : callbacks) {
+				callback.onError(throwable);
+			}
 		}
 
 		@Override
 		public void onEvent(String lastSentId, String event, String data) {
-			sseExecutionCallback.onEvent(lastSentId, event, data);
+			for (SseExecutionCallback callback : callbacks) {
+				callback.onEvent(lastSentId, event, data);
+			}
 
 			invokeCallbacks(lastSentId, event, data, dataCallback);
 
@@ -145,6 +160,9 @@ public class SseClientImpl implements SseClient {
 			}
 		}
 
+		private void addCallback(SseExecutionCallback callback) {
+			callbacks.add(callback);
+		}
 	}
 
 	private class DelegatingNioHttpCallback implements NioCallback {
