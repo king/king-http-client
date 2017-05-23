@@ -12,7 +12,7 @@ public interface BuiltSseClientRequest {
 	 * @param sseExecutionCallback the callback object
 	 * @return the built SseClient
 	 */
-	SseClient execute(SseExecutionCallback sseExecutionCallback);
+	SseClient execute(SseClientCallback sseExecutionCallback);
 
 	/**
 	 * Build the SseClient and execute it against the server
@@ -20,8 +20,6 @@ public interface BuiltSseClientRequest {
 	 */
 	SseClient execute();
 
-
-	SseClient build(SseExecutionCallback sseExecutionCallback);
 
 	SseClient build();
 

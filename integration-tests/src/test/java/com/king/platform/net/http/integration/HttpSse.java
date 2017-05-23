@@ -58,7 +58,7 @@ public class HttpSse {
 
 		final AtomicReference<String> output = new AtomicReference<>();
 
-		SseClient sseClient = httpClient.createSSE("http://localhost:" + port + "/testSSE").build().execute(new SseExecutionCallback() {
+		SseClient sseClient = httpClient.createSSE("http://localhost:" + port + "/testSSE").build().execute(new SseClientCallback() {
 			String buffer = "";
 
 			@Override
@@ -102,7 +102,7 @@ public class HttpSse {
 
 		final AtomicReference<String> errorMessage = new AtomicReference<>();
 
-		SseClient sseClient = httpClient.createSSE("http://localhost:" + port + "/test500").build().execute(new SseExecutionCallback() {
+		SseClient sseClient = httpClient.createSSE("http://localhost:" + port + "/test500").build().execute(new SseClientCallback() {
 			@Override
 			public void onConnect() {
 			}
@@ -135,7 +135,7 @@ public class HttpSse {
 		final Set<String> threadNames = new HashSet<>();
 
 		SseClient sseClient = httpClient.createSSE("http://localhost:" + port + "/sse")
-			.executingOn(Executors.newFixedThreadPool(1)).build().execute(new SseExecutionCallback() {
+			.executingOn(Executors.newFixedThreadPool(1)).build().execute(new SseClientCallback() {
 
 			@Override
 			public void onConnect() {
@@ -186,7 +186,7 @@ public class HttpSse {
 		final AtomicInteger onConnectCounter = new AtomicInteger();
 		final AtomicInteger onDisconnectCounter = new AtomicInteger();
 
-		SseClient sseClient = httpClient.createSSE("http://localhost:" + port + "/sse1").followRedirects(true).build().execute(new SseExecutionCallback() {
+		SseClient sseClient = httpClient.createSSE("http://localhost:" + port + "/sse1").followRedirects(true).build().execute(new SseClientCallback() {
 
 			@Override
 			public void onConnect() {
@@ -234,7 +234,7 @@ public class HttpSse {
 		final AtomicBoolean onConnect = new AtomicBoolean();
 		final AtomicBoolean onDisconnect = new AtomicBoolean();
 
-		SseClient sseClient = httpClient.createSSE("http://localhost:" + port + "/testSSE").build().execute(new SseExecutionCallback() {
+		SseClient sseClient = httpClient.createSSE("http://localhost:" + port + "/testSSE").build().execute(new SseClientCallback() {
 
 			@Override
 			public void onConnect() {
@@ -280,7 +280,7 @@ public class HttpSse {
 
 		final AtomicReference<String> output = new AtomicReference<>();
 
-		SseClient sseClient = httpClient.createSSE("http://localhost:" + port + "/testSSE").build().execute(new SseExecutionCallback() {
+		SseClient sseClient = httpClient.createSSE("http://localhost:" + port + "/testSSE").build().execute(new SseClientCallback() {
 			String buffer = "";
 
 			@Override
@@ -316,6 +316,85 @@ public class HttpSse {
 	}
 
 	@Test
+	public void sse404() throws Exception {
+		SseClient sseClient = httpClient.createSSE("http://localhost:" + port + "/noSSE").build().build();
+
+		final AtomicBoolean exception = new AtomicBoolean(false);
+		final AtomicBoolean connected = new AtomicBoolean(false);
+		final AtomicBoolean disconnected = new AtomicBoolean(false);
+
+		sseClient.addCallback(new SseClientCallback() {
+			@Override
+			public void onConnect() {
+				connected.set(true);
+			}
+
+			@Override
+			public void onDisconnect() {
+				disconnected.set(true);
+			}
+
+			@Override
+			public void onError(Throwable throwable) {
+				exception.set(true);
+			}
+
+			@Override
+			public void onEvent(String lastSentId, String event, String data) {
+
+			}
+		});
+
+
+
+		sseClient.connect();
+		sseClient.awaitClose();
+
+		assertTrue(exception.get());
+		assertFalse(connected.get());
+		assertFalse(disconnected.get());
+	}
+
+	@Test
+	public void sseNoServer() throws Exception {
+		SseClient sseClient = httpClient.createSSE("http://no-server:" + port + "/noSSE").build().build();
+
+		final AtomicBoolean exception = new AtomicBoolean(false);
+		final AtomicBoolean connected = new AtomicBoolean(false);
+		final AtomicBoolean disconnected = new AtomicBoolean(false);
+
+		sseClient.addCallback(new SseClientCallback() {
+			@Override
+			public void onConnect() {
+				connected.set(true);
+			}
+
+			@Override
+			public void onDisconnect() {
+				disconnected.set(true);
+			}
+
+			@Override
+			public void onError(Throwable throwable) {
+				exception.set(true);
+			}
+
+			@Override
+			public void onEvent(String lastSentId, String event, String data) {
+
+			}
+		});
+
+		sseClient.connect();
+		sseClient.awaitClose();
+
+		assertTrue(exception.get());
+		assertFalse(connected.get());
+		assertFalse(disconnected.get());
+	}
+
+
+	@Test
 	public void addCallbackToClient() throws Exception {
 		integrationServer.addServlet(new CountingEventSourceServlet(), "/testSSE");
 
@@ -327,10 +406,9 @@ public class HttpSse {
 
 		final CountDownLatch countDownLatch = new CountDownLatch(3);
 
-		SseExecutionCallback callback = new SseExecutionCallback() {
+		SseClientCallback callback = new SseClientCallback() {
 			@Override
 			public void onConnect() {
-				System.out.println("On Connect");
 				connected.incrementAndGet();
 			}
 
@@ -350,14 +428,30 @@ public class HttpSse {
 			}
 		};
 
-		sseClient.subscribe(callback);
-		sseClient.subscribe(callback);
-		sseClient.subscribe(callback);
+		sseClient.addCallback(callback);
+		sseClient.addCallback(callback);
+		sseClient.addCallback(callback);
 
-		sseClient.subscribe(new SseCallback() {
+		sseClient.onEvent(new EventCallback() {
 			@Override
 			public void onEvent(String lastSentId, String event, String data) {
 				countDownLatch.countDown();
+			}
+		});
+
+		final AtomicBoolean connectedCallback = new AtomicBoolean();
+		sseClient.onConnect(new SseClient.ConnectCallback() {
+			@Override
+			public void onConnect() {
+				connectedCallback.set(true);
+			}
+		});
+
+		final AtomicBoolean disconnectedCallback = new AtomicBoolean();
+		sseClient.onDisconnect(new SseClient.DisconnectCallback() {
+			@Override
+			public void onDisconnect() {
+				disconnectedCallback.set(true);
 			}
 		});
 
@@ -373,7 +467,8 @@ public class HttpSse {
 		assertEquals(3, disconnected.get());
 		assertEquals(9, events.get());
 
-
+		assertTrue(connectedCallback.get());
+		assertTrue(disconnectedCallback.get());
 
 	}
 
@@ -394,16 +489,16 @@ public class HttpSse {
 
 		final List<EventData> receivedEvents = new ArrayList<>();
 
-		SseCallback callback = new SseCallback() {
+		EventCallback callback = new EventCallback() {
 			@Override
 			public void onEvent(String lastSentId, String event, String data) {
 				receivedEvents.add(new EventData(event, data));
 			}
 		};
 
-		sseClient.subscribe("event1", callback);
-		sseClient.subscribe("event2", callback);
-		sseClient.subscribe("event3", callback);
+		sseClient.onEvent("event1", callback);
+		sseClient.onEvent("event2", callback);
+		sseClient.onEvent("event3", callback);
 
 		sseClient.awaitClose();
 
@@ -427,7 +522,7 @@ public class HttpSse {
 		SseClient sseClient = httpClient.createSSE("http://localhost:" + port + "/testSSE").build().execute();
 
 		final List<EventData> receivedEvents1 = new ArrayList<>();
-		sseClient.subscribe("event1", new SseCallback() {
+		sseClient.onEvent("event1", new EventCallback() {
 			@Override
 			public void onEvent(String lastSentId, String event, String data) {
 				receivedEvents1.add(new EventData(event, data));
@@ -437,7 +532,7 @@ public class HttpSse {
 
 
 		final List<EventData> receivedEvents2 = new ArrayList<>();
-		sseClient.subscribe("event1", new SseCallback() {
+		sseClient.onEvent("event1", new EventCallback() {
 			@Override
 			public void onEvent(String lastSentId, String event, String data) {
 				receivedEvents2.add(new EventData(event, data));
@@ -462,7 +557,7 @@ public class HttpSse {
 		SseClient sseClient = httpClient.createSSE("http://localhost:" + port + "/testSSE").build().execute();
 		final AtomicReference<String> buffer = new AtomicReference<>("");
 
-		sseClient.subscribe(new SseCallback() {
+		sseClient.onEvent(new EventCallback() {
 			@Override
 			public void onEvent(String lastSentId, String event, String data) {
 				buffer.set(buffer.get() + data);

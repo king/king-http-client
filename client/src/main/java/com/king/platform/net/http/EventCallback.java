@@ -6,7 +6,7 @@
 package com.king.platform.net.http;
 
 
-public interface SseCallback {
+public interface EventCallback {
 	/**
 	 * The callback for when the client has recived an server side event
 	 *

@@ -9,7 +9,7 @@ package com.king.platform.net.http.netty.requestbuilder;
 import com.king.platform.net.http.BuiltSseClientRequest;
 import com.king.platform.net.http.HttpClientSseRequestBuilder;
 import com.king.platform.net.http.SseClient;
-import com.king.platform.net.http.SseExecutionCallback;
+import com.king.platform.net.http.SseClientCallback;
 import com.king.platform.net.http.netty.ConfMap;
 import com.king.platform.net.http.netty.HttpClientCaller;
 import com.king.platform.net.http.netty.sse.SseClientImpl;
@@ -36,7 +36,7 @@ public class HttpClientSseRequestBuilderImpl extends HttpClientRequestHeaderBuil
 
 		return new BuiltSseClientRequest() {
 			@Override
-			public SseClient execute(SseExecutionCallback providedSseExecutionCallback) {
+			public SseClient execute(SseClientCallback providedSseExecutionCallback) {
 				SseClientImpl sseClient = new SseClientImpl(providedSseExecutionCallback, builtNettyClientRequest, callbackExecutor);
 				sseClient.connect();
 				return sseClient;
@@ -47,11 +47,6 @@ public class HttpClientSseRequestBuilderImpl extends HttpClientRequestHeaderBuil
 				SseClientImpl sseClient = new SseClientImpl(null, builtNettyClientRequest, callbackExecutor);
 				sseClient.connect();
 				return sseClient;
-			}
-
-			@Override
-			public SseClient build(SseExecutionCallback sseExecutionCallback) {
-				return new SseClientImpl(sseExecutionCallback, builtNettyClientRequest, callbackExecutor);
 			}
 
 			@Override

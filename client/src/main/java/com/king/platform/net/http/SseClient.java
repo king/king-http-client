@@ -8,29 +8,48 @@ package com.king.platform.net.http;
 
 public interface SseClient {
 	/**
-	 * Close the current connection to the server
-	 */
-	void close();
-
-	/**
 	 * Subscribe to an specific event
 	 * @param eventName the event name
 	 * @param callback the callback object
 	 */
-	void subscribe(String eventName, SseCallback callback);
+	void onEvent(String eventName, EventCallback callback);
 
 	/**
 	 * Subscribe to all events
 	 * @param callback the callback object
 	 */
-	void subscribe(SseCallback callback);
+	void onEvent(EventCallback callback);
 
 
 	/**
-	 * Subscribe to all events and info
+	 * Register a sse client callback
 	 * @param callback the callback object
 	 */
-	void subscribe(SseExecutionCallback callback);
+	void addCallback(SseClientCallback callback);
+
+
+	/**
+	 * Register a disconnect callback
+	 * @param disconnectCallback the callback object
+	 */
+	void onDisconnect(DisconnectCallback disconnectCallback);
+
+	/**
+	 * Register a connect callback
+	 * @param connectCallback the callback object
+	 */
+	void onConnect(ConnectCallback connectCallback);
+
+
+	/**
+	 * Connect the client to the server. Can be used to either establish the initial connection, or reconnect a failed connection.
+	 */
+	void connect();
+
+	/**
+	 * Close the current connection to the server
+	 */
+	void close();
 
 	/**
 	 * Block until the server / client has closed the connection
@@ -38,10 +57,13 @@ public interface SseClient {
 	 */
 	void awaitClose() throws InterruptedException;
 
-	/**
-	 * Connect the client to the server. Can be used to either establish the initial connection, or reconnect a failed connection.
-	 */
-	void connect();
 
+	interface DisconnectCallback {
+		void onDisconnect();
+	}
+
+	interface ConnectCallback {
+		void onConnect();
+	}
 
 }

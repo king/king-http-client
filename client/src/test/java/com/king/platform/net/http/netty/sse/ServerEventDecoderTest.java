@@ -5,7 +5,7 @@
 
 package com.king.platform.net.http.netty.sse;
 
-import com.king.platform.net.http.SseExecutionCallback;
+import com.king.platform.net.http.SseClientCallback;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import org.junit.Before;
@@ -37,7 +37,7 @@ public class ServerEventDecoderTest {
 	@Test
 	public void simpleDataEvent() throws Exception {
 
-		ServerEventDecoder serverEventDecoder = new ServerEventDecoder(sseCallback, executor);
+		ServerEventDecoder serverEventDecoder = new ServerEventDecoder(sseCallback);
 		serverEventDecoder.onReceivedContentPart(buffer("data: test\n\n"));
 
 		assertEquals(1, sseCallback.count);
@@ -51,7 +51,7 @@ public class ServerEventDecoderTest {
 
 	@Test
 	public void endOfLines() throws Exception {
-		ServerEventDecoder serverEventDecoder = new ServerEventDecoder(sseCallback, executor);
+		ServerEventDecoder serverEventDecoder = new ServerEventDecoder(sseCallback);
 		serverEventDecoder.onReceivedContentPart(buffer("data: test1\n\n"));
 		serverEventDecoder.onReceivedContentPart(buffer("data: test2\r\r"));
 		serverEventDecoder.onReceivedContentPart(buffer("data: test3\r\n\r\n"));
@@ -73,7 +73,7 @@ public class ServerEventDecoderTest {
 	@Test
 	public void twoDataEvents() throws Exception {
 
-		ServerEventDecoder serverEventDecoder = new ServerEventDecoder(sseCallback, executor);
+		ServerEventDecoder serverEventDecoder = new ServerEventDecoder(sseCallback);
 		serverEventDecoder.onReceivedContentPart(buffer("data: test\n\n"));
 		serverEventDecoder.onReceivedContentPart(buffer("data: test\n\n"));
 
@@ -95,7 +95,7 @@ public class ServerEventDecoderTest {
 	@Test
 	public void differentFormattedDataEvents() throws Exception {
 
-		ServerEventDecoder serverEventDecoder = new ServerEventDecoder(sseCallback, executor);
+		ServerEventDecoder serverEventDecoder = new ServerEventDecoder(sseCallback);
 		serverEventDecoder.onReceivedContentPart(buffer("data:test1\n\n"));
 		serverEventDecoder.onReceivedContentPart(buffer("data :test2\n\n"));
 		serverEventDecoder.onReceivedContentPart(buffer("data: test3\n\n"));
@@ -120,7 +120,7 @@ public class ServerEventDecoderTest {
 
 	@Test
 	public void emptyLinesShouldNotTriggerEvents() throws Exception {
-		ServerEventDecoder serverEventDecoder = new ServerEventDecoder(sseCallback, executor);
+		ServerEventDecoder serverEventDecoder = new ServerEventDecoder(sseCallback);
 		serverEventDecoder.onReceivedContentPart(buffer("\n"));
 		serverEventDecoder.onReceivedContentPart(buffer("\n"));
 		serverEventDecoder.onReceivedContentPart(buffer("\n"));
@@ -133,7 +133,7 @@ public class ServerEventDecoderTest {
 
 	@Test
 	public void partialEmitOfDataEvents() throws Exception {
-		ServerEventDecoder serverEventDecoder = new ServerEventDecoder(sseCallback, executor);
+		ServerEventDecoder serverEventDecoder = new ServerEventDecoder(sseCallback);
 		serverEventDecoder.onReceivedContentPart(buffer("da"));
 		serverEventDecoder.onReceivedContentPart(buffer("ta"));
 		serverEventDecoder.onReceivedContentPart(buffer(":"));
@@ -155,7 +155,7 @@ public class ServerEventDecoderTest {
 
 	@Test
 	public void eventName() throws Exception {
-		ServerEventDecoder serverEventDecoder = new ServerEventDecoder(sseCallback, executor);
+		ServerEventDecoder serverEventDecoder = new ServerEventDecoder(sseCallback);
 		serverEventDecoder.onReceivedContentPart(buffer("event: testEvent\n"));
 		serverEventDecoder.onReceivedContentPart(buffer("data: test\n"));
 		serverEventDecoder.onReceivedContentPart(buffer("\n"));
@@ -171,7 +171,7 @@ public class ServerEventDecoderTest {
 
 	@Test
 	public void id() throws Exception {
-		ServerEventDecoder serverEventDecoder = new ServerEventDecoder(sseCallback, executor);
+		ServerEventDecoder serverEventDecoder = new ServerEventDecoder(sseCallback);
 		serverEventDecoder.onReceivedContentPart(buffer("id: 1\n"));
 		serverEventDecoder.onReceivedContentPart(buffer("data: test\n\n"));
 
@@ -185,7 +185,7 @@ public class ServerEventDecoderTest {
 
 	@Test
 	public void lastSentIdIsReused() throws Exception {
-		ServerEventDecoder serverEventDecoder = new ServerEventDecoder(sseCallback, executor);
+		ServerEventDecoder serverEventDecoder = new ServerEventDecoder(sseCallback);
 		serverEventDecoder.onReceivedContentPart(buffer("id: 1\n"));
 		serverEventDecoder.onReceivedContentPart(buffer("data: test1\n\n"));
 		serverEventDecoder.onReceivedContentPart(buffer("data: test2\n\n"));
@@ -217,7 +217,7 @@ public class ServerEventDecoderTest {
 
 	@Test
 	public void eventIdData() throws Exception {
-		ServerEventDecoder serverEventDecoder = new ServerEventDecoder(sseCallback, executor);
+		ServerEventDecoder serverEventDecoder = new ServerEventDecoder(sseCallback);
 
 		serverEventDecoder.onReceivedContentPart(buffer("event: testEvent1\ndata: test1\nid: 1\n\n"));
 		serverEventDecoder.onReceivedContentPart(buffer("event: testEvent2\ndata: test2\nid: 2\n\n"));
@@ -256,7 +256,7 @@ public class ServerEventDecoderTest {
 
 
 
-	private static class CapturingSseExecutionCallback implements SseExecutionCallback {
+	private static class CapturingSseExecutionCallback implements SseClientCallback {
 		private Queue<Event> events = new LinkedList<>();
 		int count;
 

@@ -10,42 +10,33 @@ import com.king.platform.net.http.*;
 import com.king.platform.net.http.netty.eventbus.Event;
 import com.king.platform.net.http.netty.eventbus.ExternalEventTrigger;
 import com.king.platform.net.http.netty.requestbuilder.BuiltNettyClientRequest;
-import com.king.platform.net.http.netty.response.HttpRedirector;
-import io.netty.buffer.ByteBuf;
-import io.netty.handler.codec.http.HttpHeaderNames;
-import io.netty.handler.codec.http.HttpHeaders;
-import io.netty.handler.codec.http.HttpResponseStatus;
 
-import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class SseClientImpl implements SseClient {
 	private final ExternalEventTrigger externalEventTrigger;
 	private final BuiltNettyClientRequest builtNettyClientRequest;
-	private final DelegatingHttpCallback httpCallback;
+
 	private final VoidResponseConsumer responseBodyConsumer;
 	private final ServerEventDecoder serverEventDecoder;
-	private final DelegatingNioHttpCallback nioCallback;
+	private final SseNioHttpCallback nioCallback;
 
 	private AtomicReference<State> state = new AtomicReference<>(State.DISCONNECTED);
 
-	private final ConcurrentHashMap<String, List<SseCallback>> eventCallbackMap = new ConcurrentHashMap<>();
-	private List<SseCallback> dataCallback = new CopyOnWriteArrayList<>();
 
-	private CountDownLatch countDownLatch;
+	private AwaitLatch awaitLatch = new AwaitLatch();
 
-	private DelegatingSseExecutionCallback delegatingSseExecutionCallback;
+	private DelegatingAsyncSseClientCallback delegatingAsyncSseClientCallback;
+	private final Executor httpClientCallbackExecutor;
 
-	public SseClientImpl(SseExecutionCallback callback, BuiltNettyClientRequest builtNettyClientRequest, Executor httpClientCallbackExecutor) {
+	public SseClientImpl(SseClientCallback callback, BuiltNettyClientRequest builtNettyClientRequest, Executor httpClientCallbackExecutor) {
 
-		delegatingSseExecutionCallback = new DelegatingSseExecutionCallback();
+		delegatingAsyncSseClientCallback = new DelegatingAsyncSseClientCallback(httpClientCallbackExecutor);
+		this.httpClientCallbackExecutor = httpClientCallbackExecutor;
 		if (callback != null) {
-			delegatingSseExecutionCallback.addCallback(callback);
+			delegatingAsyncSseClientCallback.addSseClientCallbacks(callback);
 		}
 
 
@@ -53,46 +44,36 @@ public class SseClientImpl implements SseClient {
 
 		externalEventTrigger = new ExternalEventTrigger();
 
-		httpCallback = new DelegatingHttpCallback(delegatingSseExecutionCallback);
 		responseBodyConsumer = new VoidResponseConsumer();
-		serverEventDecoder = new ServerEventDecoder(delegatingSseExecutionCallback, httpClientCallbackExecutor);
-		nioCallback = new DelegatingNioHttpCallback(serverEventDecoder, delegatingSseExecutionCallback, httpClientCallbackExecutor);
-	}
-
-
-	@Override
-	public void close() {
-		externalEventTrigger.trigger(Event.CLOSE, null);
+		serverEventDecoder = new ServerEventDecoder(delegatingAsyncSseClientCallback);
+		nioCallback = new SseNioHttpCallback(serverEventDecoder, delegatingAsyncSseClientCallback, state, builtNettyClientRequest.isFollowRedirects(), awaitLatch);
 	}
 
 	@Override
-	public void subscribe(String eventName, SseCallback callback) {
-		List<SseCallback> sseCallbacks = eventCallbackMap.get(eventName);
-		if (sseCallbacks == null) {
-			sseCallbacks = new CopyOnWriteArrayList<>();
-			List<SseCallback> prevValue = eventCallbackMap.putIfAbsent(eventName, sseCallbacks);
-			if (prevValue != null) {
-				sseCallbacks = prevValue;
-			}
-		}
-		sseCallbacks.add(callback);
+	public void onEvent(String eventName, EventCallback callback) {
+		delegatingAsyncSseClientCallback.addEventCallback(eventName, callback);
 	}
 
 	@Override
-	public void subscribe(SseCallback callback) {
-		dataCallback.add(callback);
+	public void onEvent(EventCallback callback) {
+		delegatingAsyncSseClientCallback.addEventCallback(callback);
+
 	}
 
 	@Override
-	public void subscribe(SseExecutionCallback callback) {
-		delegatingSseExecutionCallback.addCallback(callback);
+	public void addCallback(SseClientCallback callback) {
+		delegatingAsyncSseClientCallback.addSseClientCallbacks(callback);
 	}
 
 	@Override
-	public void awaitClose() throws  InterruptedException {
-		countDownLatch.await();
+	public void onDisconnect(DisconnectCallback disconnectCallback) {
+		delegatingAsyncSseClientCallback.addCloseCallback(disconnectCallback);
 	}
 
+	@Override
+	public void onConnect(ConnectCallback connectCallback) {
+		delegatingAsyncSseClientCallback.addConnectCallback(connectCallback);
+	}
 
 	@Override
 	public void connect() {
@@ -100,206 +81,28 @@ public class SseClientImpl implements SseClient {
 			throw new RuntimeException("sse client is not in disconnected state");
 		}
 
-		if (countDownLatch != null) {
-			countDownLatch.countDown();
-		}
-
-		countDownLatch = new CountDownLatch(1);
-
 		serverEventDecoder.reset();
 
-		builtNettyClientRequest.execute(httpCallback, responseBodyConsumer, nioCallback, externalEventTrigger);
+		builtNettyClientRequest.execute(null, responseBodyConsumer, nioCallback, externalEventTrigger);
 	}
 
-	private class DelegatingSseExecutionCallback implements SseExecutionCallback {
-		private final CopyOnWriteArrayList<SseExecutionCallback> callbacks = new CopyOnWriteArrayList<>();
-
-		private DelegatingSseExecutionCallback() {
-		}
-
-		@Override
-		public void onConnect() {
-			for (SseExecutionCallback callback : callbacks) {
-				callback.onConnect();
-			}
-		}
-
-		@Override
-		public void onDisconnect() {
-			for (SseExecutionCallback callback : callbacks) {
-				callback.onDisconnect();
-			}
-		}
-
-		@Override
-		public void onError(Throwable throwable) {
-			for (SseExecutionCallback callback : callbacks) {
-				callback.onError(throwable);
-			}
-		}
-
-		@Override
-		public void onEvent(String lastSentId, String event, String data) {
-			for (SseExecutionCallback callback : callbacks) {
-				callback.onEvent(lastSentId, event, data);
-			}
-
-			invokeCallbacks(lastSentId, event, data, dataCallback);
-
-			if (event != null) {
-				List<SseCallback> sseCallbacks = eventCallbackMap.get(event);
-				invokeCallbacks(lastSentId, event, data, sseCallbacks);
-			}
-		}
-
-		private void invokeCallbacks(String lastSentId, String event, String data, List<SseCallback> sseCallbacks) {
-			if (sseCallbacks != null) {
-				for (SseCallback sseCallback : sseCallbacks) {
-					sseCallback.onEvent(lastSentId, event, data);
-				}
-			}
-		}
-
-		private void addCallback(SseExecutionCallback callback) {
-			callbacks.add(callback);
-		}
+	@Override
+	public void close() {
+		externalEventTrigger.trigger(Event.CLOSE, null);
 	}
 
-	private class DelegatingNioHttpCallback implements NioCallback {
+	@Override
+	public void awaitClose() throws InterruptedException {
+		awaitLatch.awaitClose();
 
-		private final ServerEventDecoder serverEventDecoder;
-		private final SseExecutionCallback providedSseExecutionCallback;
-		private final Executor httpClientCallbackExecutor;
-		private final AtomicBoolean isRedirecting = new AtomicBoolean();
-		private final AtomicReference<HttpResponseStatus> httpResponseStatus = new AtomicReference<>();
-
-		public DelegatingNioHttpCallback(ServerEventDecoder serverEventDecoder, SseExecutionCallback providedSseExecutionCallback, Executor httpClientCallbackExecutor) {
-			this.serverEventDecoder = serverEventDecoder;
-			this.providedSseExecutionCallback = providedSseExecutionCallback;
-			this.httpClientCallbackExecutor = httpClientCallbackExecutor;
-		}
-
-		@Override
-		public void onConnecting() {
-			isRedirecting.set(false);
-			httpResponseStatus.set(null);
-		}
-
-		@Override
-		public void onConnected() {
-		}
-
-		@Override
-		public void onWroteHeaders() {
-		}
-
-		@Override
-		public void onWroteContentProgressed(long progress, long total) {
-
-		}
-
-		@Override
-		public void onWroteContentCompleted() {
-
-		}
-
-		@Override
-		public void onReceivedStatus(final HttpResponseStatus httpResponseStatus) {
-			if (HttpRedirector.isRedirectResponse(httpResponseStatus) && builtNettyClientRequest.isFollowRedirects()) {
-				isRedirecting.set(true);
-			} else {
-				this.httpResponseStatus.set(httpResponseStatus);
+		final CountDownLatch countDownLatch = new CountDownLatch(1);
+		httpClientCallbackExecutor.execute(new Runnable() { //we post a job on the executor to make sure we have flused all pending events before we return the awaitClose
+			@Override
+			public void run() {
+				countDownLatch.countDown();
 			}
-
-		}
-
-		@Override
-		public void onReceivedHeaders(HttpHeaders httpHeaders) {
-			if (isRedirecting.get()) {
-				return;
-			}
-
-			final int httpStatus = httpResponseStatus.get().code();
-
-
-			if (httpStatus != 200) {
-				httpClientCallbackExecutor.execute(new Runnable() {
-					@Override
-					public void run() {
-						providedSseExecutionCallback.onError(new KingHttpException("Invalid http status "+httpStatus + " reason was " + httpResponseStatus.get().reasonPhrase()));
-					}
-				});
-				return;
-			}
-
-
-			final String contentType = httpHeaders.get(HttpHeaderNames.CONTENT_TYPE, "null");
-			if (!contentType.toLowerCase().contains("text/event-stream")) {
-				httpClientCallbackExecutor.execute(new Runnable() {
-					@Override
-					public void run() {
-						providedSseExecutionCallback.onError(new KingHttpException("Invalid content-type:" + contentType));
-					}
-				});
-				return;
-			}
-
-
-			state.set(State.CONNECTED);
-			httpClientCallbackExecutor.execute(new Runnable() {
-				@Override
-				public void run() {
-					providedSseExecutionCallback.onConnect();
-				}
-			});
-		}
-
-		@Override
-		public void onReceivedContentPart(int len, ByteBuf buffer) {
-			if (state.get() == State.CONNECTED) {
-				serverEventDecoder.onReceivedContentPart(buffer);
-			}
-		}
-
-		@Override
-		public void onReceivedCompleted(HttpResponseStatus httpResponseStatus, HttpHeaders httpHeaders) {
-
-		}
-
-		@Override
-		public void onError(Throwable throwable) {
-		}
-	}
-
-
-	private class DelegatingHttpCallback implements HttpCallback<Void> {
-		private final SseExecutionCallback sseExecutionCallback;
-
-		DelegatingHttpCallback(SseExecutionCallback sseExecutionCallback) {
-			this.sseExecutionCallback = sseExecutionCallback;
-		}
-
-		@Override
-		public void onCompleted(HttpResponse<Void> httpResponse) {
-			sseExecutionCallback.onDisconnect();
-			state.set(State.DISCONNECTED);
-			countDownLatch.countDown();
-
-		}
-
-		@Override
-		public void onError(Throwable throwable) {
-			sseExecutionCallback.onError(throwable);
-			state.set(State.DISCONNECTED);
-			countDownLatch.countDown();
-		}
-	}
-
-
-	private enum State {
-		CONNECTED,
-		DISCONNECTED,
-		RECONNECTING,
+		});
+		countDownLatch.await();
 	}
 
 }

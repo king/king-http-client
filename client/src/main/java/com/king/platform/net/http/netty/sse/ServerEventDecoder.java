@@ -6,15 +6,14 @@
 package com.king.platform.net.http.netty.sse;
 
 
-import com.king.platform.net.http.SseExecutionCallback;
+import com.king.platform.net.http.KingHttpException;
+import com.king.platform.net.http.SseClientCallback;
 import io.netty.buffer.ByteBuf;
 
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.Executor;
 
 public class ServerEventDecoder {
-	private final SseExecutionCallback sseExecutionCallback;
-	private final Executor httpClientCallbackExecutor;
+	private final SseClientCallback sseClientCallback;
 
 	private StringBuilder buffer = new StringBuilder();
 	private StringBuilder data = new StringBuilder();
@@ -23,9 +22,8 @@ public class ServerEventDecoder {
 	private String eventName;
 
 
-	public ServerEventDecoder(SseExecutionCallback sseExecutionCallback, Executor httpClientCallbackExecutor) {
-		this.sseExecutionCallback = sseExecutionCallback;
-		this.httpClientCallbackExecutor = httpClientCallbackExecutor;
+	public ServerEventDecoder(SseClientCallback sseClientCallback) {
+		this.sseClientCallback = sseClientCallback;
 
 	}
 
@@ -36,7 +34,7 @@ public class ServerEventDecoder {
 		eventName = null;
 	}
 
-	public void onReceivedContentPart(ByteBuf content) {
+	public void onReceivedContentPart(ByteBuf content) throws KingHttpException {
 		String contentString = content.toString(StandardCharsets.UTF_8);
 		try {
 			char[] chars = contentString.toCharArray();
@@ -57,7 +55,7 @@ public class ServerEventDecoder {
 
 			}
 		} catch (Exception e) {
-			throw new RuntimeException(e);
+			throw new KingHttpException("Failed to parse incoming content in SSE stream", e);
 		}
 	}
 
@@ -70,7 +68,11 @@ public class ServerEventDecoder {
 			return false;
 		}
 
-		return buffer[index+1] == '\n';
+		return buffer[index + 1] == '\n';
+	}
+
+	private boolean isNewLine(char c) {
+		return c == '\r' || c == '\n';
 	}
 
 	private void parseLine(String line) {
@@ -103,6 +105,24 @@ public class ServerEventDecoder {
 
 	}
 
+	private void dispatchEvent() {
+		final String thisEventName = eventName;
+		eventName = null;
+
+		if (data.length() == 0) {
+			return;
+		}
+
+		if (isNewLine(data.charAt(data.length() - 1))) {
+			data.setLength(data.length() - 1);
+		}
+
+		final String dataString = data.toString();
+		data.setLength(0);
+
+		sseClientCallback.onEvent(lastEventId, thisEventName, dataString);
+	}
+
 	private void processField(String field, String value) {
 		switch (field.charAt(0)) {
 			case 'd': {
@@ -124,34 +144,6 @@ public class ServerEventDecoder {
 				break;
 			}
 		}
-	}
-
-	private void dispatchEvent() {
-		final String thisEventName = eventName;
-		eventName = null;
-
-		if (data.length() == 0) {
-			return;
-		}
-
-		if (isNewLine(data.charAt(data.length()-1))) {
-			data.setLength(data.length() - 1);
-		}
-
-		final String dataString = data.toString();
-		data.setLength(0);
-
-		httpClientCallbackExecutor.execute(new Runnable() {
-			@Override
-			public void run() {
-				sseExecutionCallback.onEvent(lastEventId, thisEventName, dataString);
-			}
-		});
-
-	}
-
-	private boolean isNewLine(char c) {
-		return c == '\r' || c == '\n';
 	}
 
 

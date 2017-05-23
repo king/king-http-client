@@ -6,7 +6,7 @@
 package com.king.platform.net.http;
 
 
-public interface SseExecutionCallback {
+public interface SseClientCallback {
 	/**
 	 * Callback for when the client has connected to the server
 	 */
