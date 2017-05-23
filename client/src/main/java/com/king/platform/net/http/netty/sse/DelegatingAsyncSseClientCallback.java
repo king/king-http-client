@@ -15,6 +15,7 @@ public class DelegatingAsyncSseClientCallback implements SseClientCallback {
 	private final List<EventCallback> eventCallbacks = new CopyOnWriteArrayList<>();
 	private final CopyOnWriteArrayList<SseClient.DisconnectCallback> disconnectCallbacks = new CopyOnWriteArrayList<>();
 	private final CopyOnWriteArrayList<SseClient.ConnectCallback> connectCallbacks = new CopyOnWriteArrayList<>();
+	private final CopyOnWriteArrayList<SseClient.ErrorCallback> errorCallbacks = new CopyOnWriteArrayList<>();
 
 	private final ConcurrentHashMap<String, List<EventCallback>> eventCallbackMap = new ConcurrentHashMap<>();
 
@@ -66,6 +67,10 @@ public class DelegatingAsyncSseClientCallback implements SseClientCallback {
 			public void run() {
 				for (SseClientCallback callback : sseClientCallbacks) {
 					callback.onError(throwable);
+				}
+
+				for (SseClient.ErrorCallback errorCallback : errorCallbacks) {
+					errorCallback.onError(throwable);
 				}
 			}
 		});
@@ -125,5 +130,9 @@ public class DelegatingAsyncSseClientCallback implements SseClientCallback {
 
 	void addConnectCallback(SseClient.ConnectCallback connectCallback) {
 		connectCallbacks.add(connectCallback);
+	}
+
+	public void addErrorCallback(SseClient.ErrorCallback errorCallback) {
+		errorCallbacks.add(errorCallback);
 	}
 }

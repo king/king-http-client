@@ -385,10 +385,19 @@ public class HttpSse {
 			}
 		});
 
+		final AtomicBoolean exceptionCallback = new AtomicBoolean();
+		sseClient.onError(new SseClient.ErrorCallback() {
+			@Override
+			public void onError(Throwable throwable) {
+				exceptionCallback.set(true);
+			}
+		});
+
 		sseClient.connect();
 		sseClient.awaitClose();
 
 		assertTrue(exception.get());
+		assertTrue(exceptionCallback.get());
 		assertFalse(connected.get());
 		assertFalse(disconnected.get());
 	}

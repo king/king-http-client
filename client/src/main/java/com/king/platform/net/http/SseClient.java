@@ -42,6 +42,13 @@ public interface SseClient {
 
 
 	/**
+	 * Register an error callback
+	 * @param errorCallback the callback object
+	 */
+	void onError(ErrorCallback errorCallback);
+
+
+	/**
 	 * Connect the client to the server. Can be used to either establish the initial connection, or reconnect a failed connection.
 	 */
 	void connect();
@@ -64,6 +71,10 @@ public interface SseClient {
 
 	interface ConnectCallback {
 		void onConnect();
+	}
+
+	interface ErrorCallback {
+		void onError(Throwable throwable);
 	}
 
 }

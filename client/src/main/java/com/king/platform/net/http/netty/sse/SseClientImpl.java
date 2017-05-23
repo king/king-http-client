@@ -76,6 +76,11 @@ public class SseClientImpl implements SseClient {
 	}
 
 	@Override
+	public void onError(ErrorCallback errorCallback) {
+		delegatingAsyncSseClientCallback.addErrorCallback(errorCallback);
+	}
+
+	@Override
 	public void connect() {
 		if (!state.compareAndSet(State.DISCONNECTED, State.RECONNECTING)) {
 			throw new RuntimeException("sse client is not in disconnected state");
