@@ -21,17 +21,10 @@ import static org.junit.Assert.*;
 
 public class ServerEventDecoderTest {
 	private CapturingSseExecutionCallback sseCallback;
-	private Executor executor;
 
 	@Before
 	public void setUp() throws Exception {
 		sseCallback = new CapturingSseExecutionCallback();
-		executor = new Executor() {
-			@Override
-			public void execute(Runnable command) {
-				command.run();
-			}
-		};
 	}
 
 	@Test
