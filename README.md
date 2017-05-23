@@ -1,6 +1,5 @@
 # king-http-client
 
-[![Jenkins](https://img.shields.io/jenkins/s/https/kingcom.ci.cloudbees.com/king-http-client.master.build.linux.svg)](https://kingcom.ci.cloudbees.com/job/king-http-client.master.build.linux/)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.king.king-http-client/king-http-client/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.king.king-http-client/king-http-client)
 
 ## New in Version 2.1.0
