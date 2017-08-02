@@ -60,7 +60,7 @@ public class UriUtilTest {
 
 	@Test
 	public void noParameters() throws Exception {
-		String uri = UriUtil.getUriWithParameters("http://www.king.com", Collections.<Param>emptyList());
+		String uri = UriUtil.getUriWithParameters("http://www.king.com", Collections.emptyList());
 		assertEquals("http://www.king.com", uri);
 	}
 
