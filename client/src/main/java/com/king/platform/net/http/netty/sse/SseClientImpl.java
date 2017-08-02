@@ -108,6 +108,7 @@ public class SseClientImpl implements SseClient {
 			}
 		});
 		countDownLatch.await();
+		Thread.sleep(10);
 	}
 
 }

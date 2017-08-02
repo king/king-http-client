@@ -15,30 +15,29 @@ public class TestingHttpClientFactory {
 
 
 	private RecordingEventBus recordingEventBus;
+	private NettyHttpClientBuilder nettyHttpClientBuilder;
 
 	public TestingHttpClientFactory() {
 		recordingEventBus = new RecordingEventBus(new DefaultEventBus());
-	}
-
-	public HttpClient create() {
-
-		HttpClient httpClient = new NettyHttpClientBuilder()
+		nettyHttpClientBuilder = new NettyHttpClientBuilder()
 			.setNioThreads(2)
 			.setHttpCallbackExecutorThreads(2)
 			.setRootEventBus(recordingEventBus)
 			.setChannelPool(new NoChannelPool())
-			.createHttpClient();
+			.setOption(ConfKeys.SSL_ALLOW_ALL_CERTIFICATES, true)
+			.setOption(ConfKeys.HTTP_FOLLOW_REDIRECTS, true)
+			.setOption(ConfKeys.NETTY_TRACE_LOGS, true)
+			.setOption(ConfKeys.ACCEPT_COMPRESSED_RESPONSE, false);
+	}
 
-
-		httpClient.setConf(ConfKeys.SSL_ALLOW_ALL_CERTIFICATES, true);
-		httpClient.setConf(ConfKeys.HTTP_FOLLOW_REDIRECTS, true);
-		httpClient.setConf(ConfKeys.NETTY_TRACE_LOGS, true);
-
-		httpClient.setConf(ConfKeys.ACCEPT_COMPRESSED_RESPONSE, false);
-
-
+	public HttpClient create() {
+		HttpClient httpClient = nettyHttpClientBuilder.createHttpClient();
 		return httpClient;
+	}
 
+	public <T> TestingHttpClientFactory setOption(ConfKeys<T> key, T value) {
+		nettyHttpClientBuilder.setOption(key, value);
+		return this;
 	}
 
 	public RecordingEventBus getRecordingEventBus() {

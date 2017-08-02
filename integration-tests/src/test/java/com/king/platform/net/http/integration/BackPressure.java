@@ -40,12 +40,12 @@ public class BackPressure {
 
 		httpClient = new NettyHttpClientBuilder()
 			.setNioThreads(2)
-			.setHttpCallbackExecutorThreads(2).setChannelPool(new NoChannelPool()).setExecutionBackPressure(new EvictingBackPressure(10))
+			.setHttpCallbackExecutorThreads(2)
+			.setChannelPool(new NoChannelPool()).setExecutionBackPressure(new EvictingBackPressure(10))
+			.setOption(ConfKeys.IDLE_TIMEOUT_MILLIS, 0)
+			.setOption(ConfKeys.TOTAL_REQUEST_TIMEOUT_MILLIS, 0)
 			.createHttpClient();
 
-
-		httpClient.setConf(ConfKeys.IDLE_TIMEOUT_MILLIS, 0);
-		httpClient.setConf(ConfKeys.TOTAL_REQUEST_TIMEOUT_MILLIS, 0);
 
 		httpClient.start();
 

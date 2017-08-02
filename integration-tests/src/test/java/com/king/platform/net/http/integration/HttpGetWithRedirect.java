@@ -55,11 +55,10 @@ public class HttpGetWithRedirect {
 
 		TestingHttpClientFactory testingHttpClientFactory = new TestingHttpClientFactory();
 		recordingEventBus = testingHttpClientFactory.getRecordingEventBus();
-		httpClient = testingHttpClientFactory.create();
-
-
-		httpClient.setConf(ConfKeys.SSL_ALLOW_ALL_CERTIFICATES, true);
-		httpClient.setConf(ConfKeys.IDLE_TIMEOUT_MILLIS, 2000);
+		httpClient = testingHttpClientFactory
+			.setOption(ConfKeys.SSL_ALLOW_ALL_CERTIFICATES, true)
+			.setOption(ConfKeys.IDLE_TIMEOUT_MILLIS, 2000)
+			.create();
 
 		httpClient.start();
 
