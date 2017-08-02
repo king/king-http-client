@@ -80,11 +80,11 @@ public class ConnectionPool {
 		nettyHttpClientBuilder.setChannelPool(pool);
 
 
-		httpClient = nettyHttpClientBuilder.createHttpClient();
+		httpClient = nettyHttpClientBuilder
+			.setOption(ConfKeys.IDLE_TIMEOUT_MILLIS, 0)
+			.setOption(ConfKeys.TOTAL_REQUEST_TIMEOUT_MILLIS, 0)
+			.createHttpClient();
 
-
-		httpClient.setConf(ConfKeys.IDLE_TIMEOUT_MILLIS, 0);
-		httpClient.setConf(ConfKeys.TOTAL_REQUEST_TIMEOUT_MILLIS, 0);
 
 		httpClient.start();
 	}

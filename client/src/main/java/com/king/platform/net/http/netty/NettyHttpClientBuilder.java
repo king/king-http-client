@@ -5,6 +5,7 @@
 
 package com.king.platform.net.http.netty;
 
+import com.king.platform.net.http.ConfKeys;
 import com.king.platform.net.http.HttpClient;
 import com.king.platform.net.http.netty.backpressure.BackPressure;
 import com.king.platform.net.http.netty.backpressure.NoBackPressure;
@@ -21,7 +22,9 @@ import io.netty.util.HashedWheelTimer;
 import io.netty.util.Timer;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -52,6 +55,8 @@ public class NettyHttpClientBuilder {
 
 	private MetricCallback metricCallback;
 	private int keepAliveTimeoutMS = 30_000;
+
+	private final Map<ConfKeys, Object>  optionsMap = new HashMap<>();
 
 	/**
 	 * Set the amount of nio threads used for netty io reactor - defaults to two.
@@ -179,6 +184,20 @@ public class NettyHttpClientBuilder {
 		return this;
 	}
 
+
+	/**
+	 * Configure global settings for the http client. Most of the settings can be overridden on each request. <br>
+	 *
+	 * @param key   The {@link ConfKeys} field
+	 * @param value The value
+	 * @param <T>   Option value type - Defined by the {@link ConfKeys} field.
+	 * @return the builder
+	 */
+	public <T>  NettyHttpClientBuilder setOption(ConfKeys<T> key, T value) {
+		optionsMap.put(key, value);
+		return this;
+	}
+
 	/**
 	 * Create a HttpClient instance with the current settings.
 	 * @return the built HttpClient
@@ -245,6 +264,10 @@ public class NettyHttpClientBuilder {
 
 		for (NettyHttpClient.ShutdownJob shutdownJob : shutdownJobs) {
 			nettyHttpClient.addShutdownJob(shutdownJob);
+		}
+
+		for (Map.Entry<ConfKeys, Object> entry : optionsMap.entrySet()) {
+			nettyHttpClient.setOption(entry.getKey(), entry.getValue());
 		}
 
 		return nettyHttpClient;

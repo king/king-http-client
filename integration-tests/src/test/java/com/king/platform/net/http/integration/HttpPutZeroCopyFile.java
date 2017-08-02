@@ -54,10 +54,11 @@ public class HttpPutZeroCopyFile {
 		integrationServer.start();
 		port = integrationServer.getPort();
 
-		httpClient = new TestingHttpClientFactory().create();
+		httpClient = new TestingHttpClientFactory()
+			.setOption(ConfKeys.TOTAL_REQUEST_TIMEOUT_MILLIS, 0)
+			.setOption(ConfKeys.IDLE_TIMEOUT_MILLIS, 1000)
+			.create();
 
-		httpClient.setConf(ConfKeys.TOTAL_REQUEST_TIMEOUT_MILLIS, 0);
-		httpClient.setConf(ConfKeys.IDLE_TIMEOUT_MILLIS, 1000);
 
 		httpClient.start();
 

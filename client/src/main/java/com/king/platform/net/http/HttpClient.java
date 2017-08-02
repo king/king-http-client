@@ -31,11 +31,14 @@ public interface HttpClient {
 	 * Configure global settings for the http client. Most of the settings can be overridden on each request. <br>
 	 * Settings can not be set after the client has been started.
 	 *
+	 * @deprecated Replaced by {@link com.king.platform.net.http.netty.NettyHttpClientBuilder#setOption(ConfKeys, Object)}
+	 *
 	 * @param key   The {@link ConfKeys} field
 	 * @param value The value
 	 * @param <T>   Option value type - Defined by the {@link ConfKeys} field.
 	 * @throws IllegalStateException If the client is started when this method is invoked.
 	 */
+	@Deprecated
 	<T> void setConf(ConfKeys<T> key, T value);
 
 	/**

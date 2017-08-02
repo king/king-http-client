@@ -33,8 +33,10 @@ public class HttpsGet {
 		integrationServer.startHttps();
 		port = integrationServer.getPort();
 
-		httpClient = new TestingHttpClientFactory().create();
-		httpClient.setConf(ConfKeys.SSL_ALLOW_ALL_CERTIFICATES, true);
+		httpClient = new TestingHttpClientFactory()
+			.setOption(ConfKeys.SSL_ALLOW_ALL_CERTIFICATES, true)
+			.create();
+
 		httpClient.start();
 
 	}
