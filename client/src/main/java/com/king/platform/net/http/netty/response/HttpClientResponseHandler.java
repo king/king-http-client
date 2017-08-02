@@ -71,7 +71,7 @@ public class HttpClientResponseHandler {
 
 				httpRequestContext.getTimeRecorder().readResponseHttpHeaders();
 
-				if (httpRequestContext.isFollowRedirects() && httpRedirector.isRedirectResponse(httpResponseStatus)) {
+				if (httpRequestContext.isFollowRedirects() && HttpRedirector.isRedirectResponse(httpResponseStatus)) {
 					httpRedirector.redirectRequest(httpRequestContext, httpHeaders);
 					return;
 				}
@@ -116,7 +116,7 @@ public class HttpClientResponseHandler {
 
 				HttpResponseStatus httpResponseStatus = nettyHttpClientResponse.getHttpResponseStatus();
 
-				if (httpResponseStatus == null || (httpRequestContext.isFollowRedirects() && httpRedirector.isRedirectResponse(httpResponseStatus))) {
+				if (httpResponseStatus == null || (httpRequestContext.isFollowRedirects() && HttpRedirector.isRedirectResponse(httpResponseStatus))) {
 					httpRequestContext.setRedirecting(true);
 					return;
 				}
