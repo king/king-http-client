@@ -6,8 +6,6 @@
 package com.king.platform.net.http.netty;
 
 import com.king.platform.net.http.netty.eventbus.Event;
-import com.king.platform.net.http.netty.eventbus.Event1;
-import com.king.platform.net.http.netty.eventbus.EventBusCallback1;
 import com.king.platform.net.http.netty.eventbus.RequestEventBus;
 import com.king.platform.net.http.netty.util.TimeProvider;
 import io.netty.util.Timeout;
@@ -22,17 +20,18 @@ public class IdleTimeoutTimerTask implements TimeoutTimerTask {
 
 
 	private final HttpRequestContext httpRequestContext;
-	private final TimeoutTimerHandler timeoutTimerHandler;
+
 	private final long maxIdleTime;
 	private final TimeProvider timeProvider;
 	private final RequestEventBus requestEventBus;
 	private final long requestTimeoutInstant;
 	private volatile long lastTouched;
 
-	public IdleTimeoutTimerTask(HttpRequestContext httpRequestContext, TimeoutTimerHandler timeoutTimerHandler, long maxIdleTime, int
+	private TimeoutTimerHandler timeoutTimerHandler;
+
+	public IdleTimeoutTimerTask(HttpRequestContext httpRequestContext, long maxIdleTime, int
 		totalRequestTimeoutMillis, TimeProvider timeProvider, RequestEventBus requestEventBus) {
 		this.httpRequestContext = httpRequestContext;
-		this.timeoutTimerHandler = timeoutTimerHandler;
 		this.maxIdleTime = maxIdleTime;
 		this.timeProvider = timeProvider;
 		this.requestEventBus = requestEventBus;
@@ -40,13 +39,10 @@ public class IdleTimeoutTimerTask implements TimeoutTimerTask {
 
 		requestTimeoutInstant = totalRequestTimeoutMillis >= 0 ? timeProvider.currentTimeInMillis() + totalRequestTimeoutMillis : Long.MAX_VALUE;
 
-		requestEventBus.subscribe(Event.TOUCH, new EventBusCallback1<Void>() {
-			@Override
-			public void onEvent(Event1 event, Void payload) {
-				touch();
-			}
-		});
+		requestEventBus.subscribe(Event.TOUCH, (event, payload) -> touch());
 	}
+
+
 
 	@Override
 	public void run(Timeout timeout) throws Exception {
@@ -71,7 +67,7 @@ public class IdleTimeoutTimerTask implements TimeoutTimerTask {
 
 				completed();
 			} else if (currentReadTimeoutInstant < requestTimeoutInstant) {
-				timeoutTimerHandler.scheduleTimeout(this, durationBeforeCurrentReadTimeout, TimeUnit.MILLISECONDS);
+				timeoutTimerHandler.scheduleTimeout(durationBeforeCurrentReadTimeout, TimeUnit.MILLISECONDS);
 				executing.set(false);
 			} else {
 
@@ -96,5 +92,10 @@ public class IdleTimeoutTimerTask implements TimeoutTimerTask {
 
 	private void touch() {
 		lastTouched = timeProvider.currentTimeInMillis();
+	}
+
+	public void setTimeoutTimerHandler(TimeoutTimerHandler timeoutTimerHandler) {
+		this.timeoutTimerHandler = timeoutTimerHandler;
+
 	}
 }

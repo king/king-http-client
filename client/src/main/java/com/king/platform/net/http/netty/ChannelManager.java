@@ -28,8 +28,6 @@ import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import io.netty.util.Timer;
-import io.netty.util.concurrent.Future;
-import io.netty.util.concurrent.GenericFutureListener;
 import org.slf4j.Logger;
 
 import javax.net.ssl.SSLException;
@@ -178,22 +176,14 @@ public class ChannelManager {
 		scheduleTimeOutTasks(requestEventBus, httpRequestContext, httpRequestContext.getTotalRequestTimeoutMillis(), httpRequestContext.getIdleTimeoutMillis
 			());
 
-		requestEventBus.subscribe(Event.CLOSE, new EventBusCallback1<Void>() {
-			@Override
-			public void onEvent(Event1<Void> event, Void payload) {
-				channel.close();
-			}
-		});
+		requestEventBus.subscribe(Event.CLOSE, (event, payload) -> channel.close());
 
 		ChannelFuture channelFuture = channel.writeAndFlush(httpRequestContext);
-		channelFuture.addListener(new GenericFutureListener<Future<? super Void>>() {
-			@Override
-			public void operationComplete(Future<? super Void> future) throws Exception {
-				if (!future.isSuccess()) {
-					requestEventBus.triggerEvent(Event.ERROR, httpRequestContext, future.cause());
-				}
-			}
-		});
+		channelFuture.addListener(future -> {
+            if (!future.isSuccess()) {
+                requestEventBus.triggerEvent(Event.ERROR, httpRequestContext, future.cause());
+            }
+        });
 
 		logger.trace("Wrote {} to channel {}", httpRequestContext, channel);
 	}
@@ -202,18 +192,20 @@ public class ChannelManager {
 
 		if (totalRequestTimeoutMillis > 0) {
 			TotalRequestTimeoutTimerTask totalRequestTimeoutTimerTask = new TotalRequestTimeoutTimerTask(requestEventBus, httpRequestContext);
-			TimeoutTimerHandler timeoutTimerHandler = new TimeoutTimerHandler(nettyTimer, requestEventBus);
-			timeoutTimerHandler.scheduleTimeout(totalRequestTimeoutTimerTask, totalRequestTimeoutMillis, TimeUnit.MILLISECONDS);
+			TimeoutTimerHandler timeoutTimerHandler = new TimeoutTimerHandler(nettyTimer, requestEventBus, totalRequestTimeoutTimerTask);
+			timeoutTimerHandler.scheduleTimeout(totalRequestTimeoutMillis, TimeUnit.MILLISECONDS);
 		}
 
 
 		if (idleTimeoutMillis != 0 && (idleTimeoutMillis < totalRequestTimeoutMillis || totalRequestTimeoutMillis == 0)) {
-			TimeoutTimerHandler timeoutTimerHandler = new TimeoutTimerHandler(nettyTimer, requestEventBus);
-			IdleTimeoutTimerTask idleTimeoutTimerTask = new IdleTimeoutTimerTask(httpRequestContext, timeoutTimerHandler, idleTimeoutMillis,
+			IdleTimeoutTimerTask idleTimeoutTimerTask = new IdleTimeoutTimerTask(httpRequestContext, idleTimeoutMillis,
 				totalRequestTimeoutMillis, timeProvider, requestEventBus);
-			timeoutTimerHandler.scheduleTimeout(idleTimeoutTimerTask, idleTimeoutMillis, TimeUnit.MILLISECONDS);
-		}
 
+			TimeoutTimerHandler timeoutTimerHandler = new TimeoutTimerHandler(nettyTimer, requestEventBus, idleTimeoutTimerTask);
+			timeoutTimerHandler.scheduleTimeout(idleTimeoutMillis, TimeUnit.MILLISECONDS);
+			idleTimeoutTimerTask.setTimeoutTimerHandler(timeoutTimerHandler);
+
+		}
 
 	}
 
@@ -222,31 +214,25 @@ public class ChannelManager {
 
 		ChannelFuture channelFuture = connect(serverInfo);
 
-		channelFuture.addListener(new ChannelFutureListener() {
+		channelFuture.addListener((ChannelFutureListener) future -> {
+            if (future.isSuccess()) {
 
-			@Override
-			public void operationComplete(ChannelFuture future) throws Exception {
-				if (future.isSuccess()) {
+                requestEventBus.triggerEvent(Event.CREATED_CONNECTION, serverInfo);
 
-					requestEventBus.triggerEvent(Event.CREATED_CONNECTION, serverInfo);
+                requestEventBus.triggerEvent(Event.onConnected);
 
-					requestEventBus.triggerEvent(Event.onConnected);
+                Channel channel = future.channel();
 
-					Channel channel = future.channel();
+                channel.attr(ServerInfo.ATTRIBUTE_KEY).set(serverInfo);
+                logger.trace("Opened a new channel {}, for request {}", channel, httpRequestContext);
+                sendOnChannel(channel, httpRequestContext, requestEventBus);
 
-
-
-					channel.attr(ServerInfo.ATTRIBUTE_KEY).set(serverInfo);
-					logger.trace("Opened a new channel {}, for request {}", channel, httpRequestContext);
-					sendOnChannel(channel, httpRequestContext, requestEventBus);
-
-				} else {
-					logger.trace("Failed to opened a new channel for request {}", httpRequestContext);
-					Throwable cause = future.cause();
-					requestEventBus.triggerEvent(Event.ERROR, httpRequestContext, cause);
-				}
-			}
-		});
+            } else {
+                logger.trace("Failed to opened a new channel for request {}", httpRequestContext);
+                Throwable cause = future.cause();
+                requestEventBus.triggerEvent(Event.ERROR, httpRequestContext, cause);
+            }
+        });
 	}
 
 	private ChannelFuture connect(ServerInfo serverInfo) {
