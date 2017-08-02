@@ -8,8 +8,8 @@ package com.king.platform.net.http.integration;
 
 import com.king.platform.net.http.ConfKeys;
 import com.king.platform.net.http.FileResponseConsumer;
-import com.king.platform.net.http.FutureResult;
 import com.king.platform.net.http.HttpClient;
+import com.king.platform.net.http.HttpResponse;
 import io.netty.util.ResourceLeakDetector;
 import org.eclipse.jetty.server.HttpOutput;
 import org.junit.*;
@@ -25,8 +25,8 @@ import java.io.*;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
@@ -110,10 +110,13 @@ public class HttpGetFile {
 
 		File tempFile = temporaryFile.getTempFile();
 
-		Future<FutureResult<File>> execute = httpClient.createGet("http://localhost:" + port + "/getFile").build().execute(new FileResponseConsumer(tempFile));
-		FutureResult<File> result = execute.get(1000, TimeUnit.MILLISECONDS);
+		CompletableFuture<HttpResponse<File>> execute = httpClient.createGet("http://localhost:" + port + "/getFile")
+			.build()
+			.execute(new FileResponseConsumer(tempFile));
 
-		File body = result.getHttpResponse().getBody();
+		HttpResponse<File> fileHttpResponse = execute.get(1000, TimeUnit.MILLISECONDS);
+
+		File body = fileHttpResponse.getBody();
 
 		assertEquals(64*1024*1024, body.length());
 

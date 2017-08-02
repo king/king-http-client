@@ -5,7 +5,6 @@
 
 package com.king.platform.net.http.netty;
 
-import com.king.platform.net.http.FutureResult;
 import com.king.platform.net.http.HttpResponse;
 import com.king.platform.net.http.netty.eventbus.DefaultEventBus;
 import com.king.platform.net.http.netty.eventbus.Event;
@@ -13,6 +12,9 @@ import com.king.platform.net.http.netty.eventbus.RequestEventBus;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.*;
@@ -22,13 +24,13 @@ import static se.mockachino.Mockachino.mock;
 public class ResponseFutureTest {
 	private RequestEventBus requestEventBus;
 	private HttpRequestContext requestContext;
-	private ResponseFuture responseFuture;
+	private ResponseFuture<HttpResponse> responseFuture;
 
 	@Before
 	public void setUp() throws Exception {
 		requestContext = mock(HttpRequestContext.class);
 		requestEventBus = new DefaultEventBus();
-		responseFuture = new ResponseFuture(requestEventBus, requestContext);
+		responseFuture = new ResponseFuture<>(requestEventBus, requestContext);
 	}
 
 	@Test
@@ -36,8 +38,8 @@ public class ResponseFutureTest {
 		HttpResponse httpResponse = mock(HttpResponse.class);
 		requestEventBus.triggerEvent(Event.onHttpResponseDone, httpResponse);
 		assertTrue(responseFuture.isDone());
-		FutureResult futureResult = responseFuture.get(1, TimeUnit.MILLISECONDS);
-		assertSame(httpResponse, futureResult.getHttpResponse());
+		HttpResponse<HttpResponse> futureResult = responseFuture.get(1, TimeUnit.MILLISECONDS);
+		assertSame(httpResponse, futureResult);
 	}
 
 
@@ -46,27 +48,43 @@ public class ResponseFutureTest {
 		Throwable t = new Exception();
 		requestEventBus.triggerEvent(Event.ERROR, requestContext, t);
 		assertTrue(responseFuture.isDone());
-		FutureResult futureResult = responseFuture.get(1, TimeUnit.MILLISECONDS);
-		assertSame(t, futureResult.getError());
+
+		try {
+			responseFuture.get(1, TimeUnit.MILLISECONDS);
+			fail("should have thrown exception");
+		} catch (ExecutionException ee) {
+			assertSame(t, ee.getCause());
+		}
 	}
+
 
 	@Test
 	public void cancelShouldCompleteTheFuture() throws Exception {
 		responseFuture.cancel(true);
 		assertTrue(responseFuture.isDone());
 		assertTrue(responseFuture.isCancelled());
-		FutureResult futureResult = responseFuture.get(1, TimeUnit.MILLISECONDS);
-		assertNotNull(futureResult.getError());
+		try {
+			responseFuture.get();
+			fail("Should have thrown exception");
+		} catch (CancellationException e) {
+			assertNotNull(e);
+		}
+
 	}
 
 	@Test
 	public void factoryMethodForErrorShouldReturnDoneFuture() throws Exception {
 		Exception exception = new Exception();
-		ResponseFuture future = ResponseFuture.error(exception);
+		CompletableFuture<HttpResponse<String>> future = ResponseFuture.error(exception);
+
 		assertTrue(future.isDone());
 		assertFalse(future.isCancelled());
-		FutureResult futureResult = future.get(1, TimeUnit.MILLISECONDS);
-		assertSame(exception, futureResult.getError());
+		try {
+			future.get(1, TimeUnit.MILLISECONDS);
+			fail("should have thrown exception");
+		} catch (ExecutionException ee) {
+			assertSame(exception, ee.getCause());
+		}
 
 	}
 }

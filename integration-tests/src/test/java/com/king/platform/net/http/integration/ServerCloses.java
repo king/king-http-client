@@ -6,7 +6,6 @@
 package com.king.platform.net.http.integration;
 
 
-import com.king.platform.net.http.FutureResult;
 import com.king.platform.net.http.HttpClient;
 import com.king.platform.net.http.netty.ConnectionClosedException;
 import com.king.platform.net.http.netty.eventbus.Event;
@@ -20,7 +19,6 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.Charset;
-import java.util.concurrent.Future;
 
 import static org.junit.Assert.*;
 
@@ -136,7 +134,7 @@ public class ServerCloses {
 
 	@Test
 	public void serverClosesBeforeAllContentIsSent() throws Exception {
- 
+
 		new Thread(new Runnable() {
 			@Override
 			public void run() {

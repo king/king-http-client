@@ -34,8 +34,8 @@ import org.slf4j.Logger;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -148,10 +148,10 @@ public class NettyHttpClient implements HttpClient, HttpClientCaller {
 
 
 	@Override
-	public <T> Future<FutureResult<T>> execute(HttpMethod httpMethod, final NettyHttpClientRequest<T> nettyHttpClientRequest, HttpCallback<T> httpCallback,
-											   final NioCallback nioCallback, ResponseBodyConsumer<T> responseBodyConsumer, int idleTimeoutMillis,
-											   int totalRequestTimeoutMillis, boolean followRedirects, boolean keepAlive,
-											   ExternalEventTrigger externalEventTrigger, Executor callbackExecutor) {
+	public <T> CompletableFuture<HttpResponse<T>> execute(HttpMethod httpMethod, final NettyHttpClientRequest<T> nettyHttpClientRequest, HttpCallback<T> httpCallback,
+														  final NioCallback nioCallback, ResponseBodyConsumer<T> responseBodyConsumer, int idleTimeoutMillis,
+														  int totalRequestTimeoutMillis, boolean followRedirects, boolean keepAlive,
+														  ExternalEventTrigger externalEventTrigger, Executor callbackExecutor) {
 		if (!started.get()) {
 			throw new IllegalStateException("The client must be started before anything can be executed.");
 		}

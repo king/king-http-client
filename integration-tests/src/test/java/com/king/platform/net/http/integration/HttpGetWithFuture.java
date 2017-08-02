@@ -6,10 +6,9 @@
 package com.king.platform.net.http.integration;
 
 
-import com.king.platform.net.http.FutureResult;
+import com.king.platform.net.http.HttpClient;
 import com.king.platform.net.http.HttpResponse;
 import com.king.platform.net.http.StringResponseBody;
-import com.king.platform.net.http.HttpClient;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -19,10 +18,14 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.concurrent.Future;
+import java.net.UnknownHostException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 public class HttpGetWithFuture {
 	IntegrationServer integrationServer;
@@ -54,32 +57,30 @@ public class HttpGetWithFuture {
 	@Test
 	public void get200() throws Exception {
 
+		CountDownLatch countDownLatch = new CountDownLatch(1);
+		CompletableFuture<HttpResponse<String>> resultFuture = httpClient.createGet("http://localhost:" + port + "/testOk").build().execute(new StringResponseBody());
+		resultFuture.whenComplete((httpResponse, throwable) -> {
+			assertEquals(okBody, httpResponse.getBody());
+			assertEquals(200, httpResponse.getStatusCode());
+			countDownLatch.countDown();
+        });
 
-		Future<FutureResult<String>> resultFuture = httpClient.createGet("http://localhost:" + port + "/testOk").build().execute(new StringResponseBody());
-
-		FutureResult<String> stringFutureResult = resultFuture.get(1, TimeUnit.SECONDS);
-
-		HttpResponse<String> httpResponse = stringFutureResult.getHttpResponse();
-
-		assertTrue(stringFutureResult.completed());
-
-		assertEquals(okBody, httpResponse.getBody());
-		assertEquals(200, httpResponse.getStatusCode());
-
+		countDownLatch.await();
 
 	}
 
 	@Test
 	public void getUnknownHost() throws Exception {
 
-		Future<FutureResult<String>> resultFuture = httpClient.createGet("http://loasdwd.calhost:" + port + "/testOk").build().execute(new StringResponseBody());
+		CompletableFuture<HttpResponse<String>> resultFuture = httpClient.createGet("http://loasdwd.calhost:" + port + "/testOk").build().execute(new StringResponseBody());
 
-		FutureResult<String> stringFutureResult = resultFuture.get(4, TimeUnit.SECONDS);
-		assertFalse(stringFutureResult.completed());
-		assertTrue(stringFutureResult.failed());
-		Throwable error = stringFutureResult.getError();
-		assertNotNull(error);
-
+		try {
+			resultFuture.get(4, TimeUnit.SECONDS);
+			fail("Should have thrown exception");
+		}catch (ExecutionException ee) {
+			Class<? extends Throwable> aClass = ee.getCause().getClass();
+			assertEquals(UnknownHostException.class, aClass);
+		}
 	}
 
 

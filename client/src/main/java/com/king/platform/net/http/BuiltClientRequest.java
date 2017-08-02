@@ -8,7 +8,7 @@ package com.king.platform.net.http;
 
 import com.king.platform.net.http.netty.eventbus.ExternalEventTrigger;
 
-import java.util.concurrent.Future;
+import java.util.concurrent.CompletableFuture;
 
 public interface BuiltClientRequest {
 
@@ -17,7 +17,7 @@ public interface BuiltClientRequest {
 	 *
 	 * @return a future with the result of the request
 	 */
-	Future<FutureResult<String>> execute();
+	CompletableFuture<HttpResponse<String>> execute();
 
 
 	/**
@@ -26,7 +26,7 @@ public interface BuiltClientRequest {
 	 * @param httpCallback the callback object, executed on the HttpCallbackExecutor
 	 * @return a future with the result of the request
 	 */
-	Future<FutureResult<String>> execute(HttpCallback<String> httpCallback);
+	CompletableFuture<HttpResponse<String>> execute(HttpCallback<String> httpCallback);
 
 
 	/**
@@ -36,7 +36,7 @@ public interface BuiltClientRequest {
 	 * @param nioCallback  the NioCallback object, executed on the io thread for this request.
 	 * @return a future with the result of the request
 	 */
-	Future<FutureResult<String>> execute(HttpCallback<String> httpCallback, NioCallback nioCallback);
+	CompletableFuture<HttpResponse<String>> execute(HttpCallback<String> httpCallback, NioCallback nioCallback);
 
 
 	/**
@@ -47,7 +47,7 @@ public interface BuiltClientRequest {
 	 * @param <T>                  the type defined by the responseBodyConsumer
 	 * @return a future with the result of the request
 	 */
-	<T> Future<FutureResult<T>> execute(HttpCallback<T> httpCallback, ResponseBodyConsumer<T> responseBodyConsumer);
+	<T> CompletableFuture<HttpResponse<T>> execute(HttpCallback<T> httpCallback, ResponseBodyConsumer<T> responseBodyConsumer);
 
 	/**
 	 * Execute the built request, consume the returned data as the type defined by the responseBodyConsumer parameter
@@ -56,7 +56,7 @@ public interface BuiltClientRequest {
 	 * @param <T>                  the type of the response body
 	 * @return a future with the result of the request
 	 */
-	<T> Future<FutureResult<T>> execute(ResponseBodyConsumer<T> responseBodyConsumer);
+	<T> CompletableFuture<HttpResponse<T>> execute(ResponseBodyConsumer<T> responseBodyConsumer);
 
 	/**
 	 * Execute the built request, consume the returned data as String
@@ -64,7 +64,7 @@ public interface BuiltClientRequest {
 	 * @param nioCallback the NioCallback object, executed on the io thread for this request.
 	 * @return a future with the result of the request
 	 */
-	Future<FutureResult<String>> execute(NioCallback nioCallback);
+	CompletableFuture<HttpResponse<String>> execute(NioCallback nioCallback);
 
 	/**
 	 * Execute the built request, consume the returned data as the type defined by responseBodyConsumer
@@ -75,7 +75,7 @@ public interface BuiltClientRequest {
 	 * @param <T>                  the type defined by the responseBodyConsumer
 	 * @return a future with the result of the request
 	 */
-	<T> Future<FutureResult<T>> execute(HttpCallback<T> httpCallback, ResponseBodyConsumer<T> responseBodyConsumer, NioCallback nioCallback);
+	<T> CompletableFuture<HttpResponse<T>> execute(HttpCallback<T> httpCallback, ResponseBodyConsumer<T> responseBodyConsumer, NioCallback nioCallback);
 
 	/**
 	 * Execute the built request, consume the returned data as the type defined by responseBodyConsumer
@@ -86,5 +86,5 @@ public interface BuiltClientRequest {
 	 * @param <T>                  the type defined by the responseBodyConsumer
 	 * @return a future with the result of the request
 	 */
-	<T> Future<FutureResult<T>> execute(HttpCallback<T> httpCallback, ResponseBodyConsumer<T> responseBodyConsumer, NioCallback nioCallback, ExternalEventTrigger externalEventTrigger);
+	<T> CompletableFuture<HttpResponse<T>> execute(HttpCallback<T> httpCallback, ResponseBodyConsumer<T> responseBodyConsumer, NioCallback nioCallback, ExternalEventTrigger externalEventTrigger);
 }

@@ -5,23 +5,15 @@
 
 package com.king.platform.net.http.netty;
 
-import com.king.platform.net.http.FutureResult;
 import com.king.platform.net.http.HttpResponse;
 import com.king.platform.net.http.netty.eventbus.*;
 
-import java.util.concurrent.*;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
 
-public class ResponseFuture<T> implements Future<FutureResult<T>> {
-	private final AtomicBoolean done = new AtomicBoolean();
-	private final AtomicBoolean canceled = new AtomicBoolean();
-	private final CountDownLatch latch = new CountDownLatch(1);
-
+public class ResponseFuture<T> extends CompletableFuture<HttpResponse<T>> {
 	private final RequestEventBus requestEventBus;
 	private final HttpRequestContext requestContext;
-
-	private FutureResult<T> result;
 
 	public ResponseFuture(RequestEventBus requestEventBus, HttpRequestContext requestContext) {
 		this.requestEventBus = requestEventBus;
@@ -30,63 +22,35 @@ public class ResponseFuture<T> implements Future<FutureResult<T>> {
 		requestEventBus.subscribe(Event.ERROR, new RunOnceCallback2<HttpRequestContext, Throwable>() {
 			@Override
 			public void onFirstEvent(Event2 event, HttpRequestContext requestContext, Throwable throwable) {
-				if ((throwable instanceof CancellationException || !canceled.get()) && done.compareAndSet(false, true)) {
-					result = new FutureResult<T>(throwable);
-					latch.countDown();
-				}
+				ResponseFuture.this.completeExceptionally(throwable);
 			}
 		});
 
 		requestEventBus.subscribe(Event.onHttpResponseDone, new RunOnceCallback1<HttpResponse>() {
 			@Override
 			public void onFirstEvent(Event1 event, HttpResponse payload) {
-				if (!canceled.get() && done.compareAndSet(false, true)) {
-					result = new FutureResult<T>(payload);
-					latch.countDown();
-				}
+				ResponseFuture.this.complete(payload);
 			}
 		});
 	}
 
 	@Override
 	public boolean cancel(boolean mayInterruptIfRunning) {
-		if (!done.get() && canceled.compareAndSet(false, true)) {
-			requestEventBus.triggerEvent(Event.ERROR, requestContext, new CancellationException());
+		if (isCancelled() || isDone() || isCompletedExceptionally()) {
+			return false;
 		}
+
+		requestEventBus.triggerEvent(Event.ERROR, requestContext, new CancellationException());
+
+		super.cancel(mayInterruptIfRunning);
 		return true;
 	}
 
-	@Override
-	public boolean isCancelled() {
-		return canceled.get();
-	}
 
-	@Override
-	public boolean isDone() {
-		return done.get();
-	}
 
-	@Override
-	public FutureResult<T> get() throws InterruptedException, ExecutionException {
-		latch.await();
-
-		return result;
-	}
-
-	@Override
-	public FutureResult<T> get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-		if (!latch.await(timeout, unit)) {
-			throw new TimeoutException();
-		}
-
-		return result;
-	}
-
-	public static <T> ResponseFuture<T> error(Throwable error) {
+	public static <T> CompletableFuture<HttpResponse<T>> error(Throwable error) {
 		ResponseFuture<T> future = new ResponseFuture<>(new NoopRequestEventBus(), null);
-		future.result = new FutureResult<T>(error);
-		future.done.set(true);
-		future.latch.countDown();
+		future.completeExceptionally(error);
 		return future;
 	}
 }
