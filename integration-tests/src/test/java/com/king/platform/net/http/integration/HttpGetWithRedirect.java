@@ -7,7 +7,6 @@ package com.king.platform.net.http.integration;
 
 
 import com.king.platform.net.http.ConfKeys;
-import com.king.platform.net.http.FutureResult;
 import com.king.platform.net.http.HttpClient;
 import com.king.platform.net.http.HttpResponse;
 import org.junit.After;
@@ -20,7 +19,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.concurrent.Future;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
@@ -112,14 +111,11 @@ public class HttpGetWithRedirect {
 			}
 		}, "/test2");
 
-		final Future<FutureResult<String>> resultFuture = httpClient.createGet("http://localhost:" + port + "/test1").build().execute();
+		CompletableFuture<HttpResponse<String>> execute = httpClient.createGet("http://localhost:" + port + "/test1").build().execute();
 
-		final FutureResult<String> result = resultFuture.get(1000, TimeUnit.MILLISECONDS);
-		final HttpResponse<String> httpResponse = result.getHttpResponse();
+		HttpResponse<String> httpResponse = execute.get(1000, TimeUnit.MILLISECONDS);
 		assertEquals(okBody, httpResponse.getBody());
 		assertEquals(200, httpResponse.getStatusCode());
-
-
 	}
 
 

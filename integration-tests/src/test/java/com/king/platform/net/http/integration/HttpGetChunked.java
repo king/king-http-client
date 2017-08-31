@@ -50,7 +50,7 @@ public class HttpGetChunked {
 
 	@Test
 	public void getChunked() throws Exception {
-		HttpResponse<String> httpResponse = httpClient.createGet("http://localhost:" + port).keepAlive(true).build().execute().get().getHttpResponse();
+		HttpResponse<String> httpResponse = httpClient.createGet("http://localhost:" + port).keepAlive(true).build().execute().get();
 		String body = httpResponse.getBody();
 		assertEquals(message1 +"\r\n"+ message2 +"\r\n"+ message3 +"\r\n", body);
 		String header = httpResponse.getHeader("Transfer-Encoding");

@@ -29,8 +29,9 @@ public class UriQueryBuilder {
 		}
 	}
 
-	public void addParameter(String name, String value) {
+	public UriQueryBuilder addParameter(String name, String value) {
 		parameterEncoder.addParameter(completeUrl, name, value);
+		return this;
 	}
 
 	public String build() {

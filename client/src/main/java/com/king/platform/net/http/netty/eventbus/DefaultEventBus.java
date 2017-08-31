@@ -10,15 +10,11 @@ import org.slf4j.Logger;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class DefaultEventBus implements RequestEventBus, RootEventBus {
 	private final Logger logger = getLogger(getClass());
-
-	private final AtomicBoolean hasTriggeredCompleted = new AtomicBoolean();
-	private final AtomicBoolean hasTriggeredError = new AtomicBoolean();
 
 	private final ConcurrentHashMap<Event, ArrayList<EventBusCallback>> event1Callbacks;
 	private final ConcurrentHashMap<Event, ArrayList<EventBusCallback>> event2Callbacks;

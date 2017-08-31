@@ -2,6 +2,17 @@
 
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.king.king-http-client/king-http-client/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.king.king-http-client/king-http-client)
 
+## New in Version 2.3.0 
+* Changed to Java 8
+* `Future<FutureResult<T>>` has been replaced with `CompletableFuture<HttpResponse<T>>` in `BuiltClientRequest`.
+* The `CompletableFuture.get()` can now throw `ExecutionException` which contains the underlaying Exception (Before this exception could be fetched from the `FutureResult`).
+* `HttpClient.setConf` has been deprecated and replaced with `NettyHttpClientBuilder.setOption`
+* `UriQueryBuilder.addParameter` can now be chained.
+* Netty 4.1 has been bumped to 4.1.15.Final.
+
+## New in Version 2.2.0
+* Improved SseClient
+
 ## New in Version 2.1.0
  * Upgraded to use Netty-4.1
  
@@ -27,24 +38,30 @@ Before start is called, httpClient.setConf can be used to tweak internal setting
 Then to use it, use the fluent method builder on the HttpClient:
 
 ```java
-Future<FutureResult<String>> resultFuture = httpClient.createGet("http://some.url").build().execute();
-httpClient.createPost("http://someUrl").content("someContentToBePosted".getBytes()).withQueryParameter("param1", "value1").withHeader("header1", "headerValue1").build().execute();
+CompletableFuture<HttpResponse<String>> future = httpClient.createGet("http://some.url").build().execute();
+
+CompletableFuture<HttpResponse<byte[]>> byteResponseFuture = httpClient.createPost("http://someUrl")
+			.content("someContentToBePosted".getBytes())
+			.withQueryParameter("param1", "value1")
+			.withHeader("header1", "headerValue1")
+			.build()
+			.execute(new ByteArrayResponseBodyConsumer());
 ```
 
 Or using callback objects:
 
 ```java
 httpClient.createGet("http://some.url").build().execute(new HttpCallback<String>() {
-			@Override
-			public void onCompleted(HttpResponse<String> httpResponse) {
-				
-			}
+		@Override
+		public void onCompleted(HttpResponse<String> httpResponse) {
 
-			@Override
-			public void onError(Throwable throwable) {
+		}
 
-			}
-		});
+		@Override
+		public void onError(Throwable throwable) {
+
+		}
+	});
 ```
 
 
@@ -52,36 +69,36 @@ For more complex cases or when the result is unfit to handle as a string, a Resp
 
 ```java
 httpClient.createGet("http://some.url").build().execute(new HttpCallback<SomeObject>() {
-			@Override
-			public void onCompleted(HttpResponse<SomeObject> httpResponse) {
+		@Override
+		public void onCompleted(HttpResponse<SomeObject> httpResponse) {
 
-			}
+		}
 
-			@Override
-			public void onError(Throwable throwable) {
+		@Override
+		public void onError(Throwable throwable) {
 
-			}
-		}, new ResponseBodyConsumer<SomeObject>() {
-			@Override
-			public void onBodyStart(String contentType, String charset, long contentLength) throws Exception {
-				
-			}
+		}
+	}, new ResponseBodyConsumer<SomeObject>() {
+		@Override
+		public void onBodyStart(String contentType, String charset, long contentLength) throws Exception {
 
-			@Override
-			public void onReceivedContentPart(ByteBuffer buffer) throws Exception {
-				//aggregate the content from the server
-			}
+		}
 
-			@Override
-			public void onCompletedBody() throws Exception {
-				//build the SomeObject from the aggregated data
-			}
+		@Override
+		public void onReceivedContentPart(ByteBuffer buffer) throws Exception {
+			//aggregate the content from the server
+		}
 
-			@Override
-			public SomeObject getBody() {
-				return someObject;
-			}
-		});
+		@Override
+		public void onCompletedBody() throws Exception {
+			//build the SomeObject from the aggregated data
+		}
+
+		@Override
+		public SomeObject getBody() {
+			return someObject;
+		}
+	});
 ```
 This can also be used to stream the returned body to a file instead of buffer all bytes in memory.
 
@@ -89,27 +106,27 @@ This can also be used to stream the returned body to a file instead of buffer al
 ## Server Side Events Api
 A server side event connection can be made by callign the createSSE method on the httpClient.
 ```java
-SseClient sseClient = httpClient.createSSE(url).build().execute(new SseExecutionCallback() {
-			@Override
-			public void onConnect() {
+SseClient sseClient = httpClient.createSSE("http://someUrl").build().execute(new SseClientCallback() {
+		@Override
+		public void onConnect() {
 
-			}
+		}
 
-			@Override
-			public void onDisconnect() {
+		@Override
+		public void onDisconnect() {
 
-			}
+		}
 
-			@Override
-			public void onError(Throwable throwable) {
+		@Override
+		public void onError(Throwable throwable) {
 
-			}
+		}
 
-			@Override
-			public void onEvent(String lastSentId, String event, String data) {
+		@Override
+		public void onEvent(String lastSentId, String event, String data) {
 
-			}
-		});
+		}
+	});
 		
 sseClient.awaitClose();
 
@@ -120,12 +137,27 @@ sseClient.connect();
 ```
 It is also possible to subscribe specific events
 ```java
-sseClient.subscribe("stocks", new SseCallback() {
-			@Override
-			public void onEvent(String lastSentId, String event, String data) {
-				
-			}
-		});
+sseClient.onEvent("stocks", new EventCallback() {
+	@Override
+	public void onEvent(String lastSentId, String event, String data) {
+
+	}
+});
+
+sseClient.onConnect(new SseClient.ConnectCallback() {
+	@Override
+	public void onConnect() {
+
+	}
+});
+
+
+sseClient.onDisconnect(new SseClient.DisconnectCallback() {
+	@Override
+	public void onDisconnect() {
+
+	}
+});
 ```
 
 

@@ -10,9 +10,7 @@ import com.king.platform.net.http.netty.ServerInfo;
 import com.king.platform.net.http.netty.metric.MetricCallback;
 import com.king.platform.net.http.netty.util.TimeProvider;
 import io.netty.channel.Channel;
-import io.netty.util.Timeout;
 import io.netty.util.Timer;
-import io.netty.util.TimerTask;
 import org.slf4j.Logger;
 
 import java.util.Map;
@@ -36,28 +34,25 @@ public class PoolingChannelPool implements ChannelPool {
 
 		maxTtl = timeoutInMilliseconds;
 
-		cleanupTimer.newTimeout(new TimerTask() {
-			@Override
-			public void run(Timeout timeout) throws Exception {
+		cleanupTimer.newTimeout(timeout -> {
 
-				for (Map.Entry<ServerInfo, ServerPool> poolEntry : serverPoolMap.entrySet()) {
-					ServerPool serverPool = poolEntry.getValue();
-					ServerInfo serverInfo = poolEntry.getKey();
+            for (Map.Entry<ServerInfo, ServerPool> poolEntry : serverPoolMap.entrySet()) {
+                ServerPool serverPool = poolEntry.getValue();
+                ServerInfo serverInfo = poolEntry.getKey();
 
-					serverPool.cleanExpiredConnections();
-					if (serverPool.shouldRemovePool()) {
-						ServerPool remove = serverPoolMap.remove(serverInfo);
-						if (remove != null) {
-							metricCallback.onRemovedServerPool(serverInfo.getHost());
-						}
-					}
+                serverPool.cleanExpiredConnections();
+                if (serverPool.shouldRemovePool()) {
+                    ServerPool remove = serverPoolMap.remove(serverInfo);
+                    if (remove != null) {
+                        metricCallback.onRemovedServerPool(serverInfo.getHost());
+                    }
+                }
 
-				}
+            }
 
-				cleanupTimer.newTimeout(timeout.task(), maxTtl, TimeUnit.MILLISECONDS);
+            cleanupTimer.newTimeout(timeout.task(), maxTtl, TimeUnit.MILLISECONDS);
 
-			}
-		}, maxTtl, TimeUnit.MILLISECONDS);
+        }, maxTtl, TimeUnit.MILLISECONDS);
 	}
 
 

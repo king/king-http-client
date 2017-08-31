@@ -12,7 +12,7 @@ import java.util.concurrent.Executor;
 
 public class DelegatingAsyncSseClientCallback implements SseClientCallback {
 	private final CopyOnWriteArrayList<SseClientCallback> sseClientCallbacks = new CopyOnWriteArrayList<>();
-	private final List<EventCallback> eventCallbacks = new CopyOnWriteArrayList<>();
+	private final CopyOnWriteArrayList<EventCallback> eventCallbacks = new CopyOnWriteArrayList<>();
 	private final CopyOnWriteArrayList<SseClient.DisconnectCallback> disconnectCallbacks = new CopyOnWriteArrayList<>();
 	private final CopyOnWriteArrayList<SseClient.ConnectCallback> connectCallbacks = new CopyOnWriteArrayList<>();
 	private final CopyOnWriteArrayList<SseClient.ErrorCallback> errorCallbacks = new CopyOnWriteArrayList<>();
@@ -28,72 +28,60 @@ public class DelegatingAsyncSseClientCallback implements SseClientCallback {
 
 	@Override
 	public void onConnect() {
-		httpClientCallbackExecutor.execute(new Runnable() {
-			@Override
-			public void run() {
-				for (SseClientCallback callback : sseClientCallbacks) {
-					callback.onConnect();
-				}
+		httpClientCallbackExecutor.execute(() -> {
+            for (SseClientCallback callback : sseClientCallbacks) {
+                callback.onConnect();
+            }
 
-				for (SseClient.ConnectCallback callback : connectCallbacks) {
-					callback.onConnect();
-				}
-			}
-		});
+            for (SseClient.ConnectCallback callback : connectCallbacks) {
+                callback.onConnect();
+            }
+        });
 
 	}
 
 	@Override
 	public void onDisconnect() {
-		httpClientCallbackExecutor.execute(new Runnable() {
-			@Override
-			public void run() {
-				for (SseClientCallback callback : sseClientCallbacks) {
-					callback.onDisconnect();
-				}
+		httpClientCallbackExecutor.execute(() -> {
+            for (SseClientCallback callback : sseClientCallbacks) {
+                callback.onDisconnect();
+            }
 
-				for (SseClient.DisconnectCallback callback : disconnectCallbacks) {
-					callback.onDisconnect();
-				}
-			}
-		});
+            for (SseClient.DisconnectCallback callback : disconnectCallbacks) {
+                callback.onDisconnect();
+            }
+        });
 
 	}
 
 	@Override
 	public void onError(final Throwable throwable) {
-		httpClientCallbackExecutor.execute(new Runnable() {
-			@Override
-			public void run() {
-				for (SseClientCallback callback : sseClientCallbacks) {
-					callback.onError(throwable);
-				}
+		httpClientCallbackExecutor.execute(() -> {
+            for (SseClientCallback callback : sseClientCallbacks) {
+                callback.onError(throwable);
+            }
 
-				for (SseClient.ErrorCallback errorCallback : errorCallbacks) {
-					errorCallback.onError(throwable);
-				}
-			}
-		});
+            for (SseClient.ErrorCallback errorCallback : errorCallbacks) {
+                errorCallback.onError(throwable);
+            }
+        });
 
 	}
 
 	@Override
 	public void onEvent(final String lastSentId, final String event, final String data) {
-		httpClientCallbackExecutor.execute(new Runnable() {
-			@Override
-			public void run() {
-				for (SseClientCallback callback : sseClientCallbacks) {
-					callback.onEvent(lastSentId, event, data);
-				}
+		httpClientCallbackExecutor.execute(() -> {
+            for (SseClientCallback callback : sseClientCallbacks) {
+                callback.onEvent(lastSentId, event, data);
+            }
 
-				invokeCallbacks(lastSentId, event, data, eventCallbacks);
+            invokeCallbacks(lastSentId, event, data, eventCallbacks);
 
-				if (event != null) {
-					List<EventCallback> eventCallbacks = eventCallbackMap.get(event);
-					invokeCallbacks(lastSentId, event, data, eventCallbacks);
-				}
-			}
-		});
+            if (event != null) {
+                List<EventCallback> eventCallbacks = eventCallbackMap.get(event);
+                invokeCallbacks(lastSentId, event, data, eventCallbacks);
+            }
+        });
 	}
 
 	private void invokeCallbacks(String lastSentId, String event, String data, List<EventCallback> eventCallbacks) {
