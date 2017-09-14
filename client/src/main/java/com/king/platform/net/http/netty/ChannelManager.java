@@ -26,7 +26,6 @@ import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslHandler;
-import io.netty.handler.ssl.SslProvider;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import io.netty.util.Timer;
@@ -103,7 +102,7 @@ public class ChannelManager {
 		}
 
 		sslContextBuilder.sessionTimeout(confMap.get(ConfKeys.SSL_HANDSHAKE_TIMEOUT_MILLIS));
-		sslContextBuilder.sslProvider(SslProvider.JDK);
+
 		try {
 			return sslContextBuilder.build();
 		} catch (SSLException e) {
