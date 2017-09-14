@@ -8,10 +8,12 @@ package com.king.platform.net.http.netty.request;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.stream.ChunkedFile;
+import io.netty.handler.stream.ChunkedNioFile;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 
 public class ChunkedFileHttpBody implements HttpBody {
@@ -49,8 +51,9 @@ public class ChunkedFileHttpBody implements HttpBody {
 	@Override
 	public ChannelFuture writeContent(ChannelHandlerContext ctx) throws IOException {
 		Channel channel = ctx.channel();
-
-		return channel.write(new ChunkedFile(file, 1024 * 8), channel.newProgressivePromise());
+		FileChannel fileChannel = new FileInputStream(file).getChannel();
+		long length = file.length();
+		return channel.write(new ChunkedNioFile(fileChannel,0,length, 1024 * 8), channel.newProgressivePromise());
 
 	}
 

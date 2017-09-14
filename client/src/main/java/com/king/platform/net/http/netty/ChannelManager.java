@@ -25,9 +25,12 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.handler.ssl.SslHandler;
+import io.netty.handler.ssl.SslProvider;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import io.netty.util.Timer;
+import io.netty.util.concurrent.FutureListener;
 import org.slf4j.Logger;
 
 import javax.net.ssl.SSLException;
@@ -42,8 +45,8 @@ public class ChannelManager {
 	private final TimeProvider timeProvider;
 	private final ConfMap confMap;
 	private final ChannelPool channelPool;
-	private final Bootstrap plainBootstrap;
-	private final Bootstrap secureBootstrap;
+	private final Bootstrap bootstrap;
+	private final SslContext sslContext;
 	private Timer nettyTimer;
 
 
@@ -63,8 +66,8 @@ public class ChannelManager {
 		    socketChannelClass = NioSocketChannel.class;
 		}
 
-		plainBootstrap = new Bootstrap().channel(socketChannelClass).group(eventLoopGroup);
-		plainBootstrap.handler(new ChannelInitializer() {
+		bootstrap = new Bootstrap().channel(socketChannelClass).group(eventLoopGroup);
+		bootstrap.handler(new ChannelInitializer() {
 			@Override
 			protected void initChannel(Channel ch) throws Exception {
 				ChannelPipeline pipeline = ch.pipeline();
@@ -79,32 +82,12 @@ public class ChannelManager {
 		});
 
 
-		final SslContext sslContext = getSslContext(confMap);
-		secureBootstrap = new Bootstrap().channel(socketChannelClass).group(eventLoopGroup);
-		secureBootstrap.handler(new ChannelInitializer() {
-			@Override
-			protected void initChannel(Channel ch) throws Exception {
-				ChannelPipeline pipeline = ch.pipeline();
-
-				pipeline.addLast(sslContext.newHandler(ch.alloc()));
-
-				addLoggingIfDesired(pipeline, confMap.get(ConfKeys.NETTY_TRACE_LOGS));
-				pipeline.addLast("http-codec", newHttpClientCodec());
-				pipeline.addLast("inflater", new HttpContentDecompressor());
-				pipeline.addLast("chunkedWriter", new ChunkedWriteHandler());
-				pipeline.addLast("httpClientHandler", httpClientHandler);
-
-			}
-		});
-
-
-		secureBootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, confMap.get(ConfKeys.CONNECT_TIMEOUT_MILLIS));
-		plainBootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, confMap.get(ConfKeys.CONNECT_TIMEOUT_MILLIS));
+		sslContext = getSslContext(confMap);
+		bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, confMap.get(ConfKeys.CONNECT_TIMEOUT_MILLIS));
 
 		NettyChannelOptions nettyChannelOptions = confMap.get(ConfKeys.NETTY_CHANNEL_OPTIONS);
 		for (ChannelOption channelOption : nettyChannelOptions.keys()) {
-			plainBootstrap.option(channelOption, nettyChannelOptions.get(channelOption));
-			secureBootstrap.option(channelOption, nettyChannelOptions.get(channelOption));
+			bootstrap.option(channelOption, nettyChannelOptions.get(channelOption));
 		}
 
 		rootEventBus.subscribePermanently(Event.ERROR, new ErrorCallback());
@@ -120,6 +103,7 @@ public class ChannelManager {
 		}
 
 		sslContextBuilder.sessionTimeout(confMap.get(ConfKeys.SSL_HANDSHAKE_TIMEOUT_MILLIS));
+		sslContextBuilder.sslProvider(SslProvider.JDK);
 		try {
 			return sslContextBuilder.build();
 		} catch (SSLException e) {
@@ -212,20 +196,37 @@ public class ChannelManager {
 	private void sendOnNewChannel(final HttpRequestContext httpRequestContext, final RequestEventBus requestEventBus) {
 		final ServerInfo serverInfo = httpRequestContext.getServerInfo();
 
-		ChannelFuture channelFuture = connect(serverInfo);
+		ChannelFuture channelFuture = bootstrap.connect(serverInfo.getHost(), serverInfo.getPort());
 
 		channelFuture.addListener((ChannelFutureListener) future -> {
             if (future.isSuccess()) {
 
                 requestEventBus.triggerEvent(Event.CREATED_CONNECTION, serverInfo);
-
                 requestEventBus.triggerEvent(Event.onConnected);
 
                 Channel channel = future.channel();
+				logger.trace("Opened a new channel {}, for request {}", channel, httpRequestContext);
+				channel.attr(ServerInfo.ATTRIBUTE_KEY).set(serverInfo);
 
-                channel.attr(ServerInfo.ATTRIBUTE_KEY).set(serverInfo);
-                logger.trace("Opened a new channel {}, for request {}", channel, httpRequestContext);
-                sendOnChannel(channel, httpRequestContext, requestEventBus);
+                if (serverInfo.isSecure()) {
+					SslHandler sslHandler = sslContext.newHandler(channel.alloc(), serverInfo.getHost(), serverInfo.getPort());
+					channel.pipeline().addFirst("ssl", sslHandler);
+
+					sslHandler.handshakeFuture().addListener((FutureListener<Channel>) sslHandshakeFuture -> {
+                        if (sslHandshakeFuture.isSuccess()) {
+							logger.trace("SSL handshake successful, sending on channel {}, for request {}", channel, httpRequestContext);
+                            sendOnChannel(channel, httpRequestContext, requestEventBus);
+                        } else {
+                            logger.error("Failed to do ssl handshake");
+                            Throwable cause = sslHandshakeFuture.cause();
+                            requestEventBus.triggerEvent(Event.ERROR, httpRequestContext, cause);
+                        }
+                    });
+
+				} else {
+					logger.trace("Sending over clear channel channel {}, for request {}", channel, httpRequestContext);
+					sendOnChannel(channel, httpRequestContext, requestEventBus);
+				}
 
             } else {
                 logger.trace("Failed to opened a new channel for request {}", httpRequestContext);
@@ -233,18 +234,6 @@ public class ChannelManager {
                 requestEventBus.triggerEvent(Event.ERROR, httpRequestContext, cause);
             }
         });
-	}
-
-	private ChannelFuture connect(ServerInfo serverInfo) {
-		Bootstrap bootstrap = plainBootstrap;
-		if (serverInfo.isSecure()) {
-			bootstrap = secureBootstrap;
-			logger.trace("Connecting using secureBootstrap");
-		} else {
-			logger.trace("Connecting using plainBootstrap");
-		}
-
-		return bootstrap.connect(serverInfo.getHost(), serverInfo.getPort());
 	}
 
 
