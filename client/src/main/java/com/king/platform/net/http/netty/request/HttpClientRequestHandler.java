@@ -106,7 +106,7 @@ public class HttpClientRequestHandler {
 		requestEventBus) {
 		try {
 			httpRequestContext.getTimeRecorder().startWriteBody();
-
+			requestEventBus.triggerEvent(Event.onWroteContentStarted, httpBody.getContentLength());
 			ChannelFuture channelFuture = httpBody.writeContent(ctx);
 
 			channelFuture.addListener(new ChannelProgressiveFutureListener() {

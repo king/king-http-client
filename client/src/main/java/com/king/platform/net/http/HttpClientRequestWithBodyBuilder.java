@@ -76,7 +76,7 @@ public interface HttpClientRequestWithBodyBuilder extends HttpClientRequestHeade
 	 * Build the request
 	 * @return the built request
 	 */
-	BuiltClientRequest build();
+	BuiltClientRequestWithBody build();
 
 
 }

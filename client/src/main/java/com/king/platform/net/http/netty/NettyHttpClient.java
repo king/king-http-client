@@ -16,6 +16,7 @@ import com.king.platform.net.http.netty.request.NettyHttpClientRequest;
 import com.king.platform.net.http.netty.requestbuilder.HttpClientRequestBuilderImpl;
 import com.king.platform.net.http.netty.requestbuilder.HttpClientRequestWithBodyBuilderImpl;
 import com.king.platform.net.http.netty.requestbuilder.HttpClientSseRequestBuilderImpl;
+import com.king.platform.net.http.netty.requestbuilder.UploadCallbackInvoker;
 import com.king.platform.net.http.netty.response.HttpClientResponseHandler;
 import com.king.platform.net.http.netty.response.HttpRedirector;
 import com.king.platform.net.http.netty.util.TimeProvider;
@@ -151,7 +152,7 @@ public class NettyHttpClient implements HttpClient, HttpClientCaller {
 	public <T> CompletableFuture<HttpResponse<T>> execute(HttpMethod httpMethod, final NettyHttpClientRequest<T> nettyHttpClientRequest, HttpCallback<T> httpCallback,
 														  final NioCallback nioCallback, ResponseBodyConsumer<T> responseBodyConsumer, int idleTimeoutMillis,
 														  int totalRequestTimeoutMillis, boolean followRedirects, boolean keepAlive,
-														  ExternalEventTrigger externalEventTrigger, Executor callbackExecutor) {
+														  ExternalEventTrigger externalEventTrigger, Executor callbackExecutor, UploadCallback uploadCallback) {
 		if (!started.get()) {
 			throw new IllegalStateException("The client must be started before anything can be executed.");
 		}
@@ -176,7 +177,7 @@ public class NettyHttpClient implements HttpClient, HttpClientCaller {
 
 		subscribeToHttpCallbackEvents(callbackExecutor, httpCallback, requestRequestEventBus);
 		subscribeToNioCallbackEvents(nioCallback, requestRequestEventBus);
-
+		subscribeToUploadCallbacksEvents(callbackExecutor, uploadCallback, requestRequestEventBus);
 
 		if (responseBodyConsumer == null) {
 			responseBodyConsumer = (ResponseBodyConsumer<T>) EMPTY_RESPONSE_BODY_CONSUMER;
@@ -208,6 +209,7 @@ public class NettyHttpClient implements HttpClient, HttpClientCaller {
 
 		return future;
 	}
+
 
 
 	private <T> HttpCallback<T> runOnlyOnceWrapper(final HttpCallback<T> httpCallback) {
@@ -300,6 +302,21 @@ public class NettyHttpClient implements HttpClient, HttpClientCaller {
 			}
 		});
 	}
+
+
+	private void subscribeToUploadCallbacksEvents(Executor callbackExecutor, UploadCallback uploadCallback, RequestEventBus requestRequestEventBus) {
+		if (uploadCallback == null) {
+			return;
+		}
+
+		UploadCallbackInvoker uploadCallbackInvoker  = new UploadCallbackInvoker(uploadCallback, callbackExecutor);
+
+		requestRequestEventBus.subscribe(Event.onWroteContentStarted, 	 uploadCallbackInvoker::onUploadStarted);
+		requestRequestEventBus.subscribe(Event.onWroteContentProgressed, uploadCallbackInvoker::onUploadProgressed);
+		requestRequestEventBus.subscribe(Event.onWroteContentCompleted,  uploadCallbackInvoker::onUploadComplete);
+
+	}
+
 
 
 	public void addShutdownJob(ShutdownJob shutdownJob) {

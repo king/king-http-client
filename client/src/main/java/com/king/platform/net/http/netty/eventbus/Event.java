@@ -30,6 +30,7 @@ public interface Event {
 	Event1<Void> onConnecting = new Event1<>("onConnecting");
 	Event1<Void> onConnected = new Event1<>("onConnected");
 	Event1<Void> onWroteHeaders = new Event1<>("onWroteHeaders");
+	Event1<Long> onWroteContentStarted = new Event1<>("onWroteContentStarted");
 	Event2<Long, Long> onWroteContentProgressed = new Event2<>("onWroteContentProgressed");
 	Event1<Void> onWroteContentCompleted = new Event1<>("onWroteContentCompleted");
 	Event1<HttpResponseStatus> onReceivedStatus = new Event1<>("onReceivedStatus");

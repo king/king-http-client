@@ -110,7 +110,11 @@ public class BuiltNettyClientRequest implements BuiltClientRequest {
 		return internalExecute(responseBodyConsumer, null, null, null);
 	}
 
-	private <T> CompletableFuture<HttpResponse<T>> internalExecute(ResponseBodyConsumer<T> responseBodyConsumer, NioCallback nioCallback, ExternalEventTrigger externalEventTrigger, HttpCallback<T> httpCallback) {
+	protected  <T> CompletableFuture<HttpResponse<T>> internalExecute(ResponseBodyConsumer<T> responseBodyConsumer, NioCallback nioCallback, ExternalEventTrigger externalEventTrigger, HttpCallback<T> httpCallback) {
+		return internalExecute(responseBodyConsumer, nioCallback, externalEventTrigger, httpCallback, null);
+	}
+
+	protected  <T> CompletableFuture<HttpResponse<T>> internalExecute(ResponseBodyConsumer<T> responseBodyConsumer, NioCallback nioCallback, ExternalEventTrigger externalEventTrigger, HttpCallback<T> httpCallback, UploadCallback uploadCallback) {
 		String completeUri = UriUtil.getUriWithParameters(uri, queryParameters);
 
 		ServerInfo serverInfo = null;
@@ -181,7 +185,7 @@ public class BuiltNettyClientRequest implements BuiltClientRequest {
 		nettyHttpClientRequest.setKeepAlive(keepAlive);
 
 		return httpClientCaller.execute(httpMethod, nettyHttpClientRequest, httpCallback, nioCallback, responseBodyConsumer, idleTimeoutMillis, totalRequestTimeoutMillis,
-			followRedirects, keepAlive, externalEventTrigger, callbackExecutor);
+			followRedirects, keepAlive, externalEventTrigger, callbackExecutor, uploadCallback);
 	}
 
 	private <T> CompletableFuture<HttpResponse<T>> dispatchError(final HttpCallback<T> httpCallback, final URISyntaxException e) {

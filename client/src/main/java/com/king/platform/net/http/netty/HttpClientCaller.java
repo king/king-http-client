@@ -6,10 +6,7 @@
 package com.king.platform.net.http.netty;
 
 
-import com.king.platform.net.http.HttpCallback;
-import com.king.platform.net.http.HttpResponse;
-import com.king.platform.net.http.NioCallback;
-import com.king.platform.net.http.ResponseBodyConsumer;
+import com.king.platform.net.http.*;
 import com.king.platform.net.http.netty.eventbus.ExternalEventTrigger;
 import com.king.platform.net.http.netty.request.NettyHttpClientRequest;
 import io.netty.handler.codec.http.HttpMethod;
@@ -21,6 +18,6 @@ public interface HttpClientCaller {
 	<T> CompletableFuture<HttpResponse<T>> execute(HttpMethod httpMethod, NettyHttpClientRequest<T> nettyHttpClientRequest, HttpCallback<T> httpCallback,
 												   NioCallback nioCallback, ResponseBodyConsumer<T> responseBodyConsumer, int idleTimeoutMillis,
 												   int totalRequestTimeoutMillis, boolean followRedirects, boolean keepAlive,
-												   ExternalEventTrigger externalEventTrigger, Executor callbackExecutor);
+												   ExternalEventTrigger externalEventTrigger, Executor callbackExecutor, UploadCallback uploadCallback);
 
 }
