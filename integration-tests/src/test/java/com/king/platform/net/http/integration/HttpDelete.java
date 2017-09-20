@@ -7,7 +7,6 @@ package com.king.platform.net.http.integration;
 
 
 import com.king.platform.net.http.HttpClient;
-import com.king.platform.net.http.HttpClient;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -50,7 +49,7 @@ public class HttpDelete {
 		}, "/testOk");
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createDelete("http://localhost:" + port + "/testOk").build().execute(httpCallback);
+		httpClient.createDelete("http://localhost:" + port + "/testOk").build().withHttpCallback(httpCallback).execute();
 		httpCallback.waitForCompletion();
 
 		assertEquals(okBody, httpCallback.getBody());
@@ -70,7 +69,7 @@ public class HttpDelete {
 		}, "/test404");
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createDelete("http://localhost:" + port + "/test404").build().execute(httpCallback);
+		httpClient.createDelete("http://localhost:" + port + "/test404").build().withHttpCallback(httpCallback).execute();
 		httpCallback.waitForCompletion();
 		assertEquals("", httpCallback.getBody());
 		assertEquals(404, httpCallback.getStatusCode());

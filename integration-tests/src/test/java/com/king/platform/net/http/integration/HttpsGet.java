@@ -54,7 +54,7 @@ public class HttpsGet {
 		}, "/testOk");
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createGet("https://localhost:" + port + "/testOk").build().execute(httpCallback);
+		httpClient.createGet("https://localhost:" + port + "/testOk").build().withHttpCallback(httpCallback).execute();
 		httpCallback.waitForCompletion();
 
 		assertEquals(okBody, httpCallback.getBody());
@@ -74,7 +74,7 @@ public class HttpsGet {
 		}, "/test404");
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createGet("https://localhost:" + port + "/test404").build().execute(httpCallback);
+		httpClient.createGet("https://localhost:" + port + "/test404").build().withHttpCallback(httpCallback).execute();
 		httpCallback.waitForCompletion();
 		assertEquals("", httpCallback.getBody());
 		assertEquals(404, httpCallback.getStatusCode());

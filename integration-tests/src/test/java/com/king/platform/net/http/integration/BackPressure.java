@@ -8,7 +8,6 @@ package com.king.platform.net.http.integration;
 
 import com.king.platform.net.http.ConfKeys;
 import com.king.platform.net.http.HttpClient;
-import com.king.platform.net.http.HttpClient;
 import com.king.platform.net.http.netty.NettyHttpClientBuilder;
 import com.king.platform.net.http.netty.backpressure.EvictingBackPressure;
 import com.king.platform.net.http.netty.pool.NoChannelPool;
@@ -84,7 +83,7 @@ public class BackPressure {
 		goLatch.countDown();
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createGet("http://localhost:" + port + "/testOk").build().execute(httpCallback);
+		httpClient.createGet("http://localhost:" + port + "/testOk").build().withHttpCallback(httpCallback).execute();
 
 		httpCallback.waitForCompletion();
 

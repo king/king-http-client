@@ -72,7 +72,7 @@ public class HttpPutChunkedFile {
 		BlockingBinaryHttpCallback httpCallback = new BlockingBinaryHttpCallback();
 
 
-		httpClient.createPut("http://localhost:" + port + "/putFile").content(temporaryFile.getFile()).build().execute(httpCallback, new ByteArrayResponseBodyConsumer());
+		httpClient.createPut("http://localhost:" + port + "/putFile").content(temporaryFile.getFile()).build(new ByteArrayResponseBodyConsumer()).withHttpCallback(httpCallback).execute();
 
 		httpCallback.waitForCompletion();
 

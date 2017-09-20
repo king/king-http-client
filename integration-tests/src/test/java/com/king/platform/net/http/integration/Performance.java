@@ -7,8 +7,8 @@ package com.king.platform.net.http.integration;
 
 
 import com.king.platform.net.http.HttpCallback;
-import com.king.platform.net.http.HttpResponse;
 import com.king.platform.net.http.HttpClient;
+import com.king.platform.net.http.HttpResponse;
 import com.king.platform.net.http.netty.NettyHttpClientBuilder;
 import org.junit.After;
 import org.junit.Before;
@@ -85,7 +85,7 @@ public class Performance {
 		}, "/testOk");
 
 		for (int i = 0; i < NR_OF_RUNS; i++) {
-			httpClient.createGet("http://localhost:" + port + "/testOk").build().execute(new HttpCallback<String>() {
+			httpClient.createGet("http://localhost:" + port + "/testOk").build().withHttpCallback(new HttpCallback<String>() {
 				@Override
 				public void onCompleted(HttpResponse httpResponse) {
 					if (httpResponse.getBody().equals(okBody)) {
@@ -103,7 +103,7 @@ public class Performance {
 					exception.printStackTrace();
 					countDownLatch.countDown();
 				}
-			});
+			}).execute();
 		}
 
 		serverCountDownLatch.await();

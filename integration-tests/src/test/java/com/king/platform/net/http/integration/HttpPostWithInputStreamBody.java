@@ -28,9 +28,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class HttpPostWithInputStreamBody {
 	IntegrationServer integrationServer;
@@ -69,7 +67,7 @@ public class HttpPostWithInputStreamBody {
 		}, "/testOk");
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createPost("http://localhost:" + port + "/testOk").content(content).build().execute(httpCallback);
+		httpClient.createPost("http://localhost:" + port + "/testOk").content(content).build().withHttpCallback(httpCallback).execute();
 
 		httpCallback.waitForCompletion();
 
@@ -112,7 +110,7 @@ public class HttpPostWithInputStreamBody {
 		}, "/testOk");
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createPost("http://localhost:" + port + "/testOk").content(new ByteArrayInputStream(content)).build().execute(httpCallback);
+		httpClient.createPost("http://localhost:" + port + "/testOk").content(new ByteArrayInputStream(content)).build().withHttpCallback(httpCallback).execute();
 
 		httpCallback.waitForCompletion();
 
@@ -182,7 +180,7 @@ public class HttpPostWithInputStreamBody {
 
 				return promise;
 			}
-		}).build().execute(httpCallback);
+		}).build().withHttpCallback(httpCallback).execute();
 
 		httpCallback.waitForCompletion();
 
@@ -206,7 +204,7 @@ public class HttpPostWithInputStreamBody {
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
 		String contentType = "text/unit test";
 
-		httpClient.createPost("http://localhost:" + port + "/testOk").content(content).contentType(contentType).build().execute(httpCallback);
+		httpClient.createPost("http://localhost:" + port + "/testOk").content(content).contentType(contentType).build().withHttpCallback(httpCallback).execute();
 
 		httpCallback.waitForCompletion();
 

@@ -73,7 +73,7 @@ public class ServerCloses {
 
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createGet("http://localhost:" + port + "/").build().execute(httpCallback);
+		httpClient.createGet("http://localhost:" + port + "/").build().withHttpCallback(httpCallback).execute();
 		httpCallback.waitForCompletion();
 		recordingEventBus.printDeepInteractionStack();
 		assertEquals("OK", httpCallback.getHeader("X-Status"));
@@ -119,7 +119,7 @@ public class ServerCloses {
 
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createGet("http://localhost:" + port + "/").idleTimeoutMillis(50000).build().execute(httpCallback);
+		httpClient.createGet("http://localhost:" + port + "/").idleTimeoutMillis(50000).build().withHttpCallback(httpCallback).execute();
 
 		httpCallback.waitForCompletion();
 		recordingEventBus.printDeepInteractionStack();
@@ -163,7 +163,7 @@ public class ServerCloses {
 
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createGet("http://localhost:" + port + "/").build().execute(httpCallback);
+		httpClient.createGet("http://localhost:" + port + "/").build().withHttpCallback(httpCallback).execute();
 		httpCallback.waitForCompletion();
 
 		assertNotNull(httpCallback.getException());
@@ -198,7 +198,7 @@ public class ServerCloses {
 		httpClient.createPost("http://localhost:" + port + "/")
 			.content("some data that needs to be sent to server".getBytes())
 			.build()
-			.execute(httpCallback);
+			.withHttpCallback(httpCallback).execute();
 
 		httpCallback.waitForCompletion();
 

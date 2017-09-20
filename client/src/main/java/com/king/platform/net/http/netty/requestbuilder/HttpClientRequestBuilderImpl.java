@@ -8,6 +8,8 @@ package com.king.platform.net.http.netty.requestbuilder;
 
 import com.king.platform.net.http.BuiltClientRequest;
 import com.king.platform.net.http.HttpClientRequestBuilder;
+import com.king.platform.net.http.ResponseBodyConsumer;
+import com.king.platform.net.http.StringResponseBody;
 import com.king.platform.net.http.netty.ConfMap;
 import com.king.platform.net.http.netty.HttpClientCaller;
 import io.netty.handler.codec.http.HttpMethod;
@@ -23,8 +25,13 @@ public class HttpClientRequestBuilderImpl extends HttpClientRequestHeaderBuilder
 	}
 
 	@Override
-	public BuiltClientRequest build() {
-		return new BuiltNettyClientRequest(httpClientCaller, httpVersion, httpMethod, uri, defaultUserAgent, idleTimeoutMillis, totalRequestTimeoutMillis,
-			followRedirects, acceptCompressedResponse, keepAlive, null, null, null, queryParameters, headerParameters, callbackExecutor);
+	public BuiltClientRequest<String> build() {
+		return build(new StringResponseBody());
+	}
+
+	@Override
+	public <T> BuiltClientRequest<T> build(ResponseBodyConsumer<T> responseBodyConsumer) {
+		return new BuiltNettyClientRequest<T>(httpClientCaller, httpVersion, httpMethod, uri, defaultUserAgent, idleTimeoutMillis, totalRequestTimeoutMillis,
+			followRedirects, acceptCompressedResponse, keepAlive, null, null, null, queryParameters, headerParameters, callbackExecutor, responseBodyConsumer);
 	}
 }

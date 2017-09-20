@@ -8,7 +8,6 @@ package com.king.platform.net.http.integration;
 
 import com.king.platform.net.http.ConfKeys;
 import com.king.platform.net.http.HttpClient;
-import com.king.platform.net.http.HttpClient;
 import com.king.platform.net.http.netty.NettyHttpClientBuilder;
 import com.king.platform.net.http.netty.eventbus.DefaultEventBus;
 import com.king.platform.net.http.netty.eventbus.Event;
@@ -96,7 +95,7 @@ public class ConnectionPool {
 
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createGet("http://localhost:" + port + "/testOk").build().execute(httpCallback);
+		httpClient.createGet("http://localhost:" + port + "/testOk").build().withHttpCallback(httpCallback).execute();
 		httpCallback.waitForCompletion();
 
 		assertEquals(okBody, httpCallback.getBody());
@@ -118,7 +117,7 @@ public class ConnectionPool {
 
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createGet("http://localhost:" + port + "/testOk").build().execute(httpCallback);
+		httpClient.createGet("http://localhost:" + port + "/testOk").build().withHttpCallback(httpCallback).execute();
 		httpCallback.waitForCompletion();
 
 		assertEquals(okBody, httpCallback.getBody());
@@ -140,13 +139,13 @@ public class ConnectionPool {
 
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createGet("http://localhost:" + port + "/testOk").build().execute(httpCallback);
+		httpClient.createGet("http://localhost:" + port + "/testOk").build().withHttpCallback(httpCallback).execute();
 		httpCallback.waitForCompletion();
 
 		//eventBusFactory.resetInteractions();
 
 		httpCallback = new BlockingHttpCallback();
-		httpClient.createGet("http://localhost:" + port + "/testOk").build().execute(httpCallback);
+		httpClient.createGet("http://localhost:" + port + "/testOk").build().withHttpCallback(httpCallback).execute();
 		httpCallback.waitForCompletion();
 
 		assertEquals(okBody, httpCallback.getBody());
@@ -168,13 +167,13 @@ public class ConnectionPool {
 
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createGet("http://localhost:" + port + "/testOk").build().execute(httpCallback);
+		httpClient.createGet("http://localhost:" + port + "/testOk").build().withHttpCallback(httpCallback).execute();
 		httpCallback.waitForCompletion();
 
 		//eventBusFactory.resetInteractions();
 
 		httpCallback = new BlockingHttpCallback();
-		httpClient.createGet("http://localhost:" + port + "/testOk").build().execute(httpCallback);
+		httpClient.createGet("http://localhost:" + port + "/testOk").build().withHttpCallback(httpCallback).execute();
 		httpCallback.waitForCompletion();
 
 		assertEquals(okBody, httpCallback.getBody());

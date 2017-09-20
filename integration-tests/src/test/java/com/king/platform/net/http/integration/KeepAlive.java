@@ -7,7 +7,6 @@ package com.king.platform.net.http.integration;
 
 
 import com.king.platform.net.http.HttpClient;
-import com.king.platform.net.http.HttpClient;
 import com.king.platform.net.http.netty.NettyHttpClientBuilder;
 import com.king.platform.net.http.netty.eventbus.DefaultEventBus;
 import com.king.platform.net.http.netty.eventbus.Event;
@@ -61,7 +60,7 @@ public class KeepAlive {
 		}, "/testOk");
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createGet("http://localhost:" + port + "/testOk").build().execute(httpCallback);
+		httpClient.createGet("http://localhost:" + port + "/testOk").build().withHttpCallback(httpCallback).execute();
 		httpCallback.waitForCompletion();
 
 		assertTrue(recordingEventBus.hasTriggered(Event.CLOSED_CONNECTION));
@@ -87,7 +86,7 @@ public class KeepAlive {
 		}, "/testOk");
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createGet("http://localhost:" + port + "/testOk").keepAlive(true).build().execute(httpCallback);
+		httpClient.createGet("http://localhost:" + port + "/testOk").keepAlive(true).build().withHttpCallback(httpCallback).execute();
 		httpCallback.waitForCompletion();
 
 		assertTrue(recordingEventBus.hasTriggered(Event.CLOSED_CONNECTION));
@@ -114,7 +113,7 @@ public class KeepAlive {
 		}, "/testOk");
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createGet("http://localhost:" + port + "/testOk").keepAlive(true).build().execute(httpCallback);
+		httpClient.createGet("http://localhost:" + port + "/testOk").keepAlive(true).build().withHttpCallback(httpCallback).execute();
 		httpCallback.waitForCompletion();
 
 		assertFalse(recordingEventBus.hasTriggered(Event.CLOSED_CONNECTION));
@@ -141,7 +140,7 @@ public class KeepAlive {
 		}, "/testOk");
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createGet("http://localhost:" + port + "/testOk").keepAlive(false).build().execute(httpCallback);
+		httpClient.createGet("http://localhost:" + port + "/testOk").keepAlive(false).build().withHttpCallback(httpCallback).execute();
 		httpCallback.waitForCompletion();
 
 		assertTrue(recordingEventBus.hasTriggered(Event.CLOSED_CONNECTION));

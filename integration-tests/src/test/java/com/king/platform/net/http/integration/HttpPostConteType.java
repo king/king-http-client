@@ -21,7 +21,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -83,7 +82,7 @@ public class HttpPostConteType {
 	public void postBodyWithContentTypeAndNoEncoding() throws Exception {
 		String contentType = "text/unitTest";
 
-		post.content(content.getBytes()).contentType(contentType).build().execute(httpCallback);
+		post.content(content.getBytes()).contentType(contentType).build().withHttpCallback(httpCallback).execute();
 
 		httpCallback.waitForCompletion();
 
@@ -97,7 +96,7 @@ public class HttpPostConteType {
 	public void postBodyWithContentTypeAndEncodingInContentType() throws Exception {
 		String contentType = "text/unitTest;charset=utf-8";
 
-		post.content(content.getBytes()).contentType(contentType).build().execute(httpCallback);
+		post.content(content.getBytes()).contentType(contentType).build().withHttpCallback(httpCallback).execute();
 
 		httpCallback.waitForCompletion();
 
@@ -114,7 +113,7 @@ public class HttpPostConteType {
 			.bodyCharset(StandardCharsets.UTF_8)
 			.contentType(contentType)
 			.build()
-			.execute(httpCallback);
+			.withHttpCallback(httpCallback).execute();
 		httpCallback.waitForCompletion();
 
 		assertTrue(contentTypeValue.get().startsWith(contentType));
@@ -127,7 +126,7 @@ public class HttpPostConteType {
 			.bodyCharset(StandardCharsets.UTF_8)
 			//.contentType(null)
 			.build()
-			.execute(httpCallback);
+			.withHttpCallback(httpCallback).execute();
 		httpCallback.waitForCompletion();
 
 		assertNull(contentTypeValue.get());
@@ -141,7 +140,7 @@ public class HttpPostConteType {
 			.bodyCharset(StandardCharsets.US_ASCII)
 			.contentType(contentType)
 			.build()
-			.execute(httpCallback);
+			.withHttpCallback(httpCallback).execute();
 		httpCallback.waitForCompletion();
 
 		assertTrue(contentTypeValue.get().startsWith(contentType));

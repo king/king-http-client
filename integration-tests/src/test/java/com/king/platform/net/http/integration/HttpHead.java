@@ -7,19 +7,17 @@ package com.king.platform.net.http.integration;
 
 
 import com.king.platform.net.http.HttpClient;
-import com.king.platform.net.http.netty.ConnectionClosedException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import javax.servlet.ServletException;
-import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class HttpHead {
 	IntegrationServer integrationServer;
@@ -52,7 +50,7 @@ public class HttpHead {
 		}, "/testOk");
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createHead("http://localhost:" + port + "/testOk").build().execute(httpCallback);
+		httpClient.createHead("http://localhost:" + port + "/testOk").build().withHttpCallback(httpCallback).execute();
 		httpCallback.waitForCompletion();
 
 		assertEquals(okHeader, httpCallback.getHeader("X-OK"));
@@ -73,7 +71,7 @@ public class HttpHead {
 		}, "/testOk");
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createHead("http://localhost:" + port + "/testOk").build().execute(httpCallback);
+		httpClient.createHead("http://localhost:" + port + "/testOk").build().withHttpCallback(httpCallback).execute();
 		httpCallback.waitForCompletion();
 
 		assertEquals(okHeader, httpCallback.getHeader("X-OK"));
@@ -94,7 +92,7 @@ public class HttpHead {
 		}, "/testOk");
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createHead("http://localhost:" + port + "/testOk").build().execute(httpCallback);
+		httpClient.createHead("http://localhost:" + port + "/testOk").build().withHttpCallback(httpCallback).execute();
 		httpCallback.waitForCompletion();
 
 		assertEquals("", httpCallback.getBody());
@@ -115,7 +113,7 @@ public class HttpHead {
 		}, "/test404");
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createHead("http://localhost:" + port + "/test404").build().execute(httpCallback);
+		httpClient.createHead("http://localhost:" + port + "/test404").build().withHttpCallback(httpCallback).execute();
 		httpCallback.waitForCompletion();
 		assertEquals("", httpCallback.getBody());
 		assertEquals(404, httpCallback.getStatusCode());

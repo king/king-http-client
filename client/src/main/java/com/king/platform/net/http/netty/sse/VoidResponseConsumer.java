@@ -10,7 +10,7 @@ import com.king.platform.net.http.ResponseBodyConsumer;
 
 import java.nio.ByteBuffer;
 
-class VoidResponseConsumer implements ResponseBodyConsumer<Void> {
+public class VoidResponseConsumer implements ResponseBodyConsumer<Void> {
 	@Override
 	public void onBodyStart(String contentType, String charset, long contentLength) throws Exception {
 	}

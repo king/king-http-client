@@ -7,7 +7,6 @@ package com.king.platform.net.http.integration;
 
 
 import com.king.platform.net.http.HttpClient;
-import com.king.platform.net.http.HttpClient;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlets.GzipFilter;
 import org.junit.After;
@@ -65,7 +64,7 @@ public class CompressedResponse {
 
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createGet("http://localhost:" + port + "/testOk").acceptCompressedResponse(true).build().execute(httpCallback);
+		httpClient.createGet("http://localhost:" + port + "/testOk").acceptCompressedResponse(true).build().withHttpCallback(httpCallback).execute();
 		httpCallback.waitForCompletion();
 
 		assertEquals(okBody, httpCallback.getBody());
@@ -85,7 +84,7 @@ public class CompressedResponse {
 		}, "/test404");
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createGet("http://localhost:" + port + "/test404").build().execute(httpCallback);
+		httpClient.createGet("http://localhost:" + port + "/test404").build().withHttpCallback(httpCallback).execute();
 		httpCallback.waitForCompletion();
 		assertEquals("", httpCallback.getBody());
 		assertEquals(404, httpCallback.getStatusCode());

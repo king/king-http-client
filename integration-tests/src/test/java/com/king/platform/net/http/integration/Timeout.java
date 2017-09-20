@@ -56,7 +56,7 @@ public class Timeout {
 		}, "/testOk");
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createGet("http://localhost:" + port + "/testOk").totalRequestTimeoutMillis(200).build().execute(httpCallback);
+		httpClient.createGet("http://localhost:" + port + "/testOk").totalRequestTimeoutMillis(200).build().withHttpCallback(httpCallback).execute();
 		httpCallback.waitForCompletion();
 
 		Throwable exception = httpCallback.getException();
@@ -81,7 +81,7 @@ public class Timeout {
 		}, "/testOk");
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createGet("http://localhost:" + port + "/testOk").idleTimeoutMillis(100).totalRequestTimeoutMillis(1000).build().execute(httpCallback);
+		httpClient.createGet("http://localhost:" + port + "/testOk").idleTimeoutMillis(100).totalRequestTimeoutMillis(1000).build().withHttpCallback(httpCallback).execute();
 		httpCallback.waitForCompletion();
 
 		assertNotNull(httpCallback.getException());
@@ -105,7 +105,7 @@ public class Timeout {
 		}, "/testOk");
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createGet("http://localhost:" + port + "/testOk").totalRequestTimeoutMillis(100).build().execute(httpCallback);
+		httpClient.createGet("http://localhost:" + port + "/testOk").totalRequestTimeoutMillis(100).build().withHttpCallback(httpCallback).execute();
 		httpCallback.waitForCompletion();
 
 		assertEquals(okBody, httpCallback.getBody());

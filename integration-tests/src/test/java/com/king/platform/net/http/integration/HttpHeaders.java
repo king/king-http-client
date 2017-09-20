@@ -60,7 +60,7 @@ public class HttpHeaders {
 		httpClient
 			.createGet("http://localhost:" + port + "/testOk")
 			.withHeader(headerName, headerValue)
-			.build().execute(httpCallback);
+			.build().withHttpCallback(httpCallback).execute();
 
 		httpCallback.waitForCompletion();
 
@@ -85,7 +85,7 @@ public class HttpHeaders {
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
 
-		httpClient.createGet("http://localhost:" + port + "/testOk").build().execute(httpCallback);
+		httpClient.createGet("http://localhost:" + port + "/testOk").build().withHttpCallback(httpCallback).execute();
 
 		httpCallback.waitForCompletion();
 
@@ -118,7 +118,7 @@ public class HttpHeaders {
 		httpClient
 			.createGet("http://localhost:" + port + "/testOk")
 			.withHeaders(headers)
-			.build().execute(httpCallback);
+			.build().withHttpCallback(httpCallback).execute();
 
 		httpCallback.waitForCompletion();
 

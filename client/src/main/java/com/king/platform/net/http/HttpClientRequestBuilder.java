@@ -9,10 +9,17 @@ package com.king.platform.net.http;
 public interface HttpClientRequestBuilder extends HttpClientRequestHeaderBuilder<HttpClientRequestBuilder> {
 
 	/**
-	 * Build the request
+	 * Build the request. The response is consumed as String.
 	 * @return the built request
 	 */
-	BuiltClientRequest build();
+	BuiltClientRequest<String> build();
 
+	/**
+	 * Build the request. The response is consumed through the responseBodyConsumer
+	 * @param responseBodyConsumer the consumer for this request
+	 * @param <T> the type returned by the completed responseBodyConsumer
+	 * @return the build request
+	 */
+	<T> BuiltClientRequest<T> build(ResponseBodyConsumer<T> responseBodyConsumer);
 
 }

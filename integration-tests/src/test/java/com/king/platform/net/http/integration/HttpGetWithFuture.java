@@ -8,7 +8,6 @@ package com.king.platform.net.http.integration;
 
 import com.king.platform.net.http.HttpClient;
 import com.king.platform.net.http.HttpResponse;
-import com.king.platform.net.http.StringResponseBody;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -58,7 +57,7 @@ public class HttpGetWithFuture {
 	public void get200() throws Exception {
 
 		CountDownLatch countDownLatch = new CountDownLatch(1);
-		CompletableFuture<HttpResponse<String>> resultFuture = httpClient.createGet("http://localhost:" + port + "/testOk").build().execute(new StringResponseBody());
+		CompletableFuture<HttpResponse<String>> resultFuture = httpClient.createGet("http://localhost:" + port + "/testOk").build().execute();
 		resultFuture.whenComplete((httpResponse, throwable) -> {
 			assertEquals(okBody, httpResponse.getBody());
 			assertEquals(200, httpResponse.getStatusCode());
@@ -72,7 +71,7 @@ public class HttpGetWithFuture {
 	@Test
 	public void getUnknownHost() throws Exception {
 
-		CompletableFuture<HttpResponse<String>> resultFuture = httpClient.createGet("http://loasdwd.calhost:" + port + "/testOk").build().execute(new StringResponseBody());
+		CompletableFuture<HttpResponse<String>> resultFuture = httpClient.createGet("http://loasdwd.calhost:" + port + "/testOk").build().execute();
 
 		try {
 			resultFuture.get(4, TimeUnit.SECONDS);

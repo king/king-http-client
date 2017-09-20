@@ -83,7 +83,7 @@ public class HttpGetWithRedirect {
 		}, "/test2");
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createGet("http://localhost:" + port + "/test1").build().execute(httpCallback);
+		httpClient.createGet("http://localhost:" + port + "/test1").build().withHttpCallback(httpCallback).execute();
 		httpCallback.waitForCompletion();
 
 		assertEquals(okBody, httpCallback.getBody());
@@ -141,7 +141,7 @@ public class HttpGetWithRedirect {
 		}, "/test2");
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createGet("http://localhost:" + port + "/test1").followRedirects(false).build().execute(httpCallback);
+		httpClient.createGet("http://localhost:" + port + "/test1").followRedirects(false).build().withHttpCallback(httpCallback).execute();
 		httpCallback.waitForCompletion();
 
 		assertEquals("", httpCallback.getBody());
@@ -169,7 +169,7 @@ public class HttpGetWithRedirect {
 		}, "/test2");
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createGet("http://localhost:" + port + "/test1").build().execute(httpCallback);
+		httpClient.createGet("http://localhost:" + port + "/test1").build().withHttpCallback(httpCallback).execute();
 		httpCallback.waitForCompletion(500, TimeUnit.MILLISECONDS);
 
 		assertNotNull(httpCallback.getException());
@@ -199,7 +199,7 @@ public class HttpGetWithRedirect {
 		}, "/test2");
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createGet("http://localhost:" + port + "/test1").build().execute(httpCallback);
+		httpClient.createGet("http://localhost:" + port + "/test1").build().withHttpCallback(httpCallback).execute();
 		httpCallback.waitForCompletion();
 
 

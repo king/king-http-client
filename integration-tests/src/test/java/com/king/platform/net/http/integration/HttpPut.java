@@ -58,7 +58,7 @@ public class HttpPut {
 		}, "/testOk");
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createPut("http://localhost:" + port + "/testOk").build().execute(httpCallback);
+		httpClient.createPut("http://localhost:" + port + "/testOk").build().withHttpCallback(httpCallback).execute();
 
 		httpCallback.waitForCompletion();
 
@@ -84,7 +84,7 @@ public class HttpPut {
 		}, "/testOk");
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createPut("http://localhost:" + port + "/testOk").content(content.getBytes()).build().execute(httpCallback);
+		httpClient.createPut("http://localhost:" + port + "/testOk").content(content.getBytes()).build().withHttpCallback(httpCallback).execute();
 
 		httpCallback.waitForCompletion();
 
@@ -117,7 +117,7 @@ public class HttpPut {
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
 		httpClient.createPut("http://localhost:" + port + "/testOk").content(content.getBytes())
 			.withHeader("Expect", "100-continue")
-			.build().execute(httpCallback);
+			.build().withHttpCallback(httpCallback).execute();
 
 		httpCallback.waitForCompletion();
 
@@ -143,7 +143,7 @@ public class HttpPut {
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
 		String contentType = "text/unit test";
 
-		httpClient.createPut("http://localhost:" + port + "/testOk").content(content.getBytes()).contentType(contentType).build().execute(httpCallback);
+		httpClient.createPut("http://localhost:" + port + "/testOk").content(content.getBytes()).contentType(contentType).build().withHttpCallback(httpCallback).execute();
 
 		httpCallback.waitForCompletion();
 

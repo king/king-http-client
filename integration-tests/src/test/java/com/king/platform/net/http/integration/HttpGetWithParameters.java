@@ -6,8 +6,8 @@
 package com.king.platform.net.http.integration;
 
 
-import com.king.platform.net.http.HttpClientRequestBuilder;
 import com.king.platform.net.http.HttpClient;
+import com.king.platform.net.http.HttpClientRequestBuilder;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -60,7 +60,7 @@ public class HttpGetWithParameters {
 			.createGet("http://localhost:" + port + "/testOk")
 			.withQueryParameter("param1", "value1")
 			.withQueryParameter("param2", "value2")
-			.build().execute(httpCallback);
+			.build().withHttpCallback(httpCallback).execute();
 
 		httpCallback.waitForCompletion();
 
@@ -91,7 +91,7 @@ public class HttpGetWithParameters {
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
 		httpClient.createGet("http://localhost:" + port + "/testOk?param1=value1&param2=value2")
-			.build().execute(httpCallback);
+			.build().withHttpCallback(httpCallback).execute();
 
 		httpCallback.waitForCompletion();
 
@@ -126,7 +126,7 @@ public class HttpGetWithParameters {
 			.createGet("http://localhost:" + port + "/testOk?param0=value0")
 			.withQueryParameter("param1", "value1")
 			.withQueryParameter("param2", "value2")
-			.build().execute(httpCallback);
+			.build().withHttpCallback(httpCallback).execute();
 
 		httpCallback.waitForCompletion();
 
@@ -173,7 +173,7 @@ public class HttpGetWithParameters {
 			request.withQueryParameter("param" + i, values[i]);
 		}
 
-		request.build().execute(httpCallback);
+		request.build().withHttpCallback(httpCallback).execute();
 
 		httpCallback.waitForCompletion();
 
@@ -212,7 +212,7 @@ public class HttpGetWithParameters {
 		httpClient
 			.createGet("http://localhost:" + port + "/testOk")
 			.withQueryParameters(parameterMap)
-			.build().execute(httpCallback);
+			.build().withHttpCallback(httpCallback).execute();
 
 		httpCallback.waitForCompletion();
 

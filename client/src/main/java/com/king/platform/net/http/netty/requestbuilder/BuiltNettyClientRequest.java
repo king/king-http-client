@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
-public class BuiltNettyClientRequest implements BuiltClientRequest {
+public class BuiltNettyClientRequest<T> implements BuiltClientRequest<T>, BuiltClientRequestWithBody<T> {
 
 	private final HttpClientCaller httpClientCaller;
 	private final HttpVersion httpVersion;
@@ -49,9 +49,14 @@ public class BuiltNettyClientRequest implements BuiltClientRequest {
 	private final List<Param> queryParameters;
 	private final List<Param> headerParameters;
 	private final Executor callbackExecutor;
+	private final ResponseBodyConsumer<T> responseBodyConsumer;
 
+	private HttpCallback<T> httpCallback;
+	private NioCallback nioCallback;
+	private ExternalEventTrigger externalEventTrigger;
+	private UploadCallback uploadCallback;
 
-	public BuiltNettyClientRequest(HttpClientCaller httpClientCaller, HttpVersion httpVersion, HttpMethod httpMethod, String uri, String defaultUserAgent, int idleTimeoutMillis, int totalRequestTimeoutMillis, boolean followRedirects, boolean acceptCompressedResponse, boolean keepAlive, RequestBodyBuilder requestBodyBuilder, String contentType, Charset bodyCharset, List<Param> queryParameters, List<Param> headerParameters, Executor callbackExecutor) {
+	public BuiltNettyClientRequest(HttpClientCaller httpClientCaller, HttpVersion httpVersion, HttpMethod httpMethod, String uri, String defaultUserAgent, int idleTimeoutMillis, int totalRequestTimeoutMillis, boolean followRedirects, boolean acceptCompressedResponse, boolean keepAlive, RequestBodyBuilder requestBodyBuilder, String contentType, Charset bodyCharset, List<Param> queryParameters, List<Param> headerParameters, Executor callbackExecutor, ResponseBodyConsumer<T> responseBodyConsumer) {
 		this.httpClientCaller = httpClientCaller;
 		this.httpVersion = httpVersion;
 		this.httpMethod = httpMethod;
@@ -68,53 +73,35 @@ public class BuiltNettyClientRequest implements BuiltClientRequest {
 		this.queryParameters = new ArrayList<>(queryParameters);
 		this.headerParameters = new ArrayList<>(headerParameters);
 		this.callbackExecutor = callbackExecutor;
+		this.responseBodyConsumer = responseBodyConsumer;
+	}
+
+
+	@Override
+	public BuiltClientRequest<T> withHttpCallback(HttpCallback<T> httpCallback) {
+		this.httpCallback = httpCallback;
+		return this;
 	}
 
 	@Override
-	public CompletableFuture<HttpResponse<String>> execute() {
-		return internalExecute(new StringResponseBody(), null, null, null);
+	public BuiltClientRequest<T> withNioCallback(NioCallback nioCallback) {
+		this.nioCallback = nioCallback;
+		return this;
+	}
+
+	public BuiltClientRequest<T> withExternalEventTrigger(ExternalEventTrigger externalEventTrigger) {
+		this.externalEventTrigger = externalEventTrigger;
+		return this;
 	}
 
 	@Override
-	public CompletableFuture<HttpResponse<String>> execute(HttpCallback<String> httpCallback) {
-		return internalExecute(new StringResponseBody(), null, null, httpCallback);
+	public BuiltClientRequestWithBody<T> withUploadCallback(UploadCallback uploadCallback) {
+		this.uploadCallback = uploadCallback;
+		return this;
 	}
 
 	@Override
-	public CompletableFuture<HttpResponse<String>> execute(HttpCallback<String> httpCallback, NioCallback nioCallback) {
-		return internalExecute(new StringResponseBody(), nioCallback, null, httpCallback);
-	}
-
-	@Override
-	public <T> CompletableFuture<HttpResponse<T>> execute(HttpCallback<T> httpCallback, ResponseBodyConsumer<T> responseBodyConsumer) {
-		return internalExecute(responseBodyConsumer, null, null, httpCallback);
-	}
-
-	@Override
-	public CompletableFuture<HttpResponse<String>> execute(NioCallback nioCallback) {
-		return internalExecute(new StringResponseBody(), nioCallback, null, null);
-	}
-
-	@Override
-	public <T> CompletableFuture<HttpResponse<T>> execute(HttpCallback<T> httpCallback, ResponseBodyConsumer<T> responseBodyConsumer, NioCallback nioCallback) {
-		return internalExecute(responseBodyConsumer, nioCallback, null, httpCallback);
-	}
-
-	@Override
-	public <T> CompletableFuture<HttpResponse<T>> execute(HttpCallback<T> httpCallback, ResponseBodyConsumer<T> responseBodyConsumer, NioCallback nioCallback, ExternalEventTrigger externalEventTrigger) {
-		return internalExecute(responseBodyConsumer, nioCallback, externalEventTrigger, httpCallback);
-	}
-
-	@Override
-	public <T> CompletableFuture<HttpResponse<T>> execute(ResponseBodyConsumer<T> responseBodyConsumer) {
-		return internalExecute(responseBodyConsumer, null, null, null);
-	}
-
-	protected  <T> CompletableFuture<HttpResponse<T>> internalExecute(ResponseBodyConsumer<T> responseBodyConsumer, NioCallback nioCallback, ExternalEventTrigger externalEventTrigger, HttpCallback<T> httpCallback) {
-		return internalExecute(responseBodyConsumer, nioCallback, externalEventTrigger, httpCallback, null);
-	}
-
-	protected  <T> CompletableFuture<HttpResponse<T>> internalExecute(ResponseBodyConsumer<T> responseBodyConsumer, NioCallback nioCallback, ExternalEventTrigger externalEventTrigger, HttpCallback<T> httpCallback, UploadCallback uploadCallback) {
+	public CompletableFuture<HttpResponse<T>> execute() {
 		String completeUri = UriUtil.getUriWithParameters(uri, queryParameters);
 
 		ServerInfo serverInfo = null;
@@ -188,7 +175,7 @@ public class BuiltNettyClientRequest implements BuiltClientRequest {
 			followRedirects, keepAlive, externalEventTrigger, callbackExecutor, uploadCallback);
 	}
 
-	private <T> CompletableFuture<HttpResponse<T>> dispatchError(final HttpCallback<T> httpCallback, final URISyntaxException e) {
+	private CompletableFuture<HttpResponse<T>> dispatchError(final HttpCallback<T> httpCallback, final URISyntaxException e) {
 		if (httpCallback != null) {
             callbackExecutor.execute(() -> httpCallback.onError(e));
         }
@@ -215,4 +202,6 @@ public class BuiltNettyClientRequest implements BuiltClientRequest {
 	public boolean isKeepAlive() {
 		return keepAlive;
 	}
+
+
 }

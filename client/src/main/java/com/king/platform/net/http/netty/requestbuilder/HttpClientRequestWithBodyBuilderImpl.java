@@ -6,9 +6,7 @@
 package com.king.platform.net.http.netty.requestbuilder;
 
 
-import com.king.platform.net.http.BuiltClientRequestWithBody;
-import com.king.platform.net.http.ConfKeys;
-import com.king.platform.net.http.HttpClientRequestWithBodyBuilder;
+import com.king.platform.net.http.*;
 import com.king.platform.net.http.netty.ConfMap;
 import com.king.platform.net.http.netty.HttpClientCaller;
 import com.king.platform.net.http.netty.request.HttpBody;
@@ -134,13 +132,19 @@ public class HttpClientRequestWithBodyBuilderImpl extends HttpClientRequestHeade
 	}
 
 	@Override
-	public BuiltClientRequestWithBody build() {
+	public <T> BuiltClientRequestWithBody<T> build(ResponseBodyConsumer<T> responseBodyConsumer) {
 		RequestBodyBuilder immutableBodyBuilder = requestBodyBuilder;
 		if (requestBodyBuilder instanceof FormParameterBodyBuilder) {
 			immutableBodyBuilder = new FormParameterBodyBuilder((FormParameterBodyBuilder)requestBodyBuilder);
 		}
 
-		return new BuiltNettyClientRequestWithBody(httpClientCaller, httpVersion, httpMethod, uri, defaultUserAgent, idleTimeoutMillis, totalRequestTimeoutMillis, followRedirects,
-			acceptCompressedResponse, keepAlive, immutableBodyBuilder, contentType, bodyCharset, queryParameters, headerParameters, callbackExecutor);
+		return new BuiltNettyClientRequest<T>(httpClientCaller, httpVersion, httpMethod, uri, defaultUserAgent, idleTimeoutMillis, totalRequestTimeoutMillis, followRedirects,
+			acceptCompressedResponse, keepAlive, immutableBodyBuilder, contentType, bodyCharset, queryParameters, headerParameters, callbackExecutor, responseBodyConsumer);
+	}
+
+
+	@Override
+	public BuiltClientRequestWithBody<String> build() {
+		return build(new StringResponseBody());
 	}
 }

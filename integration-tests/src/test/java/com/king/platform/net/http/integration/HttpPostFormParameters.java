@@ -57,7 +57,7 @@ public class HttpPostFormParameters {
 
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createPost("http://localhost:" + port + "/testOk").addFormParameter("param1", value).build().execute(httpCallback);
+		httpClient.createPost("http://localhost:" + port + "/testOk").addFormParameter("param1", value).build().withHttpCallback(httpCallback).execute();
 
 		httpCallback.waitForCompletion();
 
@@ -93,7 +93,7 @@ public class HttpPostFormParameters {
 
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createPost("http://localhost:" + port + "/testOk").addFormParameters(parameters).build().execute(httpCallback);
+		httpClient.createPost("http://localhost:" + port + "/testOk").addFormParameters(parameters).build().withHttpCallback(httpCallback).execute();
 
 		httpCallback.waitForCompletion();
 

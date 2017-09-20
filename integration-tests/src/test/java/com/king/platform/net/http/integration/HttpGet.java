@@ -60,7 +60,7 @@ public class HttpGet {
 		}, "/testOk");
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createGet("http://localhost:" + port + "/testOk").build().execute(httpCallback);
+		httpClient.createGet("http://localhost:" + port + "/testOk").build().withHttpCallback(httpCallback).execute();
 		httpCallback.waitForCompletion();
 
 		assertEquals(okBody, httpCallback.getBody());
@@ -81,7 +81,7 @@ public class HttpGet {
 		}, "/testOk");
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createGet("http://localhost:" + port + "/testOk").build().execute(httpCallback);
+		httpClient.createGet("http://localhost:" + port + "/testOk").build().withHttpCallback(httpCallback).execute();
 		httpCallback.waitForCompletion();
 
 		assertEquals(okBody, httpCallback.getBody());
@@ -107,7 +107,7 @@ public class HttpGet {
 		}, "/testOk");
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createGet("http://localhost:" + port + "/testOk").build().execute(httpCallback);
+		httpClient.createGet("http://localhost:" + port + "/testOk").build().withHttpCallback(httpCallback).execute();
 		httpCallback.waitForCompletion();
 
 		assertEquals(okBody, httpCallback.getBody());
@@ -134,7 +134,7 @@ public class HttpGet {
 		}, "/testOk");
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createGet("http://localhost:" + port + "/testOk").build().execute(httpCallback);
+		httpClient.createGet("http://localhost:" + port + "/testOk").build().withHttpCallback(httpCallback).execute();
 		httpCallback.waitForCompletion();
 
 		assertNotNull(httpCallback.getException());
@@ -155,7 +155,7 @@ public class HttpGet {
 		}, "/test404");
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createGet("http://localhost:" + port + "/test404").build().execute(httpCallback);
+		httpClient.createGet("http://localhost:" + port + "/test404").build().withHttpCallback(httpCallback).execute();
 		httpCallback.waitForCompletion();
 		assertEquals("", httpCallback.getBody());
 		assertEquals(404, httpCallback.getStatusCode());
@@ -179,7 +179,7 @@ public class HttpGet {
 
 		final AtomicReference<String> threadName = new AtomicReference<>();
 		final CountDownLatch countDownLatch = new CountDownLatch(1);
-		httpClient.createGet("http://localhost:" + port + "/testOk").executingOn(executorService).build().execute(new HttpCallback<String>() {
+		httpClient.createGet("http://localhost:" + port + "/testOk").executingOn(executorService).build().withHttpCallback(new HttpCallback<String>() {
 			@Override
 			public void onCompleted(HttpResponse<String> httpResponse) {
 				threadName.set(Thread.currentThread().getName());
@@ -190,7 +190,7 @@ public class HttpGet {
 			public void onError(Throwable throwable) {
 				countDownLatch.countDown();
 			}
-		});
+		}).execute();
 		countDownLatch.await();
 
 		assertTrue(threadName.get().startsWith(poolName));

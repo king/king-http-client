@@ -63,7 +63,7 @@ public class HttpNioCallback {
 		NioCallback nioCallback = mock(NioCallback.class);
 
 		HttpClientRequestBuilder request = httpClient.createGet("http://localhost:" + port + "/testOk");
-		request.build().execute(httpCallback, nioCallback);
+		request.build().withHttpCallback(httpCallback).withNioCallback(nioCallback).execute();
 		httpCallback.waitForCompletion();
 
 		assertEquals(okBody, httpCallback.getBody());
@@ -95,7 +95,7 @@ public class HttpNioCallback {
 		}, "/testOk");
 
 
-		CompletableFuture<HttpResponse<String>> future = httpClient.createGet("http://localhost:" + port + "/testOk").build().execute(mock(NioCallback.class));
+		CompletableFuture<HttpResponse<String>> future = httpClient.createGet("http://localhost:" + port + "/testOk").build().withNioCallback(mock(NioCallback.class)).execute();
 
 		HttpResponse<String> response = future.get();
 		assertEquals(okBody, response.getBody());

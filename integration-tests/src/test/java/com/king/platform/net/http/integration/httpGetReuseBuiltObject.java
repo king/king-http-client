@@ -8,6 +8,7 @@ package com.king.platform.net.http.integration;
 
 import com.king.platform.net.http.BuiltClientRequest;
 import com.king.platform.net.http.HttpClient;
+import com.king.platform.net.http.HttpClientRequestBuilder;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -23,7 +24,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 public class httpGetReuseBuiltObject {
 	IntegrationServer integrationServer;
@@ -58,7 +58,7 @@ public class httpGetReuseBuiltObject {
 		BuiltClientRequest builtClientRequest = httpClient.createGet("http://localhost:" + port + "/testOk").build();
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		builtClientRequest.execute(httpCallback);
+		builtClientRequest.withHttpCallback(httpCallback).execute();
 		httpCallback.waitForCompletion();
 
 		assertEquals(okBody + "1", httpCallback.getBody());
@@ -66,7 +66,7 @@ public class httpGetReuseBuiltObject {
 
 
 		httpCallback = new BlockingHttpCallback();
-		builtClientRequest.execute(httpCallback);
+		builtClientRequest.withHttpCallback(httpCallback).execute();
 		httpCallback.waitForCompletion();
 
 		assertEquals(okBody + "2", httpCallback.getBody());
@@ -86,7 +86,7 @@ public class httpGetReuseBuiltObject {
 			}
 		}, "/testOk");
 
-		final BuiltClientRequest builtClientRequest = httpClient.createGet("http://localhost:" + port + "/testOk").build();
+		HttpClientRequestBuilder get = httpClient.createGet("http://localhost:" + port + "/testOk");
 
 		final AtomicBoolean failed = new AtomicBoolean();
 
@@ -108,7 +108,7 @@ public class httpGetReuseBuiltObject {
 					}
 
 					BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-					builtClientRequest.execute(httpCallback);
+					get.build().withHttpCallback(httpCallback).execute();
 					try {
 						httpCallback.waitForCompletion();
 						if (httpCallback.getStatusCode() != 200) {

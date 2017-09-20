@@ -6,7 +6,9 @@
 package com.king.platform.net.http.netty.sse;
 
 
-import com.king.platform.net.http.*;
+import com.king.platform.net.http.EventCallback;
+import com.king.platform.net.http.SseClient;
+import com.king.platform.net.http.SseClientCallback;
 import com.king.platform.net.http.netty.eventbus.Event;
 import com.king.platform.net.http.netty.eventbus.ExternalEventTrigger;
 import com.king.platform.net.http.netty.requestbuilder.BuiltNettyClientRequest;
@@ -19,9 +21,7 @@ public class SseClientImpl implements SseClient {
 	private final ExternalEventTrigger externalEventTrigger;
 	private final BuiltNettyClientRequest builtNettyClientRequest;
 
-	private final VoidResponseConsumer responseBodyConsumer;
 	private final ServerEventDecoder serverEventDecoder;
-	private final SseNioHttpCallback nioCallback;
 
 	private AtomicReference<State> state = new AtomicReference<>(State.DISCONNECTED);
 
@@ -44,9 +44,12 @@ public class SseClientImpl implements SseClient {
 
 		externalEventTrigger = new ExternalEventTrigger();
 
-		responseBodyConsumer = new VoidResponseConsumer();
 		serverEventDecoder = new ServerEventDecoder(delegatingAsyncSseClientCallback);
-		nioCallback = new SseNioHttpCallback(serverEventDecoder, delegatingAsyncSseClientCallback, state, builtNettyClientRequest.isFollowRedirects(), awaitLatch);
+		SseNioHttpCallback nioCallback = new SseNioHttpCallback(serverEventDecoder, delegatingAsyncSseClientCallback, state, builtNettyClientRequest
+			.isFollowRedirects(), awaitLatch);
+
+		builtNettyClientRequest.withNioCallback(nioCallback);
+		builtNettyClientRequest.withExternalEventTrigger(externalEventTrigger);
 	}
 
 	@Override
@@ -88,7 +91,7 @@ public class SseClientImpl implements SseClient {
 
 		serverEventDecoder.reset();
 
-		builtNettyClientRequest.execute(null, responseBodyConsumer, nioCallback, externalEventTrigger);
+		builtNettyClientRequest.execute();
 	}
 
 	@Override

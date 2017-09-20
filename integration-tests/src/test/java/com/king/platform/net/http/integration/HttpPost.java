@@ -72,7 +72,7 @@ public class HttpPost {
 
 	@Test
 	public void post200() throws Exception {
-		post.build().execute(httpCallback);
+		post.build().withHttpCallback(httpCallback).execute();
 
 		httpCallback.waitForCompletion();
 
@@ -85,7 +85,7 @@ public class HttpPost {
 	public void postBodyWithByteArray() throws Exception {
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		post.content(content.getBytes()).build().execute(httpCallback);
+		post.content(content.getBytes()).build().withHttpCallback(httpCallback).execute();
 
 		httpCallback.waitForCompletion();
 
@@ -96,7 +96,7 @@ public class HttpPost {
 
 	@Test
 	public void postBodyWithInputStream() throws Exception {
-		post.content(new ByteArrayInputStream(content.getBytes())).build().execute(httpCallback);
+		post.content(new ByteArrayInputStream(content.getBytes())).build().withHttpCallback(httpCallback).execute();
 
 		httpCallback.waitForCompletion();
 
