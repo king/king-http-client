@@ -92,7 +92,7 @@ public class BuiltNettyClientRequest implements BuiltClientRequest {
 
 	@Override
 	public CompletableFuture<HttpResponse<String>> execute(NioCallback nioCallback) {
-		return internalExecute(null, nioCallback, null, null);
+		return internalExecute(new StringResponseBody(), nioCallback, null, null);
 	}
 
 	@Override

@@ -6,9 +6,10 @@
 package com.king.platform.net.http.integration;
 
 
-import com.king.platform.net.http.HttpClientRequestBuilder;
-import com.king.platform.net.http.NioCallback;
 import com.king.platform.net.http.HttpClient;
+import com.king.platform.net.http.HttpClientRequestBuilder;
+import com.king.platform.net.http.HttpResponse;
+import com.king.platform.net.http.NioCallback;
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.After;
@@ -21,6 +22,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.concurrent.CompletableFuture;
 
 import static org.junit.Assert.assertEquals;
 import static se.mockachino.Mockachino.*;
@@ -81,6 +83,24 @@ public class HttpNioCallback {
 
 	}
 
+	@Test
+	public void getWithNioCallbackShouldDefaultToStringBodyConsumer() throws Exception {
+
+		integrationServer.addServlet(new HttpServlet() {
+			@Override
+			protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+				resp.getWriter().write(okBody);
+				resp.getWriter().flush();
+			}
+		}, "/testOk");
+
+
+		CompletableFuture<HttpResponse<String>> future = httpClient.createGet("http://localhost:" + port + "/testOk").build().execute(mock(NioCallback.class));
+
+		HttpResponse<String> response = future.get();
+		assertEquals(okBody, response.getBody());
+
+	}
 
 	@After
 	public void tearDown() throws Exception {
