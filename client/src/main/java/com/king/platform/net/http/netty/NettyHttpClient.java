@@ -9,14 +9,11 @@ package com.king.platform.net.http.netty;
 import com.king.platform.net.http.*;
 import com.king.platform.net.http.netty.backpressure.BackPressure;
 import com.king.platform.net.http.netty.eventbus.*;
-import com.king.platform.net.http.netty.metric.TimeStampRecorder;
 import com.king.platform.net.http.netty.pool.ChannelPool;
 import com.king.platform.net.http.netty.request.HttpClientRequestHandler;
-import com.king.platform.net.http.netty.request.NettyHttpClientRequest;
 import com.king.platform.net.http.netty.requestbuilder.HttpClientRequestBuilderImpl;
 import com.king.platform.net.http.netty.requestbuilder.HttpClientRequestWithBodyBuilderImpl;
 import com.king.platform.net.http.netty.requestbuilder.HttpClientSseRequestBuilderImpl;
-import com.king.platform.net.http.netty.requestbuilder.UploadCallbackInvoker;
 import com.king.platform.net.http.netty.response.HttpClientResponseHandler;
 import com.king.platform.net.http.netty.response.HttpRedirector;
 import com.king.platform.net.http.netty.util.TimeProvider;
@@ -29,10 +26,8 @@ import io.netty.handler.codec.http.HttpVersion;
 import io.netty.util.Timer;
 import org.slf4j.Logger;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
@@ -40,7 +35,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-public class NettyHttpClient implements HttpClient, HttpClientCaller {
+public class NettyHttpClient implements HttpClient {
 	private final AtomicBoolean started = new AtomicBoolean();
 
 	private final ConfMap confMap = new ConfMap();
@@ -56,11 +51,10 @@ public class NettyHttpClient implements HttpClient, HttpClientCaller {
 	private final ChannelPool channelPool;
 
 	private EventLoopGroup group;
-	private ChannelManager channelManager;
 	private BackPressure executionBackPressure;
-	private Boolean executeOnCallingThread;
 
 	private List<ShutdownJob> shutdownJobs = new ArrayList<>();
+	private HttpClientCallerImpl httpClientCaller;
 
 	public NettyHttpClient(int nioThreads, ThreadFactory nioThreadFactory, Executor defaultHttpClientCallbackExecutor, Timer
 		cleanupTimer, TimeProvider timeProvider, final BackPressure executionBackPressure, RootEventBus rootEventBus, ChannelPool channelPool) {
@@ -96,19 +90,21 @@ public class NettyHttpClient implements HttpClient, HttpClientCaller {
 			throw new IllegalStateException("Http client has already been started!");
 		}
 
-		executeOnCallingThread = confMap.get(ConfKeys.EXECUTE_ON_CALLING_THREAD);
-
 		if (Epoll.isAvailable() && confMap.get(ConfKeys.USE_EPOLL)) {
-		    group = new EpollEventLoopGroup(nioThreads, nioThreadFactory);
+			group = new EpollEventLoopGroup(nioThreads, nioThreadFactory);
 		} else {
-		    group = new NioEventLoopGroup(nioThreads, nioThreadFactory);
+			group = new NioEventLoopGroup(nioThreads, nioThreadFactory);
 		}
 
 		HttpClientResponseHandler responseHandler = new HttpClientResponseHandler(new HttpRedirector());
 		HttpClientRequestHandler requestHandler = new HttpClientRequestHandler();
 		HttpClientHandler clientHandler = new HttpClientHandler(responseHandler, requestHandler);
 
-		channelManager = new ChannelManager(group, clientHandler, cleanupTimer, timeProvider, channelPool, confMap, rootEventBus);
+		ChannelManager channelManager = new ChannelManager(group, clientHandler, cleanupTimer, timeProvider, channelPool, confMap, rootEventBus);
+
+		boolean executeOnCallingThread = confMap.get(ConfKeys.EXECUTE_ON_CALLING_THREAD);
+
+		httpClientCaller = new HttpClientCallerImpl(rootEventBus, executeOnCallingThread, channelManager, executionBackPressure, timeProvider);
 	}
 
 	@Override
@@ -127,6 +123,50 @@ public class NettyHttpClient implements HttpClient, HttpClientCaller {
 
 	}
 
+	@Override
+	public HttpClientRequestBuilder createGet(String uri) {
+		verifyStarted();
+		return new HttpClientRequestBuilderImpl(httpClientCaller, HttpVersion.HTTP_1_1, HttpMethod.GET, uri, confMap, defaultHttpClientCallbackExecutor);
+	}
+
+	@Override
+	public HttpClientRequestWithBodyBuilder createPost(String uri) {
+		verifyStarted();
+		return new HttpClientRequestWithBodyBuilderImpl(httpClientCaller, HttpVersion.HTTP_1_1, HttpMethod.POST, uri, confMap,
+			defaultHttpClientCallbackExecutor);
+	}
+
+	@Override
+	public HttpClientRequestWithBodyBuilder createPut(String uri) {
+		verifyStarted();
+		return new HttpClientRequestWithBodyBuilderImpl(httpClientCaller, HttpVersion.HTTP_1_1, HttpMethod.PUT, uri, confMap,
+			defaultHttpClientCallbackExecutor);
+	}
+
+	@Override
+	public HttpClientRequestBuilder createDelete(String uri) {
+		verifyStarted();
+		return new HttpClientRequestBuilderImpl(httpClientCaller, HttpVersion.HTTP_1_1, HttpMethod.DELETE, uri, confMap, defaultHttpClientCallbackExecutor);
+	}
+
+	@Override
+	public HttpClientRequestBuilder createHead(String uri) {
+		verifyStarted();
+		return new HttpClientRequestBuilderImpl(httpClientCaller, HttpVersion.HTTP_1_1, HttpMethod.HEAD, uri, confMap, defaultHttpClientCallbackExecutor);
+	}
+
+	@Override
+	public HttpClientSseRequestBuilder createSSE(String uri) {
+		verifyStarted();
+		return new HttpClientSseRequestBuilderImpl(httpClientCaller, HttpVersion.HTTP_1_1, HttpMethod.GET, uri, confMap, defaultHttpClientCallbackExecutor);
+	}
+
+	private void verifyStarted() {
+		if (!started.get()) {
+			throw new IllegalStateException("Http client is not running!");
+		}
+	}
+
 	<T> void setOption(ConfKeys<T> key, T value) {
 		if (started.get()) {
 			throw new IllegalStateException("Can't set global config keys after the client has been started!");
@@ -135,172 +175,9 @@ public class NettyHttpClient implements HttpClient, HttpClientCaller {
 		confMap.set(key, value);
 	}
 
-
-
-	@Override
-	public <T> CompletableFuture<HttpResponse<T>> execute(HttpMethod httpMethod, final NettyHttpClientRequest<T> nettyHttpClientRequest, HttpCallback<T> httpCallback,
-														  final NioCallback nioCallback, ResponseBodyConsumer<T> responseBodyConsumer, int idleTimeoutMillis,
-														  int totalRequestTimeoutMillis, boolean followRedirects, boolean keepAlive,
-														  ExternalEventTrigger externalEventTrigger, Executor callbackExecutor, UploadCallback uploadCallback) {
-		if (!started.get()) {
-			throw new IllegalStateException("The client must be started before anything can be executed.");
-		}
-
-		final RequestEventBus requestRequestEventBus = rootEventBus.createRequestEventBus();
-
-		if (externalEventTrigger != null) {
-			externalEventTrigger.registerEventListener(new EventListener() {
-				@Override
-				public <T> void onEvent(Event1<T> event, T payload) {
-					requestRequestEventBus.triggerEvent(event, payload);
-				}
-
-				@Override
-				public <T1, T2> void onEvent(Event2<T1, T2> event, T1 payload1, T2 payload2) {
-					requestRequestEventBus.triggerEvent(event, payload1, payload2);
-				}
-			});
-		}
-
-		subscribeToHttpCallbackEvents(callbackExecutor, httpCallback, requestRequestEventBus);
-		subscribeToNioCallbackEvents(nioCallback, requestRequestEventBus);
-		subscribeToUploadCallbacksEvents(callbackExecutor, uploadCallback, requestRequestEventBus);
-
-		if (responseBodyConsumer == null) {
-			responseBodyConsumer = (ResponseBodyConsumer<T>) EMPTY_RESPONSE_BODY_CONSUMER;
-		}
-
-
-		final HttpRequestContext<T> httpRequestContext = new HttpRequestContext<>(httpMethod, nettyHttpClientRequest, requestRequestEventBus, responseBodyConsumer,
-			idleTimeoutMillis, totalRequestTimeoutMillis, followRedirects, keepAlive, new TimeStampRecorder(timeProvider));
-
-		ResponseFuture<T> future = new ResponseFuture<>(requestRequestEventBus, httpRequestContext, callbackExecutor);
-
-		if (!executionBackPressure.acquireSlot(nettyHttpClientRequest.getServerInfo())) {
-			requestRequestEventBus.triggerEvent(Event.ERROR, httpRequestContext, new KingHttpException("Too many concurrent connections"));
-			return future;
-		}
-
-		logger.trace("Executing httpRequest {}", httpRequestContext);
-
-		if (executeOnCallingThread) {
-			sendRequest(requestRequestEventBus, httpRequestContext);
-		} else {
-			callbackExecutor.execute(new Runnable() {
-				@Override
-				public void run() {
-					sendRequest(requestRequestEventBus, httpRequestContext);
-				}
-			});
-		}
-
-		return future;
-	}
-
-	private <T> void sendRequest(RequestEventBus requestRequestEventBus, HttpRequestContext<T> httpRequestContext) {
-		try {
-			channelManager.sendOnChannel(httpRequestContext, requestRequestEventBus);
-		} catch (Throwable throwable) {
-			requestRequestEventBus.triggerEvent(Event.ERROR, httpRequestContext, throwable);
-		}
-	}
-
-	@Override
-	public HttpClientRequestBuilder createGet(String uri) {
-		return new HttpClientRequestBuilderImpl(this, HttpVersion.HTTP_1_1, HttpMethod.GET, uri, confMap, defaultHttpClientCallbackExecutor);
-	}
-
-	@Override
-	public HttpClientRequestWithBodyBuilder createPost(String uri) {
-		return new HttpClientRequestWithBodyBuilderImpl(this, HttpVersion.HTTP_1_1, HttpMethod.POST, uri, confMap, defaultHttpClientCallbackExecutor);
-	}
-
-	@Override
-	public HttpClientRequestWithBodyBuilder createPut(String uri) {
-		return new HttpClientRequestWithBodyBuilderImpl(this, HttpVersion.HTTP_1_1, HttpMethod.PUT, uri, confMap, defaultHttpClientCallbackExecutor);
-	}
-
-	@Override
-	public HttpClientRequestBuilder createDelete(String uri) {
-		return new HttpClientRequestBuilderImpl(this, HttpVersion.HTTP_1_1, HttpMethod.DELETE, uri, confMap, defaultHttpClientCallbackExecutor);
-	}
-
-	@Override
-	public HttpClientRequestBuilder createHead(String uri) {
-		return new HttpClientRequestBuilderImpl(this, HttpVersion.HTTP_1_1, HttpMethod.HEAD, uri, confMap, defaultHttpClientCallbackExecutor);
-	}
-
-	@Override
-	public HttpClientSseRequestBuilder createSSE(String uri) {
-		return new HttpClientSseRequestBuilderImpl(this, HttpVersion.HTTP_1_1, HttpMethod.GET, uri, confMap, defaultHttpClientCallbackExecutor);
-	}
-
-
 	public void addShutdownJob(ShutdownJob shutdownJob) {
 		shutdownJobs.add(shutdownJob);
 	}
-
-
-
-	private <T> void subscribeToHttpCallbackEvents(final Executor callbackExecutor, final HttpCallback<T> httpCallback, RequestEventBus requestRequestEventBus) {
-		if (httpCallback == null) {
-			return;
-		}
-		HttpCallbackInvoker<T> httpCallbackInvoker = new HttpCallbackInvoker<>(callbackExecutor, httpCallback);
-		requestRequestEventBus.subscribePermanently(Event.onHttpResponseDone, httpCallbackInvoker::onHttpResponseDone);
-		requestRequestEventBus.subscribePermanently(Event.ERROR, httpCallbackInvoker::onError);
-
-	}
-
-
-	private void subscribeToUploadCallbacksEvents(Executor callbackExecutor, UploadCallback uploadCallback, RequestEventBus requestRequestEventBus) {
-		if (uploadCallback == null) {
-			return;
-		}
-
-		UploadCallbackInvoker uploadCallbackInvoker  = new UploadCallbackInvoker(uploadCallback, callbackExecutor);
-		requestRequestEventBus.subscribe(Event.onWroteContentStarted, 	 uploadCallbackInvoker::onUploadStarted);
-		requestRequestEventBus.subscribe(Event.onWroteContentProgressed, uploadCallbackInvoker::onUploadProgressed);
-		requestRequestEventBus.subscribe(Event.onWroteContentCompleted,  uploadCallbackInvoker::onUploadComplete);
-
-	}
-
-
-	private void subscribeToNioCallbackEvents(final NioCallback nioCallback, RequestEventBus requestRequestEventBus) {
-		if (nioCallback == null) {
-			return;
-		}
-
-		requestRequestEventBus.subscribePermanently(Event.onConnecting, (event, payload) -> nioCallback.onConnecting());
-		requestRequestEventBus.subscribePermanently(Event.onConnected, (event, payload) -> nioCallback.onConnected());
-		requestRequestEventBus.subscribePermanently(Event.onWroteHeaders, (event, payload) -> nioCallback.onWroteHeaders());
-		requestRequestEventBus.subscribePermanently(Event.onWroteContentProgressed, (event, progress, total) -> nioCallback.onWroteContentProgressed(progress, total));
-		requestRequestEventBus.subscribePermanently(Event.onWroteContentCompleted, (event, payload) -> nioCallback.onWroteContentCompleted());
-		requestRequestEventBus.subscribePermanently(Event.onReceivedStatus, (event, payload) -> nioCallback.onReceivedStatus(payload));
-		requestRequestEventBus.subscribePermanently(Event.onReceivedHeaders, (event, payload) -> nioCallback.onReceivedHeaders(payload));
-		requestRequestEventBus.subscribePermanently(Event.onReceivedContentPart, (event, length, contentPart) -> nioCallback.onReceivedContentPart(length, contentPart));
-		requestRequestEventBus.subscribePermanently(Event.onReceivedCompleted, (event, httpResponseStatus, httpHeaders) -> nioCallback.onReceivedCompleted(httpResponseStatus, httpHeaders));
-		requestRequestEventBus.subscribePermanently(Event.ERROR, (event, httpRequestContext, throwable) -> nioCallback.onError(throwable));
-	}
-
-	private static final ResponseBodyConsumer<Void> EMPTY_RESPONSE_BODY_CONSUMER = new ResponseBodyConsumer<Void>() {
-		@Override
-		public void onBodyStart(String contentType, String charset, long contentLength) throws Exception {
-		}
-
-		@Override
-		public void onReceivedContentPart(ByteBuffer buffer) throws Exception {
-		}
-
-		@Override
-		public void onCompletedBody() throws Exception {
-		}
-
-		@Override
-		public Void getBody() {
-			return null;
-		}
-	};
 
 
 	interface ShutdownJob {
