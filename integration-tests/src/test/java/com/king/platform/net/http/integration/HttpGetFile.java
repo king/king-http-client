@@ -244,6 +244,7 @@ public class HttpGetFile {
 				final HttpOutput out = (HttpOutput) resp.getOutputStream();
 				final AsyncContext async = req.startAsync();
 				out.setWriteListener(new WriteListener() {
+					@Override
 					public void onWritePossible() throws IOException {
 						while (out.isReady()) {
 							if (!content.hasRemaining()) {
@@ -255,6 +256,7 @@ public class HttpGetFile {
 						}
 					}
 
+					@Override
 					public void onError(Throwable t) {
 						getServletContext().log("Async Error", t);
 						async.complete();

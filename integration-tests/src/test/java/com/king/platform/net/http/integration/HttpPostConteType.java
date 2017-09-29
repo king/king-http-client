@@ -82,7 +82,7 @@ public class HttpPostConteType {
 	public void postBodyWithContentTypeAndNoEncoding() throws Exception {
 		String contentType = "text/unitTest";
 
-		post.content(content.getBytes()).contentType(contentType).build().withHttpCallback(httpCallback).execute();
+		post.content(content.getBytes(StandardCharsets.UTF_8)).contentType(contentType).build().withHttpCallback(httpCallback).execute();
 
 		httpCallback.waitForCompletion();
 
@@ -96,7 +96,7 @@ public class HttpPostConteType {
 	public void postBodyWithContentTypeAndEncodingInContentType() throws Exception {
 		String contentType = "text/unitTest;charset=utf-8";
 
-		post.content(content.getBytes()).contentType(contentType).build().withHttpCallback(httpCallback).execute();
+		post.content(content.getBytes(StandardCharsets.UTF_8)).contentType(contentType).build().withHttpCallback(httpCallback).execute();
 
 		httpCallback.waitForCompletion();
 
@@ -109,7 +109,7 @@ public class HttpPostConteType {
 	public void postBodyWithContentTypeAndEncoding() throws Exception {
 		String contentType = "text/unitTest";
 
-		post.content(content.getBytes())
+		post.content(content.getBytes(StandardCharsets.UTF_8))
 			.bodyCharset(StandardCharsets.UTF_8)
 			.contentType(contentType)
 			.build()
@@ -122,7 +122,7 @@ public class HttpPostConteType {
 
 	@Test
 	public void postBodyWithNoContentTypeAndEncoding() throws Exception {
-		post.content(content.getBytes())
+		post.content(content.getBytes(StandardCharsets.UTF_8))
 			.bodyCharset(StandardCharsets.UTF_8)
 			//.contentType(null)
 			.build()
@@ -136,7 +136,7 @@ public class HttpPostConteType {
 	@Test
 	public void postBodyWithContentTypeAndDualEncoding() throws Exception {
 		String contentType = "text/unitTest;charset=utf-8";
-		post.content(content.getBytes())
+		post.content(content.getBytes(StandardCharsets.UTF_8))
 			.bodyCharset(StandardCharsets.US_ASCII)
 			.contentType(contentType)
 			.build()

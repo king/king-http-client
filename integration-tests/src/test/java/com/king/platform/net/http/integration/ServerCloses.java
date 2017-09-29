@@ -19,6 +19,7 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import static org.junit.Assert.*;
 
@@ -196,7 +197,7 @@ public class ServerCloses {
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
 
 		httpClient.createPost("http://localhost:" + port + "/")
-			.content("some data that needs to be sent to server".getBytes())
+			.content("some data that needs to be sent to server".getBytes(StandardCharsets.UTF_8))
 			.build()
 			.withHttpCallback(httpCallback).execute();
 

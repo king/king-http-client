@@ -18,6 +18,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.assertEquals;
@@ -76,7 +77,7 @@ public class HttpPut {
 			@Override
 			protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 				byte[] body = readPostBody(req);
-				bodyContent.set(new String(body));
+				bodyContent.set(new String(body, StandardCharsets.UTF_8));
 
 				resp.getWriter().write(okBody);
 				resp.getWriter().flush();
@@ -84,7 +85,7 @@ public class HttpPut {
 		}, "/testOk");
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createPut("http://localhost:" + port + "/testOk").content(content.getBytes()).build().withHttpCallback(httpCallback).execute();
+		httpClient.createPut("http://localhost:" + port + "/testOk").content(content.getBytes(StandardCharsets.UTF_8)).build().withHttpCallback(httpCallback).execute();
 
 		httpCallback.waitForCompletion();
 
@@ -107,7 +108,7 @@ public class HttpPut {
 
 				}
 				byte[] body = readPostBody(req);
-				bodyContent.set(new String(body));
+				bodyContent.set(new String(body, StandardCharsets.UTF_8));
 
 				resp.getWriter().write(okBody);
 				resp.getWriter().flush();
@@ -115,7 +116,7 @@ public class HttpPut {
 		}, "/testOk");
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createPut("http://localhost:" + port + "/testOk").content(content.getBytes())
+		httpClient.createPut("http://localhost:" + port + "/testOk").content(content.getBytes(StandardCharsets.UTF_8))
 			.withHeader("Expect", "100-continue")
 			.build().withHttpCallback(httpCallback).execute();
 
@@ -143,7 +144,7 @@ public class HttpPut {
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
 		String contentType = "text/unit test";
 
-		httpClient.createPut("http://localhost:" + port + "/testOk").content(content.getBytes()).contentType(contentType).build().withHttpCallback(httpCallback).execute();
+		httpClient.createPut("http://localhost:" + port + "/testOk").content(content.getBytes(StandardCharsets.UTF_8)).contentType(contentType).build().withHttpCallback(httpCallback).execute();
 
 		httpCallback.waitForCompletion();
 

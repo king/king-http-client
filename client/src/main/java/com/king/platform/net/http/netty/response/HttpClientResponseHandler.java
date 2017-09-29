@@ -76,7 +76,7 @@ public class HttpClientResponseHandler {
 					return;
 				}
 
-				if (httpRequestContext.getHttpMethod() == HttpMethod.HEAD) {
+				if (httpRequestContext.getHttpMethod().equals(HttpMethod.HEAD)) {
 					httpRequestContext.getTimeRecorder().responseBodyStart();
 					httpRequestContext.getTimeRecorder().responseBodyCompleted();
 					handleCompletedTransfer(httpRequestContext, requestEventBus, nettyHttpClientResponse);

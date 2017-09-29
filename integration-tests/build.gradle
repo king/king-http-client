@@ -3,6 +3,22 @@
 // Author: Magnus Gustafsson
 // License: Apache 2.0, https://raw.github.com/king/king-http-client/LICENSE-APACHE
 
+
+buildscript {
+	repositories {
+		maven {
+			url "https://plugins.gradle.org/m2/"
+		}
+	}
+	dependencies {
+		classpath "net.ltgt.gradle:gradle-errorprone-plugin:0.0.11"
+	}
+}
+
+
+apply plugin: "net.ltgt.errorprone"
+
+
 dependencies {
 	compile project(":client")
 	compile 'org.slf4j:slf4j-api:1.7.7'
@@ -15,5 +31,10 @@ dependencies {
 
 	testCompile 'junit:junit:4.11'
 	testCompile 'se.mockachino:mockachino:0.6.1'
+}
+
+
+tasks.withType(JavaCompile) {
+	options.compilerArgs += ['-Xep:FutureReturnValueIgnored:OFF' ]
 }
 

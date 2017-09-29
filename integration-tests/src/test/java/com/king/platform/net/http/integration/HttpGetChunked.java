@@ -65,6 +65,7 @@ public class HttpGetChunked {
 	}
 
 	public static class MyHandler extends AbstractHandler {
+		@Override
 		public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
 			baseRequest.setHandled(true);
 			response.setContentType("text/plain; charset=utf-8");

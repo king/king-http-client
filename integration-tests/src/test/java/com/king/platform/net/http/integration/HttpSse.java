@@ -6,7 +6,10 @@
 package com.king.platform.net.http.integration;
 
 
-import com.king.platform.net.http.*;
+import com.king.platform.net.http.EventCallback;
+import com.king.platform.net.http.HttpClient;
+import com.king.platform.net.http.SseClient;
+import com.king.platform.net.http.SseClientCallback;
 import com.king.platform.net.http.netty.eventbus.Event;
 import org.eclipse.jetty.servlets.EventSource;
 import org.eclipse.jetty.servlets.EventSourceServlet;
@@ -107,6 +110,7 @@ public class HttpSse {
 			public void onConnect() {
 			}
 
+			@Override
 			public void onDisconnect() {
 			}
 

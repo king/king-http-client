@@ -24,6 +24,7 @@ public class MD5CalculatingOutputStream extends OutputStream {
 		md = MessageDigest.getInstance("MD5");
 	}
 
+	@Override
 	public void write(int b) throws IOException {
 		if (this.wrappedOutputStream != null) {
 			this.wrappedOutputStream.write(b);
@@ -32,6 +33,7 @@ public class MD5CalculatingOutputStream extends OutputStream {
 		this.md.update((byte) b);
 	}
 
+	@Override
 	public void write(byte[] b, int off, int len) throws IOException {
 		if (this.wrappedOutputStream != null) {
 			this.wrappedOutputStream.write(b, off, len);
@@ -44,6 +46,7 @@ public class MD5CalculatingOutputStream extends OutputStream {
 		return this.md.digest();
 	}
 
+	@Override
 	public void close() throws IOException {
 		if (this.wrappedOutputStream != null) {
 			this.wrappedOutputStream.close();

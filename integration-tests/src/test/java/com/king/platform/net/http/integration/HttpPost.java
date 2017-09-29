@@ -19,6 +19,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.assertEquals;
@@ -85,22 +86,22 @@ public class HttpPost {
 	public void postBodyWithByteArray() throws Exception {
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		post.content(content.getBytes()).build().withHttpCallback(httpCallback).execute();
+		post.content(content.getBytes(StandardCharsets.UTF_8)).build().withHttpCallback(httpCallback).execute();
 
 		httpCallback.waitForCompletion();
 
-		assertEquals(content, new String(readBodyContent.get()));
+		assertEquals(content, new String(readBodyContent.get(), StandardCharsets.UTF_8));
 		assertEquals(200, httpCallback.getStatusCode());
 
 	}
 
 	@Test
 	public void postBodyWithInputStream() throws Exception {
-		post.content(new ByteArrayInputStream(content.getBytes())).build().withHttpCallback(httpCallback).execute();
+		post.content(new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8))).build().withHttpCallback(httpCallback).execute();
 
 		httpCallback.waitForCompletion();
 
-		assertEquals(content, new String(readBodyContent.get()));
+		assertEquals(content, new String(readBodyContent.get(), StandardCharsets.UTF_8));
 		assertEquals(200, httpCallback.getStatusCode());
 
 	}

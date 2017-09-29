@@ -19,6 +19,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -89,7 +90,7 @@ public class HttpGetWithFuture {
 				resp.addHeader("Connection", "close");
 
 				ServletOutputStream outputStream = resp.getOutputStream();
-				byte[] bytes = okBody.getBytes();
+				byte[] bytes = okBody.getBytes(StandardCharsets.UTF_8);
 
 				resp.setContentLength(bytes.length);
 
@@ -114,7 +115,7 @@ public class HttpGetWithFuture {
 				resp.addHeader("Connection", "close");
 
 				ServletOutputStream outputStream = resp.getOutputStream();
-				byte[] bytes = okBody.getBytes();
+				byte[] bytes = okBody.getBytes(StandardCharsets.UTF_8);
 
 				resp.setContentLength(2000);
 

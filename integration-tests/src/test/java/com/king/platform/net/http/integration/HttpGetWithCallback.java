@@ -21,6 +21,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -97,7 +98,7 @@ public class HttpGetWithCallback {
 				resp.addHeader("Connection", "close");
 
 				ServletOutputStream outputStream = resp.getOutputStream();
-				byte[] bytes = okBody.getBytes();
+				byte[] bytes = okBody.getBytes(StandardCharsets.UTF_8);
 
 				resp.setContentLength(bytes.length);
 
@@ -124,7 +125,7 @@ public class HttpGetWithCallback {
 				resp.addHeader("Connection", "close");
 
 				ServletOutputStream outputStream = resp.getOutputStream();
-				byte[] bytes = okBody.getBytes();
+				byte[] bytes = okBody.getBytes(StandardCharsets.UTF_8);
 
 				resp.setContentLength(2000);
 

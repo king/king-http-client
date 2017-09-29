@@ -76,7 +76,14 @@ public class HttpClientRequestHandler {
 				}
 			}
 		} else {
-			ctx.write(msg, promise);
+			ctx.write(msg, promise).addListener(new ChannelFutureListener() {
+				@Override
+				public void operationComplete(ChannelFuture future) throws Exception {
+					if (!future.isSuccess()) {
+						logger.error("Failed to write unknown message", future.cause());
+					}
+				}
+			});
 		}
 	}
 

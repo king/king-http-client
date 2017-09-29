@@ -14,6 +14,7 @@ public class Event2<T1, T2> implements Event {
 		this.name = name;
 	}
 
+	@Override
 	public String getName() {
 		return name;
 	}

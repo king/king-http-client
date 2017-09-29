@@ -54,7 +54,7 @@ public class httpGetReuseBuiltObject {
 			}
 		}, "/testOk");
 
-		BuiltClientRequest builtClientRequest = httpClient.createGet("http://localhost:" + port + "/testOk").build();
+		BuiltClientRequest<String> builtClientRequest = httpClient.createGet("http://localhost:" + port + "/testOk").build();
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
 		builtClientRequest.withHttpCallback(httpCallback).execute();
