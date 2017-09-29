@@ -138,14 +138,6 @@ public class NettyHttpClient implements HttpClient, HttpClientCaller {
 		confMap.set(key, value);
 	}
 
-	@Deprecated
-	public <T> void setConf(ConfKeys<T> key, T value) {
-		if (started.get()) {
-			throw new IllegalStateException("Can't set global config keys after the client has been started!");
-		}
-
-		confMap.set(key, value);
-	}
 
 
 	@Override
