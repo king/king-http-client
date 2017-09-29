@@ -12,6 +12,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.Map;
+import java.util.function.Supplier;
 
 public interface HttpClientRequestWithBodyBuilder extends HttpClientRequestHeaderBuilder<HttpClientRequestWithBodyBuilder> {
 
@@ -84,6 +85,6 @@ public interface HttpClientRequestWithBodyBuilder extends HttpClientRequestHeade
 	 * @param <T> the type returned by the completed responseBodyConsumer
 	 * @return the build request
 	 */
-	<T> BuiltClientRequestWithBody<T> build(ResponseBodyConsumer<T> responseBodyConsumer);
+	<T> BuiltClientRequestWithBody<T> build(Supplier<ResponseBodyConsumer<T>> responseBodyConsumer);
 
 }

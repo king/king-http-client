@@ -6,6 +6,8 @@
 package com.king.platform.net.http;
 
 
+import java.util.function.Supplier;
+
 public interface HttpClientRequestBuilder extends HttpClientRequestHeaderBuilder<HttpClientRequestBuilder> {
 
 	/**
@@ -20,6 +22,6 @@ public interface HttpClientRequestBuilder extends HttpClientRequestHeaderBuilder
 	 * @param <T> the type returned by the completed responseBodyConsumer
 	 * @return the build request
 	 */
-	<T> BuiltClientRequest<T> build(ResponseBodyConsumer<T> responseBodyConsumer);
+	<T> BuiltClientRequest<T> build(Supplier<ResponseBodyConsumer<T>> responseBodyConsumer);
 
 }

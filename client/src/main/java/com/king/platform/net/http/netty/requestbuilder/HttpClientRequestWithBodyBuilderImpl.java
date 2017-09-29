@@ -18,6 +18,7 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.util.Map;
 import java.util.concurrent.Executor;
+import java.util.function.Supplier;
 
 public class HttpClientRequestWithBodyBuilderImpl extends HttpClientRequestHeaderBuilderImpl<HttpClientRequestWithBodyBuilder> implements HttpClientRequestWithBodyBuilder {
 
@@ -132,7 +133,7 @@ public class HttpClientRequestWithBodyBuilderImpl extends HttpClientRequestHeade
 	}
 
 	@Override
-	public <T> BuiltClientRequestWithBody<T> build(ResponseBodyConsumer<T> responseBodyConsumer) {
+	public <T> BuiltClientRequestWithBody<T> build(Supplier<ResponseBodyConsumer<T>> responseBodyConsumer) {
 		RequestBodyBuilder immutableBodyBuilder = requestBodyBuilder;
 		if (requestBodyBuilder instanceof FormParameterBodyBuilder) {
 			immutableBodyBuilder = new FormParameterBodyBuilder((FormParameterBodyBuilder)requestBodyBuilder);
@@ -145,6 +146,6 @@ public class HttpClientRequestWithBodyBuilderImpl extends HttpClientRequestHeade
 
 	@Override
 	public BuiltClientRequestWithBody<String> build() {
-		return build(new StringResponseBody());
+		return build(StringResponseBody::new);
 	}
 }

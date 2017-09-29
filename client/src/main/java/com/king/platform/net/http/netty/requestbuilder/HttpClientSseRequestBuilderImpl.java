@@ -32,7 +32,7 @@ public class HttpClientSseRequestBuilderImpl extends HttpClientRequestHeaderBuil
 
 		final BuiltNettyClientRequest<Void> builtNettyClientRequest = new BuiltNettyClientRequest<>(httpClientCaller, httpVersion, httpMethod, uri, defaultUserAgent,
 			idleTimeoutMillis, totalRequestTimeoutMillis, followRedirects, acceptCompressedResponse, keepAlive, null, null, null, queryParameters,
-			headerParameters, callbackExecutor, new VoidResponseConsumer());
+			headerParameters, callbackExecutor, VoidResponseConsumer::new);
 
 
 		return new BuiltSseClientRequest() {

@@ -71,7 +71,7 @@ public class HttpPutZeroCopyFile {
 		integrationServer.addServlet(new MD5CalculatingHttpServlet(), "/putFile");
 
 		BlockingBinaryHttpCallback httpCallback = new BlockingBinaryHttpCallback();
-		httpClient.createPut("http://localhost:" + port + "/putFile").content(temporaryFile.getFile()).build(new ByteArrayResponseBodyConsumer()).withHttpCallback(httpCallback).execute();
+		httpClient.createPut("http://localhost:" + port + "/putFile").content(temporaryFile.getFile()).build(ByteArrayResponseBodyConsumer::new).withHttpCallback(httpCallback).execute();
 		httpCallback.waitForCompletion();
 
 		assertEquals(200, httpCallback.getStatusCode());
@@ -90,7 +90,7 @@ public class HttpPutZeroCopyFile {
 
 		BlockingBinaryHttpCallback httpCallback = new BlockingBinaryHttpCallback();
 
-		httpClient.createPut("http://localhost:" + port + "/putFile").content(temporaryFile.getFile()).build(new ByteArrayResponseBodyConsumer()).withHttpCallback(httpCallback).execute();
+		httpClient.createPut("http://localhost:" + port + "/putFile").content(temporaryFile.getFile()).build(ByteArrayResponseBodyConsumer::new).withHttpCallback(httpCallback).execute();
 
 		httpCallback.waitForCompletion();
 
@@ -112,7 +112,7 @@ public class HttpPutZeroCopyFile {
 
 		BlockingBinaryHttpCallback httpCallback = new BlockingBinaryHttpCallback();
 		httpClient.createPut("http://localhost:" + port + "/putFile").contentType("multipart/form-data").
-			content(temporaryFile.getFile()).build(new ByteArrayResponseBodyConsumer()).withHttpCallback(httpCallback).execute();
+			content(temporaryFile.getFile()).build(ByteArrayResponseBodyConsumer::new).withHttpCallback(httpCallback).execute();
 		httpCallback.waitForCompletion();
 
 

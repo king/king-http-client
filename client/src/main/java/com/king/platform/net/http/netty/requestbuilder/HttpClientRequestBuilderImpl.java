@@ -16,6 +16,7 @@ import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpVersion;
 
 import java.util.concurrent.Executor;
+import java.util.function.Supplier;
 
 public class HttpClientRequestBuilderImpl extends HttpClientRequestHeaderBuilderImpl<HttpClientRequestBuilder> implements HttpClientRequestBuilder {
 
@@ -26,11 +27,11 @@ public class HttpClientRequestBuilderImpl extends HttpClientRequestHeaderBuilder
 
 	@Override
 	public BuiltClientRequest<String> build() {
-		return build(new StringResponseBody());
+		return build(StringResponseBody::new);
 	}
 
 	@Override
-	public <T> BuiltClientRequest<T> build(ResponseBodyConsumer<T> responseBodyConsumer) {
+	public <T> BuiltClientRequest<T> build(Supplier<ResponseBodyConsumer<T>> responseBodyConsumer) {
 		return new BuiltNettyClientRequest<T>(httpClientCaller, httpVersion, httpMethod, uri, defaultUserAgent, idleTimeoutMillis, totalRequestTimeoutMillis,
 			followRedirects, acceptCompressedResponse, keepAlive, null, null, null, queryParameters, headerParameters, callbackExecutor, responseBodyConsumer);
 	}

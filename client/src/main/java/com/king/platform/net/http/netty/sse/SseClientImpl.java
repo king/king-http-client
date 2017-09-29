@@ -18,7 +18,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class SseClientImpl implements SseClient {
-	private final ExternalEventTrigger externalEventTrigger;
+	private ExternalEventTrigger externalEventTrigger;
 	private final BuiltNettyClientRequest builtNettyClientRequest;
 
 	private final ServerEventDecoder serverEventDecoder;
@@ -42,14 +42,15 @@ public class SseClientImpl implements SseClient {
 
 		this.builtNettyClientRequest = builtNettyClientRequest;
 
-		externalEventTrigger = new ExternalEventTrigger();
-
 		serverEventDecoder = new ServerEventDecoder(delegatingAsyncSseClientCallback);
 		SseNioHttpCallback nioCallback = new SseNioHttpCallback(serverEventDecoder, delegatingAsyncSseClientCallback, state, builtNettyClientRequest
 			.isFollowRedirects(), awaitLatch);
 
 		builtNettyClientRequest.withNioCallback(nioCallback);
-		builtNettyClientRequest.withExternalEventTrigger(externalEventTrigger);
+		builtNettyClientRequest.withExternalEventTrigger(() -> {
+            SseClientImpl.this.externalEventTrigger = new ExternalEventTrigger();
+            return externalEventTrigger;
+        });
 	}
 
 	@Override
@@ -96,7 +97,9 @@ public class SseClientImpl implements SseClient {
 
 	@Override
 	public void close() {
-		externalEventTrigger.trigger(Event.CLOSE, null);
+		if (externalEventTrigger != null) {
+			externalEventTrigger.trigger(Event.CLOSE, null);
+		}
 	}
 
 	@Override

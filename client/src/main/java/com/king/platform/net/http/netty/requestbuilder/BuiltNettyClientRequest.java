@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.function.Supplier;
 
 public class BuiltNettyClientRequest<T> implements BuiltClientRequest<T>, BuiltClientRequestWithBody<T> {
 
@@ -49,14 +50,19 @@ public class BuiltNettyClientRequest<T> implements BuiltClientRequest<T>, BuiltC
 	private final List<Param> queryParameters;
 	private final List<Param> headerParameters;
 	private final Executor callbackExecutor;
-	private final ResponseBodyConsumer<T> responseBodyConsumer;
+	private final Supplier<ResponseBodyConsumer<T>> responseBodyConsumer;
 
 	private HttpCallback<T> httpCallback;
 	private NioCallback nioCallback;
-	private ExternalEventTrigger externalEventTrigger;
 	private UploadCallback uploadCallback;
 
-	public BuiltNettyClientRequest(HttpClientCaller httpClientCaller, HttpVersion httpVersion, HttpMethod httpMethod, String uri, String defaultUserAgent, int idleTimeoutMillis, int totalRequestTimeoutMillis, boolean followRedirects, boolean acceptCompressedResponse, boolean keepAlive, RequestBodyBuilder requestBodyBuilder, String contentType, Charset bodyCharset, List<Param> queryParameters, List<Param> headerParameters, Executor callbackExecutor, ResponseBodyConsumer<T> responseBodyConsumer) {
+	private Supplier<ExternalEventTrigger> externalEventTriggerSupplier;
+
+	private Supplier<HttpCallback<T>> httpCallbackSupplier;
+	private Supplier<NioCallback> nioCallbackSupplier;
+
+
+	public BuiltNettyClientRequest(HttpClientCaller httpClientCaller, HttpVersion httpVersion, HttpMethod httpMethod, String uri, String defaultUserAgent, int idleTimeoutMillis, int totalRequestTimeoutMillis, boolean followRedirects, boolean acceptCompressedResponse, boolean keepAlive, RequestBodyBuilder requestBodyBuilder, String contentType, Charset bodyCharset, List<Param> queryParameters, List<Param> headerParameters, Executor callbackExecutor, Supplier<ResponseBodyConsumer<T>> responseBodyConsumer) {
 		this.httpClientCaller = httpClientCaller;
 		this.httpVersion = httpVersion;
 		this.httpMethod = httpMethod;
@@ -79,18 +85,44 @@ public class BuiltNettyClientRequest<T> implements BuiltClientRequest<T>, BuiltC
 
 	@Override
 	public BuiltClientRequest<T> withHttpCallback(HttpCallback<T> httpCallback) {
+		if (httpCallbackSupplier != null) {
+			throw new IllegalStateException("An Supplier<HttpCallback> has already been provided");
+		}
 		this.httpCallback = httpCallback;
 		return this;
 	}
 
 	@Override
+	public BuiltClientRequest<T> withHttpCallback(Supplier<HttpCallback<T>> httpCallbackSupplier) {
+		if (httpCallback != null) {
+			throw new IllegalStateException("An HttpCallback has already been provided");
+		}
+		this.httpCallbackSupplier = httpCallbackSupplier;
+		return this;
+	}
+
+	@Override
 	public BuiltClientRequest<T> withNioCallback(NioCallback nioCallback) {
+		if (nioCallbackSupplier != null) {
+			throw new IllegalStateException("An Supplier<NioCallback> has already been provided");
+		}
+
 		this.nioCallback = nioCallback;
 		return this;
 	}
 
-	public BuiltClientRequest<T> withExternalEventTrigger(ExternalEventTrigger externalEventTrigger) {
-		this.externalEventTrigger = externalEventTrigger;
+	@Override
+	public BuiltClientRequest<T> withNioCallback(Supplier<NioCallback> nioCallbackSupplier) {
+		if (nioCallback != null) {
+			throw new IllegalStateException("An NioCallback has already been provided");
+		}
+
+		this.nioCallbackSupplier = nioCallbackSupplier;
+		return this;
+	}
+
+	public BuiltClientRequest<T> withExternalEventTrigger(Supplier<ExternalEventTrigger> externalEventTriggerSupplier) {
+		this.externalEventTriggerSupplier = externalEventTriggerSupplier;
 		return this;
 	}
 
@@ -102,6 +134,10 @@ public class BuiltNettyClientRequest<T> implements BuiltClientRequest<T>, BuiltC
 
 	@Override
 	public CompletableFuture<HttpResponse<T>> execute() {
+		HttpCallback<T> httpCallback = getHttpCallback();
+		NioCallback nioCallback = getNioCallback();
+		ExternalEventTrigger externalEventTrigger = getExternalEventTrigger();
+
 		String completeUri = UriUtil.getUriWithParameters(uri, queryParameters);
 
 		ServerInfo serverInfo = null;
@@ -168,11 +204,34 @@ public class BuiltNettyClientRequest<T> implements BuiltClientRequest<T>, BuiltC
 			headers.set(HttpHeaderNames.HOST, serverInfo.getHost() + ":" + serverInfo.getPort());
 		}
 
-
 		nettyHttpClientRequest.setKeepAlive(keepAlive);
 
-		return httpClientCaller.execute(httpMethod, nettyHttpClientRequest, httpCallback, nioCallback, responseBodyConsumer, idleTimeoutMillis, totalRequestTimeoutMillis,
+		return httpClientCaller.execute(httpMethod, nettyHttpClientRequest, httpCallback, nioCallback, responseBodyConsumer.get(), idleTimeoutMillis, totalRequestTimeoutMillis,
 			followRedirects, keepAlive, externalEventTrigger, callbackExecutor, uploadCallback);
+	}
+
+	private NioCallback getNioCallback() {
+		NioCallback nioCallback = this.nioCallback;
+		if (nioCallbackSupplier != null) {
+			nioCallback = nioCallbackSupplier.get();
+		}
+		return nioCallback;
+	}
+
+	private HttpCallback<T> getHttpCallback() {
+		HttpCallback<T> httpCallback = this.httpCallback;
+		if (httpCallbackSupplier != null) {
+			httpCallback = httpCallbackSupplier.get();
+		}
+		return httpCallback;
+	}
+
+	private ExternalEventTrigger getExternalEventTrigger() {
+		ExternalEventTrigger externalEventTrigger = null;
+		if (externalEventTriggerSupplier != null) {
+			externalEventTrigger = externalEventTriggerSupplier.get();
+		}
+		return externalEventTrigger;
 	}
 
 	private CompletableFuture<HttpResponse<T>> dispatchError(final HttpCallback<T> httpCallback, final URISyntaxException e) {

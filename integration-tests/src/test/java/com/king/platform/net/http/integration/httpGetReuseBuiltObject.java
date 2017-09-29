@@ -6,9 +6,8 @@
 package com.king.platform.net.http.integration;
 
 
-import com.king.platform.net.http.BuiltClientRequest;
-import com.king.platform.net.http.HttpClient;
-import com.king.platform.net.http.HttpClientRequestBuilder;
+import com.king.platform.net.http.*;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -130,9 +129,132 @@ public class httpGetReuseBuiltObject {
 
 		assertFalse(failed.get());
 
-
 	}
 
+	@Test
+	public void responseBodyConsumerShouldNotBeReused() throws Exception {
+
+		integrationServer.addServlet(new HttpServlet() {
+			@Override
+			protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+				resp.getWriter().write(okBody);
+				resp.setStatus(200);
+			}
+		}, "/testOk");
+
+		AtomicInteger supplierGetCount = new AtomicInteger();
+		BuiltClientRequest<String> clientRequest = httpClient.createGet("http://localhost:" + port + "/testOk").build(() -> {
+            supplierGetCount.incrementAndGet();
+            return new StringResponseBody();
+        });
+
+		clientRequest.execute().join();
+		clientRequest.execute().join();
+		assertEquals(2, supplierGetCount.get());
+	}
+
+	@Test
+	public void httpCallbackShouldBeReused() throws Exception {
+		integrationServer.addServlet(new HttpServlet() {
+			@Override
+			protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+				resp.getWriter().write(okBody);
+				resp.setStatus(200);
+			}
+		}, "/testOk");
+
+		AtomicInteger httpCallbackCount = new AtomicInteger();
+
+		BuiltClientRequest<String> clientRequest = httpClient.createGet("http://localhost:" + port + "/testOk")
+			.build()
+			.withHttpCallback(new HttpCallbackAdapter<String>() {
+				@Override
+				public void onCompleted(HttpResponse<String> httpResponse) {
+					httpCallbackCount.incrementAndGet();
+				}
+			});
+
+		clientRequest.execute().join();
+		clientRequest.execute().join();
+		assertEquals(2, httpCallbackCount.get());
+	}
+
+	@Test
+	public void httpCallbackSupplierShouldProvide() throws Exception {
+		integrationServer.addServlet(new HttpServlet() {
+			@Override
+			protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+				resp.getWriter().write(okBody);
+				resp.setStatus(200);
+			}
+		}, "/testOk");
+
+		AtomicInteger httpCallbackCount = new AtomicInteger();
+
+		BuiltClientRequest<String> clientRequest = httpClient.createGet("http://localhost:" + port + "/testOk")
+			.build()
+			.withHttpCallback(() -> {
+                httpCallbackCount.incrementAndGet();
+                return new HttpCallbackAdapter<String>() {
+                };
+            });
+
+		clientRequest.execute().join();
+		clientRequest.execute().join();
+		assertEquals(2, httpCallbackCount.get());
+	}
+
+	@Test
+	public void nioCallbackShouldBeReused() throws Exception {
+		integrationServer.addServlet(new HttpServlet() {
+			@Override
+			protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+				resp.getWriter().write(okBody);
+				resp.setStatus(200);
+			}
+		}, "/testOk");
+
+		AtomicInteger callbackCount = new AtomicInteger();
+
+		BuiltClientRequest<String> clientRequest = httpClient.createGet("http://localhost:" + port + "/testOk")
+			.build()
+			.withNioCallback(new NioCallbackAdapter() {
+				@Override
+				public void onReceivedCompleted(HttpResponseStatus httpResponseStatus, io.netty.handler.codec.http.HttpHeaders httpHeaders) {
+					callbackCount.incrementAndGet();
+				}
+			});
+
+		clientRequest.execute().join();
+		clientRequest.execute().join();
+		assertEquals(2, callbackCount.get());
+	}
+
+
+	@Test
+	public void nioCallbackSupplierShouldProvide() throws Exception {
+		integrationServer.addServlet(new HttpServlet() {
+			@Override
+			protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+				resp.getWriter().write(okBody);
+				resp.setStatus(200);
+			}
+		}, "/testOk");
+
+		AtomicInteger callbackCount = new AtomicInteger();
+
+		BuiltClientRequest<String> clientRequest = httpClient.createGet("http://localhost:" + port + "/testOk")
+			.build()
+			.withNioCallback(() -> {
+                callbackCount.incrementAndGet();
+                return new NioCallbackAdapter() {
+                };
+            });
+
+		clientRequest.execute().join();
+		clientRequest.execute().join();
+		assertEquals(2, callbackCount.get());
+	}
 
 	@After
 	public void tearDown() throws Exception {
