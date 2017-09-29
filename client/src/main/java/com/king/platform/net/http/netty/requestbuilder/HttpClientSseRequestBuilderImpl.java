@@ -20,9 +20,9 @@ import io.netty.handler.codec.http.HttpVersion;
 import java.util.concurrent.Executor;
 
 public class HttpClientSseRequestBuilderImpl extends HttpClientRequestHeaderBuilderImpl<HttpClientSseRequestBuilder> implements HttpClientSseRequestBuilder {
-	public HttpClientSseRequestBuilderImpl(HttpClientCaller httpClientCaller, HttpVersion httpVersion, HttpMethod httpMethod, String uri, ConfMap confMap,
+	public HttpClientSseRequestBuilderImpl(HttpClientCaller httpClientCaller, String uri, ConfMap confMap,
 										   Executor callbackExecutor) {
-		super(HttpClientSseRequestBuilder.class, httpClientCaller, httpVersion, httpMethod, uri, confMap, callbackExecutor);
+		super(HttpClientSseRequestBuilder.class, httpClientCaller, HttpVersion.HTTP_1_1, HttpMethod.GET, uri, confMap, callbackExecutor);
 	}
 
 	@Override
