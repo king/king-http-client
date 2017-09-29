@@ -6,6 +6,7 @@
 package com.king.platform.net.http.integration;
 
 
+import com.king.platform.net.http.HttpCallback;
 import com.king.platform.net.http.HttpClient;
 import com.king.platform.net.http.HttpResponse;
 import com.king.platform.net.http.netty.ConnectionClosedException;
@@ -24,7 +25,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.*;
 
-public class HttpGetWithFuture {
+public class HttpGetWithFutureAndCallback {
 	IntegrationServer integrationServer;
 	private HttpClient httpClient;
 	private int port;
@@ -37,7 +38,8 @@ public class HttpGetWithFuture {
 		integrationServer.start();
 		port = integrationServer.getPort();
 
-		httpClient = new TestingHttpClientFactory().create();
+		httpClient = new TestingHttpClientFactory().setHttpCallbackExecutorThreads(1).create();
+
 		httpClient.start();
 
 	}
@@ -56,11 +58,15 @@ public class HttpGetWithFuture {
 		}, "/testOk");
 
 
-		HttpResponse<String> response = httpClient.createGet("http://localhost:" + port + "/testOk").build().execute().get(200, TimeUnit.MILLISECONDS);
+		StringHttpCallback httpCallback = new StringHttpCallback();
+		HttpResponse<String> response = httpClient.createGet("http://localhost:" + port + "/testOk").build().withHttpCallback(httpCallback).execute().get(200, TimeUnit.MILLISECONDS);
 
 		assertEquals(okBody, response.getBody());
 		assertEquals(200, response.getStatusCode());
 
+		response = httpCallback.httpResponse;
+		assertEquals(okBody, response.getBody());
+		assertEquals(200, response.getStatusCode());
 	}
 
 	@Test
@@ -74,8 +80,13 @@ public class HttpGetWithFuture {
 			}
 		}, "/testOk");
 
-		HttpResponse<String> response = httpClient.createGet("http://localhost:" + port + "/testOk").build().execute().get(200, TimeUnit.MILLISECONDS);
+		StringHttpCallback httpCallback = new StringHttpCallback();
+		HttpResponse<String> response = httpClient.createGet("http://localhost:" + port + "/testOk").build().withHttpCallback(httpCallback).execute().get(200000, TimeUnit.MILLISECONDS);
 
+		assertEquals(okBody, response.getBody());
+		assertEquals(200, response.getStatusCode());
+
+		response = httpCallback.httpResponse;
 		assertEquals(okBody, response.getBody());
 		assertEquals(200, response.getStatusCode());
 
@@ -98,8 +109,13 @@ public class HttpGetWithFuture {
 			}
 		}, "/testOk");
 
-		HttpResponse<String> response = httpClient.createGet("http://localhost:" + port + "/testOk").build().execute().get(200, TimeUnit.MILLISECONDS);
+		StringHttpCallback httpCallback = new StringHttpCallback();
+		HttpResponse<String> response = httpClient.createGet("http://localhost:" + port + "/testOk").build().withHttpCallback(httpCallback).execute().join();
 
+		assertEquals(okBody, response.getBody());
+		assertEquals(200, response.getStatusCode());
+
+		response = httpCallback.httpResponse;
 		assertEquals(okBody, response.getBody());
 		assertEquals(200, response.getStatusCode());
 
@@ -124,16 +140,23 @@ public class HttpGetWithFuture {
 		}, "/testOk");
 
 
+		StringHttpCallback httpCallback = new StringHttpCallback();
 		try {
-			httpClient.createGet("http://localhost:" + port + "/testOk").build().execute().get(200, TimeUnit.MILLISECONDS);
+			httpClient.createGet("http://localhost:" + port + "/testOk").build().withHttpCallback(httpCallback).execute().get(200, TimeUnit.MILLISECONDS);
 			fail("Should have thrown exception");
 		} catch (ExecutionException ee) {
 			Throwable cause = ee.getCause();
 			assertTrue(cause instanceof ConnectionClosedException);
+
+			assertSame(cause, httpCallback.throwable);
 		}
 
 	}
 
+	@Test
+	public void invocationHappensInTheRightOrder() throws Exception {
+
+	}
 
 	@Test
 	public void get404() throws Exception {
@@ -160,4 +183,19 @@ public class HttpGetWithFuture {
 	}
 
 
+	private static class StringHttpCallback implements HttpCallback<String> {
+		private volatile HttpResponse<String> httpResponse;
+		private volatile Throwable throwable;
+
+		@Override
+        public void onCompleted(HttpResponse<String> httpResponse) {
+            this.httpResponse = httpResponse;
+        }
+
+		@Override
+        public void onError(Throwable throwable) {
+			this.throwable = throwable;
+        }
+
+	}
 }

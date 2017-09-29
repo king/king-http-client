@@ -12,7 +12,6 @@ import com.king.platform.net.http.HttpResponse;
 import com.king.platform.net.http.netty.NettyHttpClientBuilder;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import javax.servlet.ServletException;
@@ -47,7 +46,6 @@ public class Performance {
 	}
 
 	@Test
-	@Ignore
 	public void getParallel() throws Exception {
 
 		final AtomicInteger successCounter = new AtomicInteger();

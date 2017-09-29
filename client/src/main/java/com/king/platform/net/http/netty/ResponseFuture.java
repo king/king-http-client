@@ -10,26 +10,40 @@ import com.king.platform.net.http.netty.eventbus.*;
 
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 public class ResponseFuture<T> extends CompletableFuture<HttpResponse<T>> {
 	private final RequestEventBus requestEventBus;
 	private final HttpRequestContext requestContext;
+	private final Executor callbackExecutor;
 
-	public ResponseFuture(RequestEventBus requestEventBus, HttpRequestContext requestContext) {
+	public ResponseFuture(RequestEventBus requestEventBus, HttpRequestContext requestContext, Executor callbackExecutor) {
 		this.requestEventBus = requestEventBus;
 		this.requestContext = requestContext;
+		this.callbackExecutor = callbackExecutor;
 
 		requestEventBus.subscribe(Event.ERROR, new RunOnceCallback2<HttpRequestContext, Throwable>() {
 			@Override
 			public void onFirstEvent(Event2 event, HttpRequestContext requestContext, Throwable throwable) {
-				ResponseFuture.this.completeExceptionally(throwable);
+				callbackExecutor.execute(new Runnable() {
+					@Override
+					public void run() {
+						ResponseFuture.this.completeExceptionally(throwable);
+					}
+				});
+
 			}
 		});
 
 		requestEventBus.subscribe(Event.onHttpResponseDone, new RunOnceCallback1<HttpResponse>() {
 			@Override
 			public void onFirstEvent(Event1 event, HttpResponse payload) {
-				ResponseFuture.this.complete(payload);
+				callbackExecutor.execute(new Runnable() {
+					@Override
+					public void run() {
+						ResponseFuture.this.complete(payload);
+					}
+				});
 			}
 		});
 	}
@@ -49,7 +63,7 @@ public class ResponseFuture<T> extends CompletableFuture<HttpResponse<T>> {
 
 
 	public static <T> CompletableFuture<HttpResponse<T>> error(Throwable error) {
-		ResponseFuture<T> future = new ResponseFuture<>(new NoopRequestEventBus(), null);
+		ResponseFuture<T> future = new ResponseFuture<>(new NoopRequestEventBus(), null, null);
 		future.completeExceptionally(error);
 		return future;
 	}

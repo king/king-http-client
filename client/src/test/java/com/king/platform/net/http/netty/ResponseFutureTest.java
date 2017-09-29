@@ -30,7 +30,7 @@ public class ResponseFutureTest {
 	public void setUp() throws Exception {
 		requestContext = mock(HttpRequestContext.class);
 		requestEventBus = new DefaultEventBus();
-		responseFuture = new ResponseFuture<>(requestEventBus, requestContext);
+		responseFuture = new ResponseFuture<>(requestEventBus, requestContext, Runnable::run);
 	}
 
 	@Test

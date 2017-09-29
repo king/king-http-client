@@ -157,8 +157,6 @@ public class NettyHttpClient implements HttpClient, HttpClientCaller {
 			throw new IllegalStateException("The client must be started before anything can be executed.");
 		}
 
-		httpCallback = runOnlyOnceWrapper(httpCallback);
-
 		final RequestEventBus requestRequestEventBus = rootEventBus.createRequestEventBus();
 
 		if (externalEventTrigger != null) {
@@ -187,7 +185,7 @@ public class NettyHttpClient implements HttpClient, HttpClientCaller {
 		final HttpRequestContext<T> httpRequestContext = new HttpRequestContext<>(httpMethod, nettyHttpClientRequest, requestRequestEventBus, responseBodyConsumer,
 			idleTimeoutMillis, totalRequestTimeoutMillis, followRedirects, keepAlive, new TimeStampRecorder(timeProvider));
 
-		ResponseFuture<T> future = new ResponseFuture<>(requestRequestEventBus, httpRequestContext);
+		ResponseFuture<T> future = new ResponseFuture<>(requestRequestEventBus, httpRequestContext, callbackExecutor);
 
 		if (!executionBackPressure.acquireSlot(nettyHttpClientRequest.getServerInfo())) {
 			requestRequestEventBus.triggerEvent(Event.ERROR, httpRequestContext, new KingHttpException("Too many concurrent connections"));
@@ -208,31 +206,6 @@ public class NettyHttpClient implements HttpClient, HttpClientCaller {
 		}
 
 		return future;
-	}
-
-
-
-	private <T> HttpCallback<T> runOnlyOnceWrapper(final HttpCallback<T> httpCallback) {
-		if (httpCallback == null) {
-			return null;
-		}
-
-		return new HttpCallback<T>() {
-			private final AtomicBoolean firstExecute = new AtomicBoolean();
-			@Override
-			public void onCompleted(HttpResponse<T> httpResponse) {
-				if (firstExecute.compareAndSet(false, true)) {
-					httpCallback.onCompleted(httpResponse);
-				}
-			}
-
-			@Override
-			public void onError(Throwable throwable) {
-				if (firstExecute.compareAndSet(false, true)) {
-					httpCallback.onError(throwable);
-				}
-			}
-		};
 	}
 
 	private <T> void sendRequest(RequestEventBus requestRequestEventBus, HttpRequestContext<T> httpRequestContext) {
@@ -273,34 +246,21 @@ public class NettyHttpClient implements HttpClient, HttpClientCaller {
 		return new HttpClientSseRequestBuilderImpl(this, HttpVersion.HTTP_1_1, HttpMethod.GET, uri, confMap, defaultHttpClientCallbackExecutor);
 	}
 
+
+	public void addShutdownJob(ShutdownJob shutdownJob) {
+		shutdownJobs.add(shutdownJob);
+	}
+
+
+
 	private <T> void subscribeToHttpCallbackEvents(final Executor callbackExecutor, final HttpCallback<T> httpCallback, RequestEventBus requestRequestEventBus) {
 		if (httpCallback == null) {
 			return;
 		}
+		HttpCallbackInvoker<T> httpCallbackInvoker = new HttpCallbackInvoker<>(callbackExecutor, httpCallback);
+		requestRequestEventBus.subscribePermanently(Event.onHttpResponseDone, httpCallbackInvoker::onHttpResponseDone);
+		requestRequestEventBus.subscribePermanently(Event.ERROR, httpCallbackInvoker::onError);
 
-		requestRequestEventBus.subscribePermanently(Event.onHttpResponseDone, new RunOnceCallback1<HttpResponse>() {
-			@Override
-			public void onFirstEvent(Event1 event, final HttpResponse httpResponse) {
-				callbackExecutor.execute(new Runnable() {
-					@Override
-					public void run() {
-						httpCallback.onCompleted(httpResponse);
-					}
-				});
-			}
-		});
-
-		requestRequestEventBus.subscribePermanently(Event.ERROR, new RunOnceCallback2<HttpRequestContext, Throwable>() {
-			@Override
-			public void onFirstEvent(Event2 event, HttpRequestContext httpRequestContext, final Throwable throwable) {
-				callbackExecutor.execute(new Runnable() {
-					@Override
-					public void run() {
-						httpCallback.onError(throwable);
-					}
-				});
-			}
-		});
 	}
 
 
@@ -310,18 +270,12 @@ public class NettyHttpClient implements HttpClient, HttpClientCaller {
 		}
 
 		UploadCallbackInvoker uploadCallbackInvoker  = new UploadCallbackInvoker(uploadCallback, callbackExecutor);
-
 		requestRequestEventBus.subscribe(Event.onWroteContentStarted, 	 uploadCallbackInvoker::onUploadStarted);
 		requestRequestEventBus.subscribe(Event.onWroteContentProgressed, uploadCallbackInvoker::onUploadProgressed);
 		requestRequestEventBus.subscribe(Event.onWroteContentCompleted,  uploadCallbackInvoker::onUploadComplete);
 
 	}
 
-
-
-	public void addShutdownJob(ShutdownJob shutdownJob) {
-		shutdownJobs.add(shutdownJob);
-	}
 
 	private void subscribeToNioCallbackEvents(final NioCallback nioCallback, RequestEventBus requestRequestEventBus) {
 		if (nioCallback == null) {

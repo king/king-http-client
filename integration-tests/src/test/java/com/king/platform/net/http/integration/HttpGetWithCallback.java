@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.*;
 
-public class HttpGet {
+public class HttpGetWithCallback {
 	IntegrationServer integrationServer;
 	private HttpClient httpClient;
 	private int port;
