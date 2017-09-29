@@ -20,14 +20,11 @@ import com.king.platform.net.http.netty.requestbuilder.UploadCallbackInvoker;
 import com.king.platform.net.http.netty.response.HttpClientResponseHandler;
 import com.king.platform.net.http.netty.response.HttpRedirector;
 import com.king.platform.net.http.netty.util.TimeProvider;
-import io.netty.buffer.ByteBuf;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.epoll.Epoll;
 import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
-import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.util.Timer;
 import org.slf4j.Logger;
@@ -274,75 +271,16 @@ public class NettyHttpClient implements HttpClient, HttpClientCaller {
 			return;
 		}
 
-		requestRequestEventBus.subscribePermanently(Event.onConnecting, new EventBusCallback1<Void>() {
-			@Override
-			public void onEvent(Event1 event, Void payload) {
-				nioCallback.onConnecting();
-			}
-		});
-
-		requestRequestEventBus.subscribePermanently(Event.onConnected, new EventBusCallback1<Void>() {
-			@Override
-			public void onEvent(Event1 event, Void payload) {
-				nioCallback.onConnected();
-			}
-		});
-
-		requestRequestEventBus.subscribePermanently(Event.onWroteHeaders, new EventBusCallback1<Void>() {
-			@Override
-			public void onEvent(Event1 event, Void payload) {
-				nioCallback.onWroteHeaders();
-			}
-		});
-
-		requestRequestEventBus.subscribePermanently(Event.onWroteContentProgressed, new EventBusCallback2<Long, Long>() {
-			@Override
-			public void onEvent(Event2<Long, Long> event, Long progress, Long total) {
-				nioCallback.onWroteContentProgressed(progress, total);
-			}
-		});
-
-		requestRequestEventBus.subscribePermanently(Event.onWroteContentCompleted, new EventBusCallback1<Void>() {
-			@Override
-			public void onEvent(Event1 event, Void payload) {
-				nioCallback.onWroteContentCompleted();
-			}
-		});
-
-		requestRequestEventBus.subscribePermanently(Event.onReceivedStatus, new EventBusCallback1<HttpResponseStatus>() {
-			@Override
-			public void onEvent(Event1<HttpResponseStatus> event, HttpResponseStatus payload) {
-				nioCallback.onReceivedStatus(payload);
-			}
-		});
-
-		requestRequestEventBus.subscribePermanently(Event.onReceivedHeaders, new EventBusCallback1<HttpHeaders>() {
-			@Override
-			public void onEvent(Event1<HttpHeaders> event, HttpHeaders payload) {
-				nioCallback.onReceivedHeaders(payload);
-			}
-		});
-
-		requestRequestEventBus.subscribePermanently(Event.onReceivedContentPart, new EventBusCallback2<Integer, ByteBuf>() {
-			@Override
-			public void onEvent(Event2<Integer, ByteBuf> event, Integer length, ByteBuf contentPart) {
-				nioCallback.onReceivedContentPart(length, contentPart);
-			}
-		});
-
-		requestRequestEventBus.subscribePermanently(Event.onReceivedCompleted, new EventBusCallback2<HttpResponseStatus, HttpHeaders>() {
-			@Override
-			public void onEvent(Event2<HttpResponseStatus, HttpHeaders> event, HttpResponseStatus httpResponseStatus, HttpHeaders httpHeaders) {
-				nioCallback.onReceivedCompleted(httpResponseStatus, httpHeaders);
-			}
-		});
-
-		requestRequestEventBus.subscribePermanently(Event.ERROR, new EventBusCallback2<HttpRequestContext, Throwable>() {
-			@Override
-			public void onEvent(Event2<HttpRequestContext, Throwable> event, HttpRequestContext httpRequestContext, Throwable throwable) {
-				nioCallback.onError(throwable);
-			}
-		});
+		requestRequestEventBus.subscribePermanently(Event.onConnecting, (event, payload) -> nioCallback.onConnecting());
+		requestRequestEventBus.subscribePermanently(Event.onConnected, (event, payload) -> nioCallback.onConnected());
+		requestRequestEventBus.subscribePermanently(Event.onWroteHeaders, (event, payload) -> nioCallback.onWroteHeaders());
+		requestRequestEventBus.subscribePermanently(Event.onWroteContentProgressed, (event, progress, total) -> nioCallback.onWroteContentProgressed(progress, total));
+		requestRequestEventBus.subscribePermanently(Event.onWroteContentCompleted, (event, payload) -> nioCallback.onWroteContentCompleted());
+		requestRequestEventBus.subscribePermanently(Event.onReceivedStatus, (event, payload) -> nioCallback.onReceivedStatus(payload));
+		requestRequestEventBus.subscribePermanently(Event.onReceivedHeaders, (event, payload) -> nioCallback.onReceivedHeaders(payload));
+		requestRequestEventBus.subscribePermanently(Event.onReceivedContentPart, (event, length, contentPart) -> nioCallback.onReceivedContentPart(length, contentPart));
+		requestRequestEventBus.subscribePermanently(Event.onReceivedCompleted, (event, httpResponseStatus, httpHeaders) -> nioCallback.onReceivedCompleted(httpResponseStatus, httpHeaders));
+		requestRequestEventBus.subscribePermanently(Event.ERROR, (event, httpRequestContext, throwable) -> nioCallback.onError(throwable));
 	}
 
 	private static final ResponseBodyConsumer<Void> EMPTY_RESPONSE_BODY_CONSUMER = new ResponseBodyConsumer<Void>() {
