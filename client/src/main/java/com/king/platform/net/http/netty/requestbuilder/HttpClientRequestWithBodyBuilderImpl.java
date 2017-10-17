@@ -20,6 +20,8 @@ import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 
+import static java.util.Objects.requireNonNull;
+
 public class HttpClientRequestWithBodyBuilderImpl extends HttpClientRequestHeaderBuilderImpl<HttpClientRequestWithBodyBuilder> implements HttpClientRequestWithBodyBuilder {
 
 	private RequestBodyBuilder requestBodyBuilder;
@@ -37,6 +39,8 @@ public class HttpClientRequestWithBodyBuilderImpl extends HttpClientRequestHeade
 
 	@Override
 	public HttpClientRequestWithBodyBuilder content(byte[] content) {
+		requireNonNull(content, "Content can't be null");
+
 		if (requestBodyBuilder != null) {
 			throw new RuntimeException("Already defined request body as type " + requestBodyBuilder.getClass());
 		}
@@ -47,6 +51,8 @@ public class HttpClientRequestWithBodyBuilderImpl extends HttpClientRequestHeade
 
 	@Override
 	public HttpClientRequestWithBodyBuilder content(File file) {
+		requireNonNull(file, "File can't be null");
+
 		if (requestBodyBuilder != null) {
 			throw new RuntimeException("Already defined request body as type  " + requestBodyBuilder.getClass());
 		}
@@ -58,6 +64,7 @@ public class HttpClientRequestWithBodyBuilderImpl extends HttpClientRequestHeade
 
 	@Override
 	public HttpClientRequestWithBodyBuilder content(HttpBody httpBody) {
+		requireNonNull(httpBody, "HttpBody can't be null");
 		if (requestBodyBuilder != null) {
 			throw new RuntimeException("Already defined request body as type  " + requestBodyBuilder.getClass());
 		}
@@ -69,20 +76,23 @@ public class HttpClientRequestWithBodyBuilderImpl extends HttpClientRequestHeade
 
 	@Override
 	public HttpClientRequestWithBodyBuilder contentType(String contentType) {
-		this.contentType = contentType;
+		this.contentType = requireNonNull(contentType, "Content-Type can't be null");
 		return this;
 	}
 
 
 	@Override
 	public HttpClientRequestWithBodyBuilder bodyCharset(Charset charset) {
-		this.bodyCharset = charset;
+		this.bodyCharset = requireNonNull(charset, "Charset can't be null");
 		return this;
 	}
 
 
 	@Override
 	public HttpClientRequestWithBodyBuilder addFormParameter(String name, String value) {
+		requireNonNull(name, "name");
+		requireNonNull(value, "value");
+
 		validateRequestBuilderStat(FormParameterBodyBuilder.class);
 
 		if (requestBodyBuilder == null) {
@@ -123,6 +133,8 @@ public class HttpClientRequestWithBodyBuilderImpl extends HttpClientRequestHeade
 
 	@Override
 	public HttpClientRequestWithBodyBuilder content(InputStream inputStream) {
+		requireNonNull(inputStream, "InputStream can't be null");
+
 		if (requestBodyBuilder != null) {
 			throw new RuntimeException("Already defined request body as type  " + requestBodyBuilder.getClass());
 		}
@@ -134,6 +146,8 @@ public class HttpClientRequestWithBodyBuilderImpl extends HttpClientRequestHeade
 
 	@Override
 	public <T> BuiltClientRequestWithBody<T> build(Supplier<ResponseBodyConsumer<T>> responseBodyConsumer) {
+		requireNonNull(responseBodyConsumer, "Supplier of ResponseBodyConsumer can't be null");
+
 		RequestBodyBuilder immutableBodyBuilder = requestBodyBuilder;
 		if (requestBodyBuilder instanceof FormParameterBodyBuilder) {
 			immutableBodyBuilder = new FormParameterBodyBuilder((FormParameterBodyBuilder)requestBodyBuilder);

@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
 
+import static java.util.Objects.requireNonNull;
+
 public abstract class HttpClientRequestHeaderBuilderImpl<T extends HttpClientRequestHeaderBuilder> implements HttpClientRequestHeaderBuilder<T> {
 	private final Class<T> implClass;
 	protected final HttpClientCaller httpClientCaller;
@@ -64,6 +66,8 @@ public abstract class HttpClientRequestHeaderBuilderImpl<T extends HttpClientReq
 
 	@Override
 	public T withHeader(String name, String value) {
+		requireNonNull(name, "name");
+		requireNonNull(value, "value");
 		headerParameters.add(new Param(name, value));
 		return implClass.cast(this);
 	}
@@ -91,6 +95,8 @@ public abstract class HttpClientRequestHeaderBuilderImpl<T extends HttpClientReq
 
 	@Override
 	public T withQueryParameter(String name, String value) {
+		requireNonNull(name, "name");
+		requireNonNull(value, "value");
 		queryParameters.add(new Param(name, value));
 		return implClass.cast(this);
 	}
@@ -123,7 +129,7 @@ public abstract class HttpClientRequestHeaderBuilderImpl<T extends HttpClientReq
 
 	@Override
 	public T executingOn(Executor executor) {
-		this.callbackExecutor = executor;
+		this.callbackExecutor = requireNonNull(executor, "Executor can't be null");
 		return implClass.cast(this);
 	}
 }
