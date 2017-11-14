@@ -74,4 +74,6 @@ public interface HttpClient {
 	 * @return The reusable {@link HttpClientSseRequestBuilder}
 	 */
 	HttpClientSseRequestBuilder createSSE(String uri);
+
+	HttpClientWebSocketRequestBuilder createWebSocket(String uri);
 }

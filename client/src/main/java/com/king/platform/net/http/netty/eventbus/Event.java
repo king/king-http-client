@@ -6,12 +6,16 @@
 package com.king.platform.net.http.netty.eventbus;
 
 import com.king.platform.net.http.HttpResponse;
+import com.king.platform.net.http.WebSocketClient;
 import com.king.platform.net.http.netty.HttpRequestContext;
 import com.king.platform.net.http.netty.ServerInfo;
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.websocketx.*;
 
 public interface Event {
 	Event2<HttpRequestContext, Throwable> ERROR = new Event2<>("Error");
@@ -39,6 +43,16 @@ public interface Event {
 	Event2<HttpResponseStatus, HttpHeaders> onReceivedCompleted = new Event2<>("onReceivedCompleted");
 
 	Event1<HttpResponse> onHttpResponseDone = new Event1<>("onHttpResponseDone");
+
+
+	Event1<ChannelPipeline> WS_UPGRADE_PIPELINE = new Event1<>("WS_UPGRADE_PIPELINE");
+	Event2<Channel, HttpHeaders> onWsOpen = new Event2<>("onWsOpen");
+	Event1<TextWebSocketFrame> onWsTextFrame = new Event1<>("onWsTextFrame");
+	Event1<BinaryWebSocketFrame> onWsBinaryFrame = new Event1<>("onWsBinaryFrame");
+	Event1<CloseWebSocketFrame> onWsCloseFrame = new Event1<>("onWsCloseFrame");
+	Event1<PingWebSocketFrame> onWsPingFrame = new Event1<>("onWsPingFrame");
+	Event1<PongWebSocketFrame> onWsPongFrame = new Event1<>("onWsPongFrame");
+	Event1<ContinuationWebSocketFrame> onWsContinuationFrame = new Event1<>("onWsContinuationFrame");
 
 
 	String getName();

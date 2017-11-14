@@ -38,7 +38,7 @@ public class HttpClientCallerImpl implements HttpClientCaller {
 	public <T> CompletableFuture<HttpResponse<T>> execute(HttpMethod httpMethod, final NettyHttpClientRequest<T> nettyHttpClientRequest,
 														  HttpCallback<T> httpCallback, final NioCallback nioCallback, UploadCallback uploadCallback,
 														  ResponseBodyConsumer<T> responseBodyConsumer, Executor callbackExecutor,
-														  ExternalEventTrigger externalEventTrigger, int idleTimeoutMillis, int totalRequestTimeoutMillis,
+														  ExternalEventTrigger externalEventTrigger, CustomCallbackSubscriber customCallbackSubscriber, int idleTimeoutMillis, int totalRequestTimeoutMillis,
 														  boolean followRedirects, boolean keepAlive) {
 
 		final RequestEventBus requestRequestEventBus = rootEventBus.createRequestEventBus();
@@ -61,6 +61,9 @@ public class HttpClientCallerImpl implements HttpClientCaller {
 		subscribeToNioCallbackEvents(nioCallback, requestRequestEventBus);
 		subscribeToUploadCallbacksEvents(callbackExecutor, uploadCallback, requestRequestEventBus);
 
+		if (customCallbackSubscriber != null) {
+			customCallbackSubscriber.subscribeOn(requestRequestEventBus);
+		}
 
 		if (responseBodyConsumer == null) {
 

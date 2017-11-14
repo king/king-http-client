@@ -11,6 +11,7 @@ import com.king.platform.net.http.netty.eventbus.*;
 import com.king.platform.net.http.netty.pool.ChannelPool;
 import com.king.platform.net.http.netty.response.NettyHttpClientResponse;
 import com.king.platform.net.http.netty.util.TimeProvider;
+import com.king.platform.net.http.netty.websocket.WebSocketHandler;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.epoll.Epoll;
@@ -21,6 +22,7 @@ import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpContentDecompressor;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
+import io.netty.handler.codec.http.websocketx.*;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.ssl.SslContext;
@@ -44,12 +46,13 @@ public class ChannelManager {
 	private final TimeProvider timeProvider;
 	private final ConfMap confMap;
 	private final ChannelPool channelPool;
-	private final Bootstrap bootstrap;
+	private final Bootstrap httpBootstrap;
 	private final SslContext sslContext;
+	private final Bootstrap wsBootstrap;
 	private Timer nettyTimer;
 
 
-	public ChannelManager(EventLoopGroup nioEventLoop, final HttpClientHandler httpClientHandler, Timer nettyTimer, TimeProvider timeProvider, ChannelPool
+	public ChannelManager(EventLoopGroup nioEventLoop, final HttpClientHandler httpClientHandler, WebSocketHandler webSocketHandler,  Timer nettyTimer, TimeProvider timeProvider, ChannelPool
 		channelPool, final ConfMap confMap, RootEventBus rootEventBus) {
 		this.eventLoopGroup = nioEventLoop;
 		this.nettyTimer = nettyTimer;
@@ -65,8 +68,8 @@ public class ChannelManager {
 		    socketChannelClass = NioSocketChannel.class;
 		}
 
-		bootstrap = new Bootstrap().channel(socketChannelClass).group(eventLoopGroup);
-		bootstrap.handler(new ChannelInitializer() {
+		httpBootstrap = new Bootstrap().channel(socketChannelClass).group(eventLoopGroup);
+		httpBootstrap.handler(new ChannelInitializer() {
 			@Override
 			protected void initChannel(Channel ch) throws Exception {
 				ChannelPipeline pipeline = ch.pipeline();
@@ -81,18 +84,49 @@ public class ChannelManager {
 		});
 
 
+		wsBootstrap = new Bootstrap().channel(socketChannelClass).group(eventLoopGroup);
+		wsBootstrap.handler(new ChannelInitializer() {
+			@Override
+			protected void initChannel(Channel ch) throws Exception {
+				ChannelPipeline pipeline = ch.pipeline();
+
+				addLoggingIfDesired(pipeline, confMap.get(ConfKeys.NETTY_TRACE_LOGS));
+				pipeline.addLast("http-codec", newHttpClientCodec());
+				pipeline.addLast("webSocketHandler", webSocketHandler);
+
+			}
+		});
+
+
 		sslContext = getSslContext(confMap);
-		bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, confMap.get(ConfKeys.CONNECT_TIMEOUT_MILLIS));
+		httpBootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, confMap.get(ConfKeys.CONNECT_TIMEOUT_MILLIS));
+		wsBootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, confMap.get(ConfKeys.CONNECT_TIMEOUT_MILLIS));
 
 		NettyChannelOptions nettyChannelOptions = confMap.get(ConfKeys.NETTY_CHANNEL_OPTIONS);
 		for (ChannelOption channelOption : nettyChannelOptions.keys()) {
-			bootstrap.option(channelOption, nettyChannelOptions.get(channelOption));
+			httpBootstrap.option(channelOption, nettyChannelOptions.get(channelOption));
+			wsBootstrap.option(channelOption, nettyChannelOptions.get(channelOption));
 		}
 
 		rootEventBus.subscribePermanently(Event.ERROR, new ErrorCallback());
 		rootEventBus.subscribePermanently(Event.COMPLETED, new CompletedCallback());
 		rootEventBus.subscribePermanently(Event.EXECUTE_REQUEST, new ExecuteRequestCallback());
+		rootEventBus.subscribePermanently(Event.WS_UPGRADE_PIPELINE, this::upgradePipelineToWebSocket);
 	}
+
+
+	private void upgradePipelineToWebSocket(Event1<ChannelPipeline> event, ChannelPipeline pipeline) {
+
+		pipeline.addAfter("http-codec", "ws-encoder", new WebSocket13FrameEncoder(true));
+		pipeline.addBefore("webSocketHandler", "ws-decoder", new WebSocket13FrameDecoder(false, false, confMap.get(ConfKeys.WEB_SOCKET_MAX_FRAME_SIZE)));
+
+		if (confMap.get(ConfKeys.WEB_SOCKET_AGGREGATE_FRAMES)) {
+			pipeline.addAfter("ws-decoder", "ws-frameaggregator", new WebSocketFrameAggregator(confMap.get(ConfKeys.WEB_SOCKET_MAX_BUFFER_SIZE)));
+		}
+
+		pipeline.remove("http-codec");
+	}
+
 
 	private SslContext getSslContext(ConfMap confMap) {
 		SslContextBuilder sslContextBuilder = SslContextBuilder.forClient();
@@ -192,10 +226,17 @@ public class ChannelManager {
 
 	}
 
+	private Bootstrap getBootstrap(ServerInfo serverInfo) {
+		if (serverInfo.getScheme().equalsIgnoreCase("http") || serverInfo.getScheme().equalsIgnoreCase("https")) {
+			return httpBootstrap;
+		}
+		return wsBootstrap;
+	}
+
 	private void sendOnNewChannel(final HttpRequestContext httpRequestContext, final RequestEventBus requestEventBus) {
 		final ServerInfo serverInfo = httpRequestContext.getServerInfo();
 
-		ChannelFuture channelFuture = bootstrap.connect(serverInfo.getHost(), serverInfo.getPort());
+		ChannelFuture channelFuture = getBootstrap(serverInfo).connect(serverInfo.getHost(), serverInfo.getPort());
 
 		channelFuture.addListener((ChannelFutureListener) future -> {
             if (future.isSuccess()) {

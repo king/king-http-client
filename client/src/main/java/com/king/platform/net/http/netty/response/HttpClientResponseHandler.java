@@ -10,6 +10,7 @@ import com.king.platform.net.http.ResponseBodyConsumer;
 import com.king.platform.net.http.netty.ConnectionClosedException;
 import com.king.platform.net.http.netty.HttpClientHandler;
 import com.king.platform.net.http.netty.HttpRequestContext;
+import com.king.platform.net.http.netty.ResponseHandler;
 import com.king.platform.net.http.netty.eventbus.Event;
 import com.king.platform.net.http.netty.eventbus.RequestEventBus;
 import com.king.platform.net.http.netty.util.StringUtil;
@@ -23,7 +24,7 @@ import java.nio.charset.StandardCharsets;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
-public class HttpClientResponseHandler {
+public class HttpClientResponseHandler implements ResponseHandler {
 
 	private final Logger logger = getLogger(getClass());
 	private final HttpRedirector httpRedirector;

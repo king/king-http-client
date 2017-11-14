@@ -14,9 +14,12 @@ import com.king.platform.net.http.netty.request.HttpClientRequestHandler;
 import com.king.platform.net.http.netty.requestbuilder.HttpClientRequestBuilderImpl;
 import com.king.platform.net.http.netty.requestbuilder.HttpClientRequestWithBodyBuilderImpl;
 import com.king.platform.net.http.netty.requestbuilder.HttpClientSseRequestBuilderImpl;
+import com.king.platform.net.http.netty.requestbuilder.HttpClientWebSocketRequestBuilderImpl;
 import com.king.platform.net.http.netty.response.HttpClientResponseHandler;
 import com.king.platform.net.http.netty.response.HttpRedirector;
 import com.king.platform.net.http.netty.util.TimeProvider;
+import com.king.platform.net.http.netty.websocket.WebSocketHandler;
+import com.king.platform.net.http.netty.websocket.WebSocketResponseHandler;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.epoll.Epoll;
 import io.netty.channel.epoll.EpollEventLoopGroup;
@@ -99,8 +102,10 @@ public class NettyHttpClient implements HttpClient {
 		HttpClientResponseHandler responseHandler = new HttpClientResponseHandler(new HttpRedirector());
 		HttpClientRequestHandler requestHandler = new HttpClientRequestHandler();
 		HttpClientHandler clientHandler = new HttpClientHandler(responseHandler, requestHandler);
+		WebSocketResponseHandler webSocketResponseHandler = new WebSocketResponseHandler();
+		WebSocketHandler webSocketHandler = new WebSocketHandler(webSocketResponseHandler,  requestHandler);
 
-		ChannelManager channelManager = new ChannelManager(group, clientHandler, cleanupTimer, timeProvider, channelPool, confMap, rootEventBus);
+		ChannelManager channelManager = new ChannelManager(group, clientHandler, webSocketHandler, cleanupTimer, timeProvider, channelPool, confMap, rootEventBus);
 
 		boolean executeOnCallingThread = confMap.get(ConfKeys.EXECUTE_ON_CALLING_THREAD);
 
@@ -159,6 +164,12 @@ public class NettyHttpClient implements HttpClient {
 	public HttpClientSseRequestBuilder createSSE(String uri) {
 		verifyStarted();
 		return new HttpClientSseRequestBuilderImpl(httpClientCaller, uri, confMap, defaultHttpClientCallbackExecutor);
+	}
+
+	@Override
+	public HttpClientWebSocketRequestBuilder createWebSocket(String uri) {
+		verifyStarted();
+		return new HttpClientWebSocketRequestBuilderImpl(httpClientCaller, uri, confMap, defaultHttpClientCallbackExecutor);
 	}
 
 	private void verifyStarted() {

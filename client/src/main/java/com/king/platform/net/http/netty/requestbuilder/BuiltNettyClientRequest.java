@@ -8,15 +8,18 @@ package com.king.platform.net.http.netty.requestbuilder;
 
 import com.king.platform.net.http.*;
 import com.king.platform.net.http.HttpResponse;
+import com.king.platform.net.http.netty.CustomCallbackSubscriber;
 import com.king.platform.net.http.netty.HttpClientCaller;
 import com.king.platform.net.http.netty.ResponseFuture;
 import com.king.platform.net.http.netty.ServerInfo;
 import com.king.platform.net.http.netty.eventbus.ExternalEventTrigger;
 import com.king.platform.net.http.netty.request.HttpBody;
 import com.king.platform.net.http.netty.request.NettyHttpClientRequest;
+import com.king.platform.net.http.netty.websocket.WebSocketUtil;
 import com.king.platform.net.http.util.Param;
 import com.king.platform.net.http.util.UriUtil;
 import io.netty.handler.codec.http.*;
+import io.netty.util.CharsetUtil;
 
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
@@ -25,6 +28,8 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Supplier;
+
+import static com.king.platform.net.http.netty.websocket.WebSocketUtil.MAGIC_GUID;
 
 public class BuiltNettyClientRequest<T> implements BuiltClientRequest<T>, BuiltClientRequestWithBody<T> {
 
@@ -60,6 +65,7 @@ public class BuiltNettyClientRequest<T> implements BuiltClientRequest<T>, BuiltC
 
 	private Supplier<HttpCallback<T>> httpCallbackSupplier;
 	private Supplier<NioCallback> nioCallbackSupplier;
+	private CustomCallbackSubscriber customCallbackSubscriber;
 
 
 	public BuiltNettyClientRequest(HttpClientCaller httpClientCaller, HttpVersion httpVersion, HttpMethod httpMethod, String uri, String defaultUserAgent, int idleTimeoutMillis, int totalRequestTimeoutMillis, boolean followRedirects, boolean acceptCompressedResponse, boolean keepAlive, RequestBodyBuilder requestBodyBuilder, String contentType, Charset bodyCharset, List<Param> queryParameters, List<Param> headerParameters, Executor callbackExecutor, Supplier<ResponseBodyConsumer<T>> responseBodyConsumer) {
@@ -126,6 +132,7 @@ public class BuiltNettyClientRequest<T> implements BuiltClientRequest<T>, BuiltC
 		return this;
 	}
 
+
 	@Override
 	public BuiltClientRequestWithBody<T> withUploadCallback(UploadCallback uploadCallback) {
 		this.uploadCallback = uploadCallback;
@@ -135,8 +142,6 @@ public class BuiltNettyClientRequest<T> implements BuiltClientRequest<T>, BuiltC
 	@Override
 	public CompletableFuture<HttpResponse<T>> execute() {
 		HttpCallback<T> httpCallback = getHttpCallback();
-		NioCallback nioCallback = getNioCallback();
-		ExternalEventTrigger externalEventTrigger = getExternalEventTrigger();
 
 		String completeUri = UriUtil.getUriWithParameters(uri, queryParameters);
 
@@ -206,9 +211,33 @@ public class BuiltNettyClientRequest<T> implements BuiltClientRequest<T>, BuiltC
 
 		nettyHttpClientRequest.setKeepAlive(keepAlive);
 
-		return httpClientCaller.execute(httpMethod, nettyHttpClientRequest, httpCallback, nioCallback, uploadCallback, responseBodyConsumer.get(),
-			callbackExecutor, externalEventTrigger, idleTimeoutMillis, totalRequestTimeoutMillis, followRedirects, keepAlive);
+		if (serverInfo.isWebSocket()) {
+
+			byte[] nonce = WebSocketUtil.randomBytes(16);
+			String key = WebSocketUtil.base64(nonce);
+
+			headers.add(HttpHeaderNames.UPGRADE, HttpHeaderValues.WEBSOCKET)
+				.add(HttpHeaderNames.CONNECTION, HttpHeaderValues.UPGRADE)
+				.add(HttpHeaderNames.SEC_WEBSOCKET_KEY, key)
+				.add(HttpHeaderNames.SEC_WEBSOCKET_ORIGIN, websocketOriginValue(serverInfo.getHost(), serverInfo.getPort()));
+
+		}
+
+		return httpClientCaller.execute(httpMethod, nettyHttpClientRequest, httpCallback, getNioCallback(), uploadCallback, responseBodyConsumer.get(),
+			callbackExecutor, getExternalEventTrigger(), customCallbackSubscriber, idleTimeoutMillis, totalRequestTimeoutMillis, followRedirects, keepAlive);
 	}
+
+	private String websocketOriginValue(String host, int wsPort) {
+		String originValue = (wsPort == HttpScheme.HTTPS.port() ?
+			HttpScheme.HTTPS.name() : HttpScheme.HTTP.name()) + "://" + host;
+		if (wsPort != HttpScheme.HTTP.port() && wsPort != HttpScheme.HTTPS.port()) {
+			// if the port is not standard (80/443) its needed to add the port to the header.
+			// See http://tools.ietf.org/html/rfc6454#section-6.2
+			return originValue + ':' + wsPort;
+		}
+		return originValue;
+	}
+
 
 	private NioCallback getNioCallback() {
 		NioCallback nioCallback = this.nioCallback;
@@ -263,4 +292,8 @@ public class BuiltNettyClientRequest<T> implements BuiltClientRequest<T>, BuiltC
 	}
 
 
+	public BuiltClientRequest<T> withCustomCallbackSupplier(CustomCallbackSubscriber customCallbackSubscriber) {
+		this.customCallbackSubscriber = customCallbackSubscriber;
+		return this;
+	}
 }

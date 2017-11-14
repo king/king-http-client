@@ -61,6 +61,7 @@ public class ServerInfo {
 		return scheme;
 	}
 
+
 	@Override
 	public boolean equals(Object o) {
 		if (this == o)
@@ -94,10 +95,11 @@ public class ServerInfo {
 	}
 
 	public boolean isSecure() {
-		if (scheme.equalsIgnoreCase("https")) {
-			return true;
-		}
-		return false;
+		return scheme.equalsIgnoreCase("https") || scheme.equalsIgnoreCase("wss");
+	}
+
+	public boolean isWebSocket() {
+		return scheme.equalsIgnoreCase("ws") || scheme.equalsIgnoreCase("wss");
 	}
 }
 

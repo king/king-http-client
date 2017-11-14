@@ -17,7 +17,7 @@ import java.util.concurrent.Executor;
 public interface HttpClientCaller {
 	<T> CompletableFuture<HttpResponse<T>> execute(HttpMethod httpMethod, NettyHttpClientRequest<T> nettyHttpClientRequest, HttpCallback<T> httpCallback,
 												   NioCallback nioCallback, UploadCallback uploadCallback, ResponseBodyConsumer<T> responseBodyConsumer,
-												   Executor callbackExecutor, ExternalEventTrigger externalEventTrigger, int idleTimeoutMillis,
+												   Executor callbackExecutor, ExternalEventTrigger externalEventTrigger, CustomCallbackSubscriber customCallbackSubscriber, int idleTimeoutMillis,
 												   int totalRequestTimeoutMillis, boolean followRedirects, boolean keepAlive);
 
 }

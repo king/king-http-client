@@ -21,6 +21,8 @@ public class ServerInfoTest {
 		assertEquals("someserver", serverInfo.getHost());
 		assertEquals("http", serverInfo.getScheme());
 		assertEquals(80, serverInfo.getPort());
+		assertEquals(false, serverInfo.isSecure());
+
 	}
 
 	@Test
@@ -29,6 +31,7 @@ public class ServerInfoTest {
 		assertEquals("someserver", serverInfo.getHost());
 		assertEquals("https", serverInfo.getScheme());
 		assertEquals(443, serverInfo.getPort());
+		assertEquals(true, serverInfo.isSecure());
 	}
 
 	@Test
@@ -37,11 +40,26 @@ public class ServerInfoTest {
 		assertEquals("someserver", serverInfo.getHost());
 		assertEquals("http", serverInfo.getScheme());
 		assertEquals(8081, serverInfo.getPort());
+		assertEquals(false, serverInfo.isSecure());
+
 	}
 
-	public static void main(String[] args) throws URISyntaxException, MalformedURLException {
-		URI uri = new URI("http://fbweb533.sto.midasplayer.com:8081/players/3842825825?s=366");
-		System.out.println(uri.getHost());
+	@Test
+	public void buildFromWebService() throws Exception {
+		ServerInfo serverInfo = ServerInfo.buildFromUri("ws://someserver:8081/foo/bar");
+		assertEquals("someserver", serverInfo.getHost());
+		assertEquals("ws", serverInfo.getScheme());
+		assertEquals(8081, serverInfo.getPort());
+	}
+
+	@Test
+	public void buildFromSecureWebService() throws Exception {
+		ServerInfo serverInfo = ServerInfo.buildFromUri("wss://someserver:8443/foo/bar");
+		assertEquals("someserver", serverInfo.getHost());
+		assertEquals("wss", serverInfo.getScheme());
+		assertEquals(8443, serverInfo.getPort());
+		assertEquals(true, serverInfo.isSecure());
+
 	}
 
 
