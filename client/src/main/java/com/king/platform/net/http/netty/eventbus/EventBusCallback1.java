@@ -7,5 +7,5 @@ package com.king.platform.net.http.netty.eventbus;
 
 
 public interface EventBusCallback1<T> extends EventBusCallback {
-	void onEvent(Event1<T> event, T payload);
+	void onEvent(T payload);
 }

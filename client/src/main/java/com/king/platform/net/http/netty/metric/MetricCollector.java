@@ -14,19 +14,19 @@ public class MetricCollector {
 
 	public void wireMetricCallbackOnEventBus(final MetricCallback metricCallback, final RootEventBus rootEventBus) {
 
-		rootEventBus.subscribePermanently(Event.CREATED_CONNECTION, (event, payload) -> metricCallback.onCreatedConnectionTo(payload.getHost()));
+		rootEventBus.subscribePermanently(Event.CREATED_CONNECTION, (payload) -> metricCallback.onCreatedConnectionTo(payload.getHost()));
 
 
-		rootEventBus.subscribePermanently(Event.REUSED_CONNECTION, (event, payload) -> metricCallback.onReusedConnectionTo(payload.getHost()));
+		rootEventBus.subscribePermanently(Event.REUSED_CONNECTION, (payload) -> metricCallback.onReusedConnectionTo(payload.getHost()));
 
 
-		rootEventBus.subscribePermanently(Event.CLOSED_CONNECTION, (event, payload) -> metricCallback.onClosedConnectionTo(payload.getHost()));
+		rootEventBus.subscribePermanently(Event.CLOSED_CONNECTION, (payload) -> metricCallback.onClosedConnectionTo(payload.getHost()));
 
 
-		rootEventBus.subscribePermanently(Event.ERROR, (event, payload1, payload2) -> metricCallback.onError(payload1.getServerInfo().getHost(), payload1.getTimeRecorder()));
+		rootEventBus.subscribePermanently(Event.ERROR, (payload1, payload2) -> metricCallback.onError(payload1.getServerInfo().getHost(), payload1.getTimeRecorder()));
 
 
-		rootEventBus.subscribePermanently(Event.COMPLETED, (event, payload) -> metricCallback.onCompletedRequest(payload.getServerInfo().getHost(), payload.getTimeRecorder()));
+		rootEventBus.subscribePermanently(Event.COMPLETED, (payload) -> metricCallback.onCompletedRequest(payload.getServerInfo().getHost(), payload.getTimeRecorder()));
 	}
 
 }

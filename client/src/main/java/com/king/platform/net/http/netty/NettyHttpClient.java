@@ -74,14 +74,14 @@ public class NettyHttpClient implements HttpClient {
 
 		rootEventBus.subscribePermanently(Event.COMPLETED, new EventBusCallback1<HttpRequestContext>() {
 			@Override
-			public void onEvent(Event1<HttpRequestContext> event, HttpRequestContext httpRequestContext) {
+			public void onEvent(HttpRequestContext httpRequestContext) {
 				executionBackPressure.releaseSlot(httpRequestContext.getServerInfo());
 			}
 		});
 
 		rootEventBus.subscribePermanently(Event.ERROR, new EventBusCallback2<HttpRequestContext, Throwable>() {
 			@Override
-			public void onEvent(Event2<HttpRequestContext, Throwable> event, HttpRequestContext httpRequestContext, Throwable throwable) {
+			public void onEvent(HttpRequestContext httpRequestContext, Throwable throwable) {
 				executionBackPressure.releaseSlot(httpRequestContext.getServerInfo());
 			}
 		});

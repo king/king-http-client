@@ -98,7 +98,7 @@ public class DefaultEventBus implements RequestEventBus, RootEventBus {
 
 		for (EventBusCallback eventBusCallback : eventBusCallback1s) {
 			EventBusCallback1<T> callback = (EventBusCallback1<T>) eventBusCallback;
-			callback.onEvent(event, payload);
+			callback.onEvent(payload);
 		}
 	}
 
@@ -111,7 +111,7 @@ public class DefaultEventBus implements RequestEventBus, RootEventBus {
 
 		for (EventBusCallback eventBusCallback : eventBusCallback2s) {
 			EventBusCallback2<T1, T2> callback = (EventBusCallback2<T1, T2>) eventBusCallback;
-			callback.onEvent(event, payload1, payload2);
+			callback.onEvent(payload1, payload2);
 		}
 	}
 

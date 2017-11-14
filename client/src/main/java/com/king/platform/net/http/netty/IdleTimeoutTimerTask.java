@@ -35,11 +35,11 @@ public class IdleTimeoutTimerTask implements TimeoutTimerTask {
 		this.maxIdleTime = maxIdleTime;
 		this.timeProvider = timeProvider;
 		this.requestEventBus = requestEventBus;
-		touch();
+		touch(null);
 
 		requestTimeoutInstant = totalRequestTimeoutMillis >= 0 ? timeProvider.currentTimeInMillis() + totalRequestTimeoutMillis : Long.MAX_VALUE;
 
-		requestEventBus.subscribe(Event.TOUCH, (event, payload) -> touch());
+		requestEventBus.subscribe(Event.TOUCH, this::touch);
 	}
 
 
@@ -90,7 +90,7 @@ public class IdleTimeoutTimerTask implements TimeoutTimerTask {
 	}
 
 
-	private void touch() {
+	private void touch(Void v) {
 		lastTouched = timeProvider.currentTimeInMillis();
 	}
 
@@ -98,4 +98,5 @@ public class IdleTimeoutTimerTask implements TimeoutTimerTask {
 		this.timeoutTimerHandler = timeoutTimerHandler;
 
 	}
+
 }

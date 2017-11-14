@@ -20,13 +20,13 @@ public class HttpCallbackInvoker<T> {
 	}
 
 
-	public void onHttpResponseDone(Event1<HttpResponse> event, HttpResponse httpResponse) {
+	public void onHttpResponseDone(HttpResponse httpResponse) {
 		if (firstExecute.compareAndSet(false, true)) {
 			callbackExecutor.execute(() -> httpCallback.onCompleted(httpResponse));
 		}
 	}
 
-	public void onError(Event2<HttpRequestContext, Throwable> event, HttpRequestContext httpRequestContext, Throwable throwable) {
+	public void onError(HttpRequestContext httpRequestContext, Throwable throwable) {
 		if (firstExecute.compareAndSet(false, true)) {
 			callbackExecutor.execute(() -> httpCallback.onError(throwable));
 		}

@@ -9,7 +9,6 @@ package com.king.platform.net.http.netty.request;
 import com.king.platform.net.http.netty.HttpClientHandler;
 import com.king.platform.net.http.netty.HttpRequestContext;
 import com.king.platform.net.http.netty.eventbus.Event;
-import com.king.platform.net.http.netty.eventbus.Event1;
 import com.king.platform.net.http.netty.eventbus.RequestEventBus;
 import com.king.platform.net.http.netty.eventbus.RunOnceCallback1;
 import com.king.platform.net.http.netty.response.NettyHttpClientResponse;
@@ -57,7 +56,7 @@ public class HttpClientRequestHandler {
 			if (request.isDontWriteBodyBecauseExpectContinue()) {
 				requestEventBus.subscribe(Event.WRITE_BODY, new RunOnceCallback1<ChannelHandlerContext>() {
 					@Override
-					public void onFirstEvent(Event1 event, ChannelHandlerContext ctx) {
+					public void onFirstEvent(ChannelHandlerContext ctx) {
 						HttpRequestContext httpRequestContext = ctx.channel().attr(HttpRequestContext.HTTP_REQUEST_ATTRIBUTE_KEY).get();
 						NettyHttpClientRequest request = httpRequestContext.getNettyHttpClientRequest();
 						logger.trace("DelayedBodyWriter writing body");

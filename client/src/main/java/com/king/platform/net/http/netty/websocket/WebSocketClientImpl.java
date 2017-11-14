@@ -3,8 +3,6 @@ package com.king.platform.net.http.netty.websocket;
 import com.king.platform.net.http.WebSocketClient;
 import com.king.platform.net.http.WebSocketClientCallback;
 import com.king.platform.net.http.netty.eventbus.Event;
-import com.king.platform.net.http.netty.eventbus.Event1;
-import com.king.platform.net.http.netty.eventbus.Event2;
 import com.king.platform.net.http.netty.requestbuilder.BuiltNettyClientRequest;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -36,7 +34,7 @@ public class WebSocketClientImpl implements WebSocketClient {
 		this.callbackExecutor = callbackExecutor;
 
 		builtNettyClientRequest.withCustomCallbackSupplier(requestEventBus -> {
-			requestEventBus.subscribe(Event.onWsOpen, WebSocketClientImpl.this::onOpen);
+			requestEventBus.subscribe(Event.onWsOpen,  WebSocketClientImpl.this::onOpen);
 			requestEventBus.subscribe(Event.onWsCloseFrame, WebSocketClientImpl.this::onClose);
 			requestEventBus.subscribe(Event.onWsTextFrame, WebSocketClientImpl.this::onTextFrame);
 			requestEventBus.subscribe(Event.onWsBinaryFrame, WebSocketClientImpl.this::onBinaryFrame);
@@ -70,17 +68,17 @@ public class WebSocketClientImpl implements WebSocketClient {
 	}
 
 
-	private void onPongFrame(Event1<PongWebSocketFrame> event, PongWebSocketFrame pongWebSocketFrame) {
+	private void onPongFrame(PongWebSocketFrame pongWebSocketFrame) {
 		byte[] bytes = getBytes(pongWebSocketFrame.content());
 		callbackExecutor.execute(() -> webSocketClientCallback.onPongFrame(bytes));
 	}
 
-	private void onPingFrame(Event1<PingWebSocketFrame> event, PingWebSocketFrame pingWebSocketFrame) {
+	private void onPingFrame(PingWebSocketFrame pingWebSocketFrame) {
 		byte[] bytes = getBytes(pingWebSocketFrame.content());
 		callbackExecutor.execute(() -> webSocketClientCallback.onPongFrame(bytes));
 	}
 
-	private void onContinuationFrame(Event1<ContinuationWebSocketFrame> event, ContinuationWebSocketFrame continuationWebSocketFrame) {
+	private void onContinuationFrame(ContinuationWebSocketFrame continuationWebSocketFrame) {
 		if (expectedFragmentedFrameType == null) {
 			logger.error("Received continuation frame when the last frame was completed!");
 			return;
@@ -89,10 +87,10 @@ public class WebSocketClientImpl implements WebSocketClient {
 		try {
 			switch (expectedFragmentedFrameType) {
 				case BINARY:
-					onBinaryFrame(continuationWebSocketFrame);
+					handleBinaryFrame(continuationWebSocketFrame);
 					break;
 				case TEXT:
-					onTextFrame(continuationWebSocketFrame);
+					handleTextFrame(continuationWebSocketFrame);
 					break;
 				default:
 					throw new IllegalArgumentException("Unknown FragmentedFrameType " + expectedFragmentedFrameType);
@@ -104,7 +102,7 @@ public class WebSocketClientImpl implements WebSocketClient {
 		}
 	}
 
-	private void onTextFrame(WebSocketFrame webSocketFrame) {
+	private void handleTextFrame(WebSocketFrame webSocketFrame) {
 		String text = webSocketFrame.content().toString(CharsetUtil.UTF_8);
 
 		boolean finalFragment = webSocketFrame.isFinalFragment();
@@ -113,7 +111,7 @@ public class WebSocketClientImpl implements WebSocketClient {
 		callbackExecutor.execute(() -> webSocketClientCallback.onTextFrame(text, finalFragment, rsv));
 	}
 
-	private void onBinaryFrame(WebSocketFrame webSocketFrame) {
+	private void handleBinaryFrame(WebSocketFrame webSocketFrame) {
 		byte[] bytes = getBytes(webSocketFrame.content());
 		boolean finalFragment = webSocketFrame.isFinalFragment();
 		int rsv = webSocketFrame.rsv();
@@ -121,25 +119,25 @@ public class WebSocketClientImpl implements WebSocketClient {
 		callbackExecutor.execute(() -> webSocketClientCallback.onBinaryFrame(bytes, finalFragment, rsv));
 	}
 
-	private void onBinaryFrame(Event1<BinaryWebSocketFrame> event, BinaryWebSocketFrame binaryWebSocketFrame) {
+	private void onBinaryFrame(BinaryWebSocketFrame binaryWebSocketFrame) {
 		if (expectedFragmentedFrameType == null && !binaryWebSocketFrame.isFinalFragment()) {
 			expectedFragmentedFrameType = FragmentedFrameType.BINARY;
 		}
-		onBinaryFrame(binaryWebSocketFrame);
+		handleBinaryFrame(binaryWebSocketFrame);
 	}
 
-	private void onTextFrame(Event1<TextWebSocketFrame> event, TextWebSocketFrame textWebSocketFrame) {
+	private void onTextFrame(TextWebSocketFrame textWebSocketFrame) {
 		if (expectedFragmentedFrameType == null && !textWebSocketFrame.isFinalFragment()) {
 			expectedFragmentedFrameType = FragmentedFrameType.TEXT;
 		}
 
-		onTextFrame(textWebSocketFrame);
+		handleTextFrame(textWebSocketFrame);
 	}
 
-	private void onClose(Event1<CloseWebSocketFrame> event, CloseWebSocketFrame closeWebSocketFrame) {
+	private void onClose(CloseWebSocketFrame closeWebSocketFrame) {
 	}
 
-	private void onOpen(Event2<Channel, HttpHeaders> event, Channel channel, HttpHeaders httpHeaders) {
+	private void onOpen(Channel channel, HttpHeaders httpHeaders) {
 		this.channel = channel;
 		this.httpHeaders = httpHeaders;
 	}

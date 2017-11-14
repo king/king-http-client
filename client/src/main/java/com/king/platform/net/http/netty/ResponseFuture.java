@@ -24,7 +24,7 @@ public class ResponseFuture<T> extends CompletableFuture<HttpResponse<T>> {
 
 		requestEventBus.subscribe(Event.ERROR, new RunOnceCallback2<HttpRequestContext, Throwable>() {
 			@Override
-			public void onFirstEvent(Event2 event, HttpRequestContext requestContext, Throwable throwable) {
+			public void onFirstEvent(HttpRequestContext requestContext, Throwable throwable) {
 				callbackExecutor.execute(new Runnable() {
 					@Override
 					public void run() {
@@ -37,7 +37,7 @@ public class ResponseFuture<T> extends CompletableFuture<HttpResponse<T>> {
 
 		requestEventBus.subscribe(Event.onHttpResponseDone, new RunOnceCallback1<HttpResponse>() {
 			@Override
-			public void onFirstEvent(Event1 event, HttpResponse payload) {
+			public void onFirstEvent(HttpResponse payload) {
 				callbackExecutor.execute(new Runnable() {
 					@Override
 					public void run() {

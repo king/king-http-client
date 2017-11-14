@@ -115,16 +115,16 @@ public class HttpClientCallerImpl implements HttpClientCaller {
 			return;
 		}
 
-		requestRequestEventBus.subscribePermanently(Event.onConnecting, (event, payload) -> nioCallback.onConnecting());
-		requestRequestEventBus.subscribePermanently(Event.onConnected, (event, payload) -> nioCallback.onConnected());
-		requestRequestEventBus.subscribePermanently(Event.onWroteHeaders, (event, payload) -> nioCallback.onWroteHeaders());
-		requestRequestEventBus.subscribePermanently(Event.onWroteContentProgressed, (event, progress, total) -> nioCallback.onWroteContentProgressed(progress, total));
-		requestRequestEventBus.subscribePermanently(Event.onWroteContentCompleted, (event, payload) -> nioCallback.onWroteContentCompleted());
-		requestRequestEventBus.subscribePermanently(Event.onReceivedStatus, (event, payload) -> nioCallback.onReceivedStatus(payload));
-		requestRequestEventBus.subscribePermanently(Event.onReceivedHeaders, (event, payload) -> nioCallback.onReceivedHeaders(payload));
-		requestRequestEventBus.subscribePermanently(Event.onReceivedContentPart, (event, length, contentPart) -> nioCallback.onReceivedContentPart(length, contentPart));
-		requestRequestEventBus.subscribePermanently(Event.onReceivedCompleted, (event, httpResponseStatus, httpHeaders) -> nioCallback.onReceivedCompleted(httpResponseStatus, httpHeaders));
-		requestRequestEventBus.subscribePermanently(Event.ERROR, (event, httpRequestContext, throwable) -> nioCallback.onError(throwable));
+		requestRequestEventBus.subscribePermanently(Event.onConnecting, (payload) -> nioCallback.onConnecting());
+		requestRequestEventBus.subscribePermanently(Event.onConnected, (payload) -> nioCallback.onConnected());
+		requestRequestEventBus.subscribePermanently(Event.onWroteHeaders, (payload) -> nioCallback.onWroteHeaders());
+		requestRequestEventBus.subscribePermanently(Event.onWroteContentProgressed, nioCallback::onWroteContentProgressed);
+		requestRequestEventBus.subscribePermanently(Event.onWroteContentCompleted, (payload) -> nioCallback.onWroteContentCompleted());
+		requestRequestEventBus.subscribePermanently(Event.onReceivedStatus, nioCallback::onReceivedStatus);
+		requestRequestEventBus.subscribePermanently(Event.onReceivedHeaders, nioCallback::onReceivedHeaders);
+		requestRequestEventBus.subscribePermanently(Event.onReceivedContentPart, nioCallback::onReceivedContentPart);
+		requestRequestEventBus.subscribePermanently(Event.onReceivedCompleted, nioCallback::onReceivedCompleted);
+		requestRequestEventBus.subscribePermanently(Event.ERROR, (httpRequestContext, throwable) -> nioCallback.onError(throwable));
 	}
 
 	private void subscribeToUploadCallbacksEvents(Executor callbackExecutor, UploadCallback uploadCallback, RequestEventBus requestRequestEventBus) {

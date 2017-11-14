@@ -10,12 +10,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public abstract class RunOnceCallback1<T> implements EventBusCallback1<T> {
 	private final AtomicBoolean executed = new AtomicBoolean();
 
-	public abstract void onFirstEvent(Event1 event, T payload);
+	public abstract void onFirstEvent(T payload);
 
 	@Override
-	public void onEvent(Event1<T> event, T payload) {
+	public void onEvent(T payload) {
 		if (executed.compareAndSet(false, true)) {
-			onFirstEvent(event, payload);
+			onFirstEvent(payload);
 		}
 	}
 }

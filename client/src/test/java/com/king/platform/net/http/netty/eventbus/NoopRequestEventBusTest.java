@@ -34,7 +34,7 @@ public class NoopRequestEventBusTest {
 		final AtomicBoolean triggered = new AtomicBoolean();
 		requestEventBus.subscribe(Event.CLOSE, new EventBusCallback1<Void>() {
 			@Override
-			public void onEvent(Event1<Void> event, Void payload) {
+			public void onEvent(Void payload) {
 				triggered.set(true);
 			}
 		});

@@ -27,19 +27,19 @@ public class TimeoutTimerHandler {
 	public void scheduleTimeout(long delayTime, TimeUnit timeUnit) {
 		timeout = nettyTimer.newTimeout(task, delayTime, timeUnit);
 
-		requestEventBus.subscribe(Event.ERROR, (event, payload1, payload2) -> cancel());
-		requestEventBus.subscribe(Event.COMPLETED, (event, payload) -> complete());
+		requestEventBus.subscribe(Event.ERROR, this::cancel);
+		requestEventBus.subscribe(Event.COMPLETED, this::complete);
 
 	}
 
-	private void cancel() {
+	private void cancel(HttpRequestContext payload1, Throwable payload2) {
 		task.cancel();
 		if (timeout != null) {
 			timeout.cancel();
 		}
 	}
 
-	private void complete() {
+	private void complete(HttpRequestContext payload) {
 		task.completed();
 		if (timeout != null) {
 			timeout.cancel();

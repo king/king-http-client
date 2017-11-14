@@ -115,7 +115,7 @@ public class ChannelManager {
 	}
 
 
-	private void upgradePipelineToWebSocket(Event1<ChannelPipeline> event, ChannelPipeline pipeline) {
+	private void upgradePipelineToWebSocket(ChannelPipeline pipeline) {
 
 		pipeline.addAfter("http-codec", "ws-encoder", new WebSocket13FrameEncoder(true));
 		pipeline.addBefore("webSocketHandler", "ws-decoder", new WebSocket13FrameDecoder(false, false, confMap.get(ConfKeys.WEB_SOCKET_MAX_FRAME_SIZE)));
@@ -193,7 +193,7 @@ public class ChannelManager {
 		scheduleTimeOutTasks(requestEventBus, httpRequestContext, httpRequestContext.getTotalRequestTimeoutMillis(), httpRequestContext.getIdleTimeoutMillis
 			());
 
-		requestEventBus.subscribe(Event.CLOSE, (event, payload) -> channel.close());
+		requestEventBus.subscribe(Event.CLOSE, (payload) -> channel.close());
 
 		ChannelFuture channelFuture = channel.writeAndFlush(httpRequestContext);
 		channelFuture.addListener(future -> {
@@ -280,7 +280,7 @@ public class ChannelManager {
 	private class ErrorCallback implements EventBusCallback2<HttpRequestContext, Throwable> {
 
 		@Override
-		public void onEvent(Event2<HttpRequestContext, Throwable> event, HttpRequestContext httpRequestContext, Throwable throwable) {
+		public void onEvent(HttpRequestContext httpRequestContext, Throwable throwable) {
 			ServerInfo serverInfo = httpRequestContext.getServerInfo();
 
 			Channel channel = httpRequestContext.getAndDetachChannel();
@@ -298,7 +298,7 @@ public class ChannelManager {
 	private class CompletedCallback implements EventBusCallback1<HttpRequestContext> {
 
 		@Override
-		public void onEvent(Event1<HttpRequestContext> event, HttpRequestContext httpRequestContext) {
+		public void onEvent(HttpRequestContext httpRequestContext) {
 			RequestEventBus requestEventBus = httpRequestContext.getRequestEventBus();
 			Channel channel = httpRequestContext.getAndDetachChannel();
 			ServerInfo serverInfo = httpRequestContext.getServerInfo();
@@ -337,7 +337,7 @@ public class ChannelManager {
 
 	private class ExecuteRequestCallback implements EventBusCallback1<HttpRequestContext> {
 		@Override
-		public void onEvent(Event1<HttpRequestContext> event, HttpRequestContext httpRequestContext) {
+		public void onEvent(HttpRequestContext httpRequestContext) {
 			sendOnChannel(httpRequestContext, httpRequestContext.getRequestEventBus());
 
 		}

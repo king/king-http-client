@@ -20,17 +20,17 @@ public class UploadCallbackInvoker {
 	}
 
 
-	public void onUploadComplete(Event1<Void> event1, Void v) {
+	public void onUploadComplete(Void v) {
 		callbackExecutor.execute(() -> uploadCallback.onCompletedUpload(writeLength, contentLength));
 	}
 
 
-	public void onUploadStarted(Event1<Long> event1, long contentLength) {
+	public void onUploadStarted(long contentLength) {
 		this.contentLength = contentLength;
 		callbackExecutor.execute(() -> uploadCallback.onStartedUpload(contentLength));
 	}
 
-	public void onUploadProgressed(Event2<Long, Long> event2, long progress, long total) {
+	public void onUploadProgressed(long progress, long total) {
 		if (contentLength <= 0) {
 			callbackExecutor.execute(() -> uploadCallback.onProgress(-1, progress, -1));
 		} else {
