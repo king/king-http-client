@@ -119,21 +119,9 @@ public class DefaultEventBus implements RequestEventBus, RootEventBus {
 	@Override
 	public RequestEventBus createRequestEventBus() {
 		DefaultEventBus cleanEventBus = new DefaultEventBus();
-
-		for (Map.Entry<Event, ArrayList<EventBusCallback>> entry : persistentEvent1Callbacks.entrySet()) {
-			for (EventBusCallback eventBusCallback : entry.getValue()) {
-				cleanEventBus.subscribePermanently((Event1) entry.getKey(), (EventBusCallback1) eventBusCallback);
-			}
-		}
-
-		for (Map.Entry<Event, ArrayList<EventBusCallback>> entry : persistentEvent2Callbacks.entrySet()) {
-			for (EventBusCallback eventBusCallback : entry.getValue()) {
-				cleanEventBus.subscribePermanently((Event2) entry.getKey(), (EventBusCallback2) eventBusCallback);
-			}
-		}
-
+		cleanEventBus.persistentEvent1Callbacks.putAll(this.persistentEvent1Callbacks);
+		cleanEventBus.persistentEvent2Callbacks.putAll(this.persistentEvent2Callbacks);
 		return cleanEventBus;
-
 	}
 
 

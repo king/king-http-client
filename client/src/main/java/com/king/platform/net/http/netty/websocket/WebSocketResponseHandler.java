@@ -9,10 +9,7 @@ import com.king.platform.net.http.netty.eventbus.RequestEventBus;
 import com.king.platform.net.http.netty.response.NettyHttpClientResponse;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.http.HttpHeaderNames;
-import io.netty.handler.codec.http.HttpHeaderValues;
-import io.netty.handler.codec.http.HttpResponse;
-import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.*;
 import io.netty.handler.codec.http.websocketx.*;
 import org.slf4j.Logger;
 
@@ -44,6 +41,11 @@ public class WebSocketResponseHandler implements ResponseHandler {
 
 		requestEventBus.triggerEvent(Event.TOUCH);
 
+		if (msg instanceof LastHttpContent) {
+
+			return;
+		}
+
 		if (msg instanceof HttpResponse) {
 
 			HttpResponse response = (HttpResponse) msg;
@@ -58,34 +60,21 @@ public class WebSocketResponseHandler implements ResponseHandler {
 		} else if (msg instanceof WebSocketFrame) {
 
 			WebSocketFrame frame = (WebSocketFrame) msg;
-			handleFrame(frame, requestEventBus);
+			handleFrame(frame, requestEventBus, httpRequestContext, ctx);
 		} else {
 			logger.error("Invalid message {}", msg);
 		}
 	}
 
-	public void handleFrame(WebSocketFrame frame, RequestEventBus requestEventBus) {
-		if (frame instanceof TextWebSocketFrame) {
-			requestEventBus.triggerEvent(Event.onWsTextFrame, (TextWebSocketFrame) frame);
+	public void handleFrame(WebSocketFrame frame, RequestEventBus requestEventBus, HttpRequestContext httpRequestContext, ChannelHandlerContext ctx) {
+		requestEventBus.triggerEvent(Event.onWsFrame, frame);
 
-		} else if (frame instanceof BinaryWebSocketFrame) {
-			requestEventBus.triggerEvent(Event.onWsBinaryFrame, (BinaryWebSocketFrame) frame);
-
-		} else if (frame instanceof CloseWebSocketFrame) {
-			requestEventBus.triggerEvent(Event.onWsCloseFrame, (CloseWebSocketFrame) frame);
-
-		} else if (frame instanceof PingWebSocketFrame) {
-			requestEventBus.triggerEvent(Event.onWsPingFrame, (PingWebSocketFrame) frame);
-
-		} else if (frame instanceof PongWebSocketFrame) {
-			requestEventBus.triggerEvent(Event.onWsPongFrame, (PongWebSocketFrame) frame);
-
-		} else if (frame instanceof ContinuationWebSocketFrame) {
-			requestEventBus.triggerEvent(Event.onWsContinuationFrame, (ContinuationWebSocketFrame) frame);
-		} else {
-			logger.error("Invalid message {}", frame);
-
+		if (frame instanceof CloseWebSocketFrame) {
+			CloseWebSocketFrame closeWebSocketFrame = (CloseWebSocketFrame) frame;
+			ctx.channel().writeAndFlush(new CloseWebSocketFrame(closeWebSocketFrame.statusCode(), closeWebSocketFrame.reasonText()));
+			requestEventBus.triggerEvent(Event.COMPLETED, httpRequestContext);
 		}
+
 	}
 
 	private void abort(RequestEventBus requestEventBus, HttpRequestContext httpRequestContext) {

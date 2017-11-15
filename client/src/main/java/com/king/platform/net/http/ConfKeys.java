@@ -105,7 +105,7 @@ public class ConfKeys<T> {
 	public static final ConfKeys<String> USER_AGENT = new ConfKeys<>("king-http-client");
 
 
-	public static final ConfKeys<Integer> WEB_SOCKET_MAX_FRAME_SIZE = new ConfKeys<>(8*1024);
+	public static final ConfKeys<Integer> WEB_SOCKET_MAX_FRAME_SIZE = new ConfKeys<>(64*1024);
 	public static final ConfKeys<Boolean> WEB_SOCKET_AGGREGATE_FRAMES = new ConfKeys<>(true);
 	public static final ConfKeys<Integer> WEB_SOCKET_MAX_BUFFER_SIZE = new ConfKeys<>(32 * 1024);
 

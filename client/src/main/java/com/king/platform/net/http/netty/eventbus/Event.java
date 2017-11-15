@@ -47,6 +47,8 @@ public interface Event {
 
 	Event1<ChannelPipeline> WS_UPGRADE_PIPELINE = new Event1<>("WS_UPGRADE_PIPELINE");
 	Event2<Channel, HttpHeaders> onWsOpen = new Event2<>("onWsOpen");
+	Event1<WebSocketFrame> onWsFrame = new Event1<>("onWsFrame");
+
 	Event1<TextWebSocketFrame> onWsTextFrame = new Event1<>("onWsTextFrame");
 	Event1<BinaryWebSocketFrame> onWsBinaryFrame = new Event1<>("onWsBinaryFrame");
 	Event1<CloseWebSocketFrame> onWsCloseFrame = new Event1<>("onWsCloseFrame");

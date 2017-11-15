@@ -10,7 +10,5 @@ public interface WebSocketClient {
 
 	CompletableFuture<Void> sendCloseFrame();
 
-
-
-
+	CompletableFuture<Void> sendBinaryFrame(byte[] payload);
 }

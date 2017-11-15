@@ -17,10 +17,10 @@ import io.netty.handler.codec.http.HttpVersion;
 import java.util.concurrent.Executor;
 
 
-public class HttpClientWebSocketRequestBuilderImpl extends HttpClientRequestHeaderBuilderImpl<HttpClientSseRequestBuilder> implements HttpClientWebSocketRequestBuilder {
+public class HttpClientWebSocketRequestBuilderImpl extends HttpClientRequestHeaderBuilderImpl<HttpClientWebSocketRequestBuilder> implements HttpClientWebSocketRequestBuilder {
 	public HttpClientWebSocketRequestBuilderImpl(HttpClientCaller httpClientCaller, String uri, ConfMap confMap,
 												 Executor callbackExecutor) {
-		super(HttpClientSseRequestBuilder.class, httpClientCaller, HttpVersion.HTTP_1_1, HttpMethod.GET, uri, confMap, callbackExecutor);
+		super(HttpClientWebSocketRequestBuilder.class, httpClientCaller, HttpVersion.HTTP_1_1, HttpMethod.GET, uri, confMap, callbackExecutor);
 	}
 
 	@Override
