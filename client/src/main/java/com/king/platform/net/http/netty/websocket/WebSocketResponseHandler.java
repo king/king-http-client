@@ -48,7 +48,7 @@ public class WebSocketResponseHandler implements ResponseHandler {
 
 			HttpResponse response = (HttpResponse) msg;
 
-			if (response.status() == HttpResponseStatus.SWITCHING_PROTOCOLS) {
+			if (response.status().equals(HttpResponseStatus.SWITCHING_PROTOCOLS)) {
 				upgrade(response, requestEventBus, ctx.channel(), httpRequestContext);
 			} else {
 				abort(requestEventBus, httpRequestContext);

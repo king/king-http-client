@@ -29,7 +29,7 @@ public class MetricCollectorTest {
 		rootEventBus = new DefaultEventBus();
 		metricCallback = mock(MetricCallback.class);
 		metricCollector.wireMetricCallbackOnEventBus(metricCallback, rootEventBus);
-		serverInfo = new ServerInfo("http", "localhost", 8081);
+		serverInfo = new ServerInfo("http", "localhost", 8081, false, false);
 
 		httpRequestContext = mock(HttpRequestContext.class);
 		when(httpRequestContext.getServerInfo()).thenReturn(serverInfo);

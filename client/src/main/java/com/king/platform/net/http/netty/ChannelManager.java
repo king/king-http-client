@@ -227,10 +227,11 @@ public class ChannelManager {
 	}
 
 	private Bootstrap getBootstrap(ServerInfo serverInfo) {
-		if (serverInfo.getScheme().equalsIgnoreCase("http") || serverInfo.getScheme().equalsIgnoreCase("https")) {
+		if (serverInfo.isWebSocket()) {
+			return wsBootstrap;
+		} else {
 			return httpBootstrap;
 		}
-		return wsBootstrap;
 	}
 
 	private void sendOnNewChannel(final HttpRequestContext httpRequestContext, final RequestEventBus requestEventBus) {

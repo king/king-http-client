@@ -4,7 +4,13 @@ import java.util.concurrent.CompletableFuture;
 
 public interface WebSocketClient {
 
+	Headers getHeaders();
+
 	CompletableFuture<Void> sendTextFrame(String text);
+
+	CompletableFuture<Void> sendCloseFrame();
+
+
 
 
 }

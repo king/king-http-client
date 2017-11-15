@@ -20,7 +20,7 @@ public class BlockingBackPressureTest {
 	@Test
 	public void shouldBlockIfTooManyConnections() throws Exception {
 		final BlockingBackPressure blockingBackPressure = new BlockingBackPressure(1);
-		final ServerInfo serverInfo = new ServerInfo("http", "localhost", 8008);
+		final ServerInfo serverInfo = new ServerInfo("http", "localhost", 8008, false, false);
 
 		assertTrue(blockingBackPressure.acquireSlot(serverInfo));
 

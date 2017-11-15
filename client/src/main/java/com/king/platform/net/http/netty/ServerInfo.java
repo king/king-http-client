@@ -18,10 +18,15 @@ public class ServerInfo {
 	private final String host;
 	private final int port;
 
-	public ServerInfo(String scheme, String host, int port) {
+	private final boolean isSecure;
+	private final boolean isWebSocket;
+
+	public ServerInfo(String scheme, String host, int port, boolean isSecure, boolean isWebSocket) {
 		this.scheme = scheme;
 		this.host = host;
 		this.port = port;
+		this.isSecure = isSecure;
+		this.isWebSocket = isWebSocket;
 	}
 
 	public static ServerInfo buildFromUri(String uriString) throws URISyntaxException {
@@ -38,15 +43,27 @@ public class ServerInfo {
 			throw new URISyntaxException(uriString, "Scheme is null");
 		}
 
+
 		if (port < 0) {
-			if ("http".equals(scheme)) {
+			if ("http".equalsIgnoreCase(scheme)) {
 				port = 80;
-			} else if ("https".equals(scheme)) {
+			} else if ("https".equalsIgnoreCase(scheme)) {
 				port = 443;
 			}
 		}
+		boolean isSecure= false;
 
-		return new ServerInfo(scheme, host, port);
+		if ("https".equalsIgnoreCase(scheme)  || "wss".equalsIgnoreCase(scheme)) {
+				isSecure = true;
+		}
+
+		boolean isWebSocket = false;
+		if ("ws".equalsIgnoreCase(scheme)  || "wss".equalsIgnoreCase(scheme)) {
+			isWebSocket = true;
+		}
+
+
+		return new ServerInfo(scheme, host, port, isSecure, isWebSocket);
 	}
 
 	public String getHost() {
@@ -95,11 +112,11 @@ public class ServerInfo {
 	}
 
 	public boolean isSecure() {
-		return scheme.equalsIgnoreCase("https") || scheme.equalsIgnoreCase("wss");
+		return isSecure;
 	}
 
 	public boolean isWebSocket() {
-		return scheme.equalsIgnoreCase("ws") || scheme.equalsIgnoreCase("wss");
+		return isWebSocket;
 	}
 }
 

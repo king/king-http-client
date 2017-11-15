@@ -30,6 +30,7 @@ import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 
 import static com.king.platform.net.http.netty.websocket.WebSocketUtil.MAGIC_GUID;
+import static io.netty.handler.codec.http.HttpHeaderNames.SEC_WEBSOCKET_VERSION;
 
 public class BuiltNettyClientRequest<T> implements BuiltClientRequest<T>, BuiltClientRequestWithBody<T> {
 
@@ -219,7 +220,9 @@ public class BuiltNettyClientRequest<T> implements BuiltClientRequest<T>, BuiltC
 			headers.add(HttpHeaderNames.UPGRADE, HttpHeaderValues.WEBSOCKET)
 				.add(HttpHeaderNames.CONNECTION, HttpHeaderValues.UPGRADE)
 				.add(HttpHeaderNames.SEC_WEBSOCKET_KEY, key)
-				.add(HttpHeaderNames.SEC_WEBSOCKET_ORIGIN, websocketOriginValue(serverInfo.getHost(), serverInfo.getPort()));
+				.add(HttpHeaderNames.SEC_WEBSOCKET_ORIGIN, websocketOriginValue(serverInfo.getHost(), serverInfo.getPort()))
+				.set(SEC_WEBSOCKET_VERSION, "13");
+
 
 		}
 

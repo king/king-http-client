@@ -16,7 +16,7 @@ public class EvictingBackPressureTest {
 	@Test
 	public void shouldNotAllowMoreThenAllowed() throws Exception {
 		EvictingBackPressure evictingBackPressure = new EvictingBackPressure(2);
-		ServerInfo serverInfo = new ServerInfo("http", "localhost", 8008);
+		ServerInfo serverInfo = new ServerInfo("http", "localhost", 8008, false, false);
 
 		assertTrue(evictingBackPressure.acquireSlot(serverInfo));
 		assertTrue(evictingBackPressure.acquireSlot(serverInfo));

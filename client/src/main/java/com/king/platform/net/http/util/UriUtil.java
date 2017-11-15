@@ -27,6 +27,14 @@ public class UriUtil {
 			offset = 8;
 		}
 
+		if (completeUri.startsWith("ws://")) {
+			offset = 5;
+		}
+
+		if (completeUri.startsWith("wss://")) {
+			offset = 6;
+		}
+
 		int slashIndex = completeUri.indexOf("/", offset);
 		int paramIndex = completeUri.indexOf("?", offset);
 

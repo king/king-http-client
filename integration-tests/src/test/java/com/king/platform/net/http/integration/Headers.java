@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.assertEquals;
 
-public class HttpHeaders {
+public class Headers {
 	private final String headerName = "X-Test-Header";
 	private final String headerValue = "clientSuppliedHeader";
 	IntegrationServer integrationServer;
