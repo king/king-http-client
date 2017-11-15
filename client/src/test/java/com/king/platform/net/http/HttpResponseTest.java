@@ -5,6 +5,7 @@
 
 package com.king.platform.net.http;
 
+import io.netty.handler.codec.http.DefaultHttpHeaders;
 import org.junit.Test;
 
 import java.util.AbstractMap;
@@ -21,8 +22,10 @@ public class HttpResponseTest {
 	public void getHeaderShouldBeCaseInsensitive() throws Exception {
 		List<Map.Entry<String, String>> entries = new ArrayList<>();
 		entries.add(new AbstractMap.SimpleEntry<>("Accept", "*/*"));
+		DefaultHttpHeaders defaultHttpHeaders = new DefaultHttpHeaders();
+		defaultHttpHeaders.add("Accept", "*/*");
 
-		HttpResponse httpResponse = new HttpResponse(200, null, entries);
+		HttpResponse httpResponse = new HttpResponse(200, null, defaultHttpHeaders);
 
 		assertEquals("*/*", httpResponse.getHeader("Accept"));
 		assertEquals("*/*", httpResponse.getHeader("ACCEPT"));
@@ -33,12 +36,12 @@ public class HttpResponseTest {
 	@Test
 	public void getHeadersShouldBeCaseInsensitive() throws Exception {
 
-		List<Map.Entry<String, String>> entries = new ArrayList<>();
-		entries.add(new AbstractMap.SimpleEntry<>("Accept", "*/*"));
-		entries.add(new AbstractMap.SimpleEntry<>("ACCEPT", "*/*"));
-		entries.add(new AbstractMap.SimpleEntry<>("accept", "*/*"));
+		DefaultHttpHeaders defaultHttpHeaders = new DefaultHttpHeaders();
+		defaultHttpHeaders.add("Accept", "*/*");
+		defaultHttpHeaders.add("ACCEPT", "*/*");
+		defaultHttpHeaders.add("accept", "*/*");
 
-		HttpResponse httpResponse = new HttpResponse(200, null, entries);
+		HttpResponse httpResponse = new HttpResponse(200, null, defaultHttpHeaders);
 		List<String> headers = httpResponse.getHeaders("accept");
 		assertEquals(3, headers.size());
 		for (String header : headers) {
@@ -48,23 +51,23 @@ public class HttpResponseTest {
 
 	@Test
 	public void getUnknownHeaderShouldReturnNull() throws Exception {
-		HttpResponse httpResponse = new HttpResponse(200, null, new ArrayList<>());
+		HttpResponse httpResponse = new HttpResponse(200, null, new DefaultHttpHeaders());
 		String value = httpResponse.getHeader("undefined");
 		assertNull(value);
 	}
 
 	@Test
 	public void getAllHeaders() throws Exception {
-		List<Map.Entry<String, String>> entries = new ArrayList<>();
-		entries.add(new AbstractMap.SimpleEntry<>("Accept", "*/*"));
-		entries.add(new AbstractMap.SimpleEntry<>("ACCEPT", "*/*"));
-		entries.add(new AbstractMap.SimpleEntry<>("accept", "*/*"));
+		DefaultHttpHeaders defaultHttpHeaders = new DefaultHttpHeaders();
+		defaultHttpHeaders.add("Accept", "*/*");
+		defaultHttpHeaders.add("ACCEPT", "*/*");
+		defaultHttpHeaders.add("accept", "*/*");
 
-		HttpResponse httpResponse = new HttpResponse(200, null, entries);
-		Map<String,String> allHeaders = httpResponse.getAllHeaders();
+		HttpResponse httpResponse = new HttpResponse(200, null, defaultHttpHeaders);
+		List<Map.Entry<String, String>> allHeaders = httpResponse.getAllHeaders();
 		assertEquals(3, allHeaders.size());
-		for (String header : allHeaders.values()) {
-			assertEquals("*/*", header);
+		for (Map.Entry<String, String> entry : allHeaders) {
+			assertEquals("*/*", entry.getValue());
 		}
 
 	}

@@ -178,8 +178,7 @@ public class HttpClientResponseHandler implements ResponseHandler {
 		httpRequestContext.getTimeRecorder().responseBodyCompleted();
 
 		@SuppressWarnings("unchecked") com.king.platform.net.http.HttpResponse httpResponse = new com.king.platform.net.http.HttpResponse(httpResponseStatus
-			.code(), responseBodyConsumer, httpHeaders
-			.entries());
+			.code(), responseBodyConsumer, httpHeaders);
 
 		requestEventBus.triggerEvent(Event.onHttpResponseDone, httpResponse);
 

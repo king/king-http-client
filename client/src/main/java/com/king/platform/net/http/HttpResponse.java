@@ -6,24 +6,21 @@
 package com.king.platform.net.http;
 
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import io.netty.handler.codec.http.HttpHeaders;
+
 import java.util.List;
 import java.util.Map;
 
 public class HttpResponse<T> {
-	private List<HeaderParameter> headers = new ArrayList<>();
+	private Headers headers;
 	private final int statusCode;
 	private final ResponseBodyConsumer<T> responseBodyConsumer;
 
 
-	public HttpResponse(int statusCode, ResponseBodyConsumer<T> responseBodyConsumer, List<Map.Entry<String, String>> httpHeaders) {
+	public HttpResponse(int statusCode, ResponseBodyConsumer responseBodyConsumer, HttpHeaders httpHeaders) {
 		this.statusCode = statusCode;
 		this.responseBodyConsumer = responseBodyConsumer;
-
-		for (Map.Entry<String, String> httpHeader : httpHeaders) {
-			headers.add(new HeaderParameter(httpHeader.getKey(), httpHeader.getValue()));
-		}
+		headers = new Headers(httpHeaders);
 	}
 
 	public int getStatusCode() {
@@ -35,50 +32,15 @@ public class HttpResponse<T> {
 	}
 
 	public String getHeader(String name) {
-		for (HeaderParameter header : headers) {
-			if (header.getName().equalsIgnoreCase(name)) {
-				return header.getValue();
-			}
-		}
-		return null;
+		return headers.get(name);
 	}
 
 	public List<String> getHeaders(String name) {
-		List<String> values = new ArrayList<>();
 
-		for (HeaderParameter header : headers) {
-			if (header.getName().equalsIgnoreCase(name)) {
-				values.add(header.getValue());
-			}
-		}
-
-		return values;
+		return headers.getAll(name);
 	}
 
-	public Map<String, String> getAllHeaders() {
-		HashMap<String, String> map = new HashMap<>();
-		for (HeaderParameter header : headers) {
-			map.put(header.getName(), header.getValue());
-		}
-		return map;
-	}
-
-
-	private static class HeaderParameter {
-		private String name;
-		private String value;
-
-		public HeaderParameter(String name, String value) {
-			this.name = name;
-			this.value = value;
-		}
-
-		public String getName() {
-			return name;
-		}
-
-		public String getValue() {
-			return value;
-		}
+	public List<Map.Entry<String, String>> getAllHeaders() {
+		return headers.entries();
 	}
 }
