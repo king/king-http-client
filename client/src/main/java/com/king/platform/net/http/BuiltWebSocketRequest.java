@@ -1,5 +1,7 @@
 package com.king.platform.net.http;
 
+import java.util.concurrent.CompletableFuture;
+
 public interface BuiltWebSocketRequest {
-	WebSocketClient execute(WebSocketClientCallback webSocketClientCallback);
+	CompletableFuture<WebSocketConnection> execute(WebSocketListener webSocketListener);
 }

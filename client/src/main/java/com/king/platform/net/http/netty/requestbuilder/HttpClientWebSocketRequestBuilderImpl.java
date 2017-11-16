@@ -10,17 +10,21 @@ import com.king.platform.net.http.*;
 import com.king.platform.net.http.netty.ConfMap;
 import com.king.platform.net.http.netty.HttpClientCaller;
 import com.king.platform.net.http.netty.sse.VoidResponseConsumer;
-import com.king.platform.net.http.netty.websocket.WebSocketClientImpl;
+import com.king.platform.net.http.netty.websocket.WebSocketConnectionImpl;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpVersion;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
 
 public class HttpClientWebSocketRequestBuilderImpl extends HttpClientRequestHeaderBuilderImpl<HttpClientWebSocketRequestBuilder> implements HttpClientWebSocketRequestBuilder {
+	private final Executor defaultCallbackExecutor;
+
 	public HttpClientWebSocketRequestBuilderImpl(HttpClientCaller httpClientCaller, String uri, ConfMap confMap,
 												 Executor callbackExecutor) {
 		super(HttpClientWebSocketRequestBuilder.class, httpClientCaller, HttpVersion.HTTP_1_1, HttpMethod.GET, uri, confMap, callbackExecutor);
+		this.defaultCallbackExecutor = callbackExecutor;
 	}
 
 	@Override
@@ -29,12 +33,25 @@ public class HttpClientWebSocketRequestBuilderImpl extends HttpClientRequestHead
 			idleTimeoutMillis, totalRequestTimeoutMillis, followRedirects, acceptCompressedResponse, keepAlive, null, null, null, queryParameters,
 			headerParameters, callbackExecutor, VoidResponseConsumer::new);
 
+
 		return new BuiltWebSocketRequest() {
 			@Override
-			public WebSocketClient execute(WebSocketClientCallback webSocketClientCallback) {
-				WebSocketClientImpl webSocketClient = new WebSocketClientImpl(webSocketClientCallback, builtNettyClientRequest, callbackExecutor);
+			public CompletableFuture<WebSocketConnection> execute(WebSocketListener webSocketListener) {
+
+				Executor listenerExecutor = null;
+				if (defaultCallbackExecutor != HttpClientWebSocketRequestBuilderImpl.this.callbackExecutor) {
+					listenerExecutor = HttpClientWebSocketRequestBuilderImpl.this.callbackExecutor;
+				} else {
+					listenerExecutor = Runnable::run; //if no executor has been supplied (ie, still on default executor), run on calling thread
+				}
+
+				CompletableFuture<WebSocketConnection> completableFuture = new CompletableFuture<>();
+
+				WebSocketConnectionImpl webSocketClient = new WebSocketConnectionImpl(webSocketListener, builtNettyClientRequest, listenerExecutor, callbackExecutor, completableFuture);
 				webSocketClient.connect();
-				return webSocketClient;
+
+				return completableFuture;
+
 			}
 		};
 

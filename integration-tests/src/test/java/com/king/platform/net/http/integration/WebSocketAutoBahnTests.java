@@ -8,24 +8,17 @@ package com.king.platform.net.http.integration;
 
 import com.king.platform.net.http.ConfKeys;
 import com.king.platform.net.http.HttpClient;
-import com.king.platform.net.http.WebSocketClient;
-import com.king.platform.net.http.WebSocketClientCallback;
+import com.king.platform.net.http.WebSocketConnection;
+import com.king.platform.net.http.WebSocketListener;
 import com.king.platform.net.http.netty.NettyHttpClientBuilder;
 import com.king.platform.net.http.netty.backpressure.EvictingBackPressure;
 import com.king.platform.net.http.netty.pool.NoChannelPool;
-import com.sun.org.apache.xpath.internal.SourceTree;
-import org.eclipse.jetty.websocket.api.Session;
-import org.eclipse.jetty.websocket.api.WebSocketListener;
-import org.eclipse.jetty.websocket.servlet.WebSocketServlet;
-import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static junit.framework.TestCase.assertEquals;
 
@@ -54,21 +47,21 @@ public class WebSocketAutoBahnTests {
 
 		;
 
-	for (int i = 1; i < 400; i++) {
+	for (int i = 1; i < 250; i++) {
 
 			System.out.println("Starting "+ i );
 
 			CountDownLatch countDownLatch = new CountDownLatch(1);
 			httpClient.createWebSocket("ws://localhost:" + 9001 + "/runCase?case="+i+"&agent=king-http-client")
-				.executingOn(Executors.newSingleThreadExecutor())
+				//.executingOn(Executors.newSingleThreadExecutor())
 				.build()
 
-				.execute(new WebSocketClientCallback() {
-					WebSocketClient client;
+				.execute(new WebSocketListener() {
+					WebSocketConnection client;
 
 					@Override
-					public void onConnect(WebSocketClient client) {
-						this.client = client;
+					public void onConnect(WebSocketConnection connection) {
+						this.client = connection;
 					}
 
 					@Override
@@ -106,9 +99,9 @@ public class WebSocketAutoBahnTests {
 
 	@Test
 	public void updateReport() throws Exception {
-		httpClient.createWebSocket("ws://127.0.0.1:9001/updateReports?agent=king-http-client").build().execute(new WebSocketClientCallback() {
+		httpClient.createWebSocket("ws://127.0.0.1:9001/updateReports?agent=king-http-client").build().execute(new WebSocketListener() {
 			@Override
-			public void onConnect(WebSocketClient client) {
+			public void onConnect(WebSocketConnection connection) {
 				System.out.println("Connected");
 			}
 
@@ -119,6 +112,11 @@ public class WebSocketAutoBahnTests {
 
 			@Override
 			public void onError(Throwable t) {
+
+			}
+
+			@Override
+			public void onBinaryFrame(byte[] payload, boolean finalFragment, int rsv) {
 
 			}
 

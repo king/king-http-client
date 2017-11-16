@@ -89,7 +89,7 @@ public class ConfKeys<T> {
 	public static final ConfKeys<Boolean> ACCEPT_COMPRESSED_RESPONSE = new ConfKeys<>(false);
 
 	/**
-	 * Should the client keep the connections alive between requests, defaults to true
+	 * Should the client keep the connections alive between reqCuests, defaults to true
 	 */
 	public static final ConfKeys<Boolean> KEEP_ALIVE = new ConfKeys<>(true);
 

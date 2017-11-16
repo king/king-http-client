@@ -6,7 +6,6 @@
 package com.king.platform.net.http.netty.eventbus;
 
 import com.king.platform.net.http.HttpResponse;
-import com.king.platform.net.http.WebSocketClient;
 import com.king.platform.net.http.netty.HttpRequestContext;
 import com.king.platform.net.http.netty.ServerInfo;
 import io.netty.buffer.ByteBuf;

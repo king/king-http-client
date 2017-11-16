@@ -1,6 +1,5 @@
 package com.king.platform.net.http.netty.websocket;
 
-import com.king.platform.net.http.WebSocketClient;
 import com.king.platform.net.http.netty.HttpClientHandler;
 import com.king.platform.net.http.netty.HttpRequestContext;
 import com.king.platform.net.http.netty.ResponseHandler;
@@ -66,7 +65,7 @@ public class WebSocketResponseHandler implements ResponseHandler {
 		}
 	}
 
-	public void handleFrame(WebSocketFrame frame, RequestEventBus requestEventBus, HttpRequestContext httpRequestContext, ChannelHandlerContext ctx) {
+	private void handleFrame(WebSocketFrame frame, RequestEventBus requestEventBus, HttpRequestContext httpRequestContext, ChannelHandlerContext ctx) {
 		requestEventBus.triggerEvent(Event.onWsFrame, frame);
 
 		if (frame instanceof CloseWebSocketFrame) {
@@ -112,6 +111,22 @@ public class WebSocketResponseHandler implements ResponseHandler {
 
 	@Override
 	public void handleChannelInactive(ChannelHandlerContext ctx) throws Exception {
+		HttpRequestContext httpRequestContext = ctx.channel().attr(HttpRequestContext.HTTP_REQUEST_ATTRIBUTE_KEY).get();
 
+		if (httpRequestContext == null) {
+			logger.trace("httpRequestContext is null");
+			return;
+		}
+
+		if (ctx.channel().attr(HttpClientHandler.HTTP_CLIENT_HANDLER_TRIGGERED_ERROR).get()) {
+			logger.trace("This channel has already triggered error, ignoring this invocation");
+			return;
+		}
+
+		NettyHttpClientResponse nettyHttpClientResponse = httpRequestContext.getNettyHttpClientResponse();
+
+		RequestEventBus requestEventBus = nettyHttpClientResponse.getRequestEventBus();
+
+		requestEventBus.triggerEvent(Event.COMPLETED, httpRequestContext);
 	}
 }

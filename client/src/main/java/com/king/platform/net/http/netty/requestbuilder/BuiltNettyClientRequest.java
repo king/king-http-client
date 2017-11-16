@@ -210,20 +210,20 @@ public class BuiltNettyClientRequest<T> implements BuiltClientRequest<T>, BuiltC
 			headers.set(HttpHeaderNames.HOST, serverInfo.getHost() + ":" + serverInfo.getPort());
 		}
 
-		nettyHttpClientRequest.setKeepAlive(keepAlive);
-
 		if (serverInfo.isWebSocket()) {
 
 			byte[] nonce = WebSocketUtil.randomBytes(16);
 			String key = WebSocketUtil.base64(nonce);
 
-			headers.add(HttpHeaderNames.UPGRADE, HttpHeaderValues.WEBSOCKET)
-				.add(HttpHeaderNames.CONNECTION, HttpHeaderValues.UPGRADE)
-				.add(HttpHeaderNames.SEC_WEBSOCKET_KEY, key)
-				.add(HttpHeaderNames.SEC_WEBSOCKET_ORIGIN, websocketOriginValue(serverInfo.getHost(), serverInfo.getPort()))
+			headers.set(HttpHeaderNames.UPGRADE, HttpHeaderValues.WEBSOCKET)
+				.set(HttpHeaderNames.CONNECTION, HttpHeaderValues.UPGRADE)
+				.set(HttpHeaderNames.SEC_WEBSOCKET_KEY, key)
+				.set(HttpHeaderNames.SEC_WEBSOCKET_ORIGIN, websocketOriginValue(serverInfo.getHost(), serverInfo.getPort()))
 				.set(SEC_WEBSOCKET_VERSION, "13");
 
 
+		} else {
+			nettyHttpClientRequest.setKeepAlive(keepAlive);
 		}
 
 		return httpClientCaller.execute(httpMethod, nettyHttpClientRequest, httpCallback, getNioCallback(), uploadCallback, responseBodyConsumer.get(),

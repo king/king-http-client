@@ -5,6 +5,8 @@
 
 package com.king.platform.net.http;
 
+import java.util.concurrent.Executor;
+
 /**
  * Interface used to create http request builders.
  * <p>
@@ -91,5 +93,13 @@ public interface HttpClient {
 	 */
 	HttpClientSseRequestBuilder createSSE(String uri);
 
+	/**
+	 * Create a builder for web socket conncetions. The client has to be started before this method is called.
+	 * The default behavior is that {@link WebSocketListener} is called on the nio threads.
+	 * This behavior can be overridden by supplying an executor on {@link HttpClientWebSocketRequestBuilder#executingOn(Executor)}
+	 *
+	 * @param uri the ws/wss uri to call
+	 * @return the builder
+	 */
 	HttpClientWebSocketRequestBuilder createWebSocket(String uri);
 }
