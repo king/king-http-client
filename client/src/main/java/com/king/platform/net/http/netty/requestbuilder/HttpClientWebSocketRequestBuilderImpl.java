@@ -6,7 +6,10 @@
 package com.king.platform.net.http.netty.requestbuilder;
 
 
-import com.king.platform.net.http.*;
+import com.king.platform.net.http.BuiltWebSocketRequest;
+import com.king.platform.net.http.HttpClientWebSocketRequestBuilder;
+import com.king.platform.net.http.WebSocketConnection;
+import com.king.platform.net.http.WebSocketListener;
 import com.king.platform.net.http.netty.ConfMap;
 import com.king.platform.net.http.netty.HttpClientCaller;
 import com.king.platform.net.http.netty.sse.VoidResponseConsumer;
@@ -28,7 +31,14 @@ public class HttpClientWebSocketRequestBuilderImpl extends HttpClientRequestHead
 	}
 
 	@Override
+	public HttpClientWebSocketRequestBuilder subProtocols(String subProtocols) {
+		withHeader("sec-websocket-protocol", subProtocols);
+		return this;
+	}
+
+	@Override
 	public BuiltWebSocketRequest build() {
+
 		final BuiltNettyClientRequest<Void> builtNettyClientRequest = new BuiltNettyClientRequest<>(httpClientCaller, httpVersion, httpMethod, uri, defaultUserAgent,
 			idleTimeoutMillis, totalRequestTimeoutMillis, followRedirects, acceptCompressedResponse, keepAlive, null, null, null, queryParameters,
 			headerParameters, callbackExecutor, VoidResponseConsumer::new);
