@@ -8,7 +8,10 @@ package com.king.platform.net.http.netty;
 
 import com.king.platform.net.http.*;
 import com.king.platform.net.http.netty.backpressure.BackPressure;
-import com.king.platform.net.http.netty.eventbus.*;
+import com.king.platform.net.http.netty.eventbus.Event;
+import com.king.platform.net.http.netty.eventbus.EventBusCallback1;
+import com.king.platform.net.http.netty.eventbus.EventBusCallback2;
+import com.king.platform.net.http.netty.eventbus.RootEventBus;
 import com.king.platform.net.http.netty.pool.ChannelPool;
 import com.king.platform.net.http.netty.request.HttpClientRequestHandler;
 import com.king.platform.net.http.netty.requestbuilder.HttpClientRequestBuilderImpl;
@@ -117,6 +120,8 @@ public class NettyHttpClient implements HttpClient {
 		if (!started.compareAndSet(true, false)) {
 			throw new IllegalStateException("Http client is not running!");
 		}
+
+		channelPool.shutdown();
 
 		if (group != null) {
 			group.shutdownGracefully(0, 10, TimeUnit.SECONDS);

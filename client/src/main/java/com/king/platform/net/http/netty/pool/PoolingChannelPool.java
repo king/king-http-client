@@ -98,6 +98,13 @@ public class PoolingChannelPool implements ChannelPool {
 		return true;
 	}
 
+	@Override
+	public void shutdown() {
+		for (ServerPool serverPool : serverPoolMap.values()) {
+			serverPool.shutdown();
+		}
+	}
+
 	protected int getPoolSize(ServerInfo serverInfo) {
 		ServerPool serverPool = serverPoolMap.get(serverInfo);
 		if (serverPool == null) {

@@ -4,7 +4,7 @@ import java.util.concurrent.CompletableFuture;
 
 public interface WebSocketConnection {
 
-	Headers getHeaders();
+	Headers headers();
 
 	CompletableFuture<Void> sendTextFrame(String text);
 

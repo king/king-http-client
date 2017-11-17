@@ -15,7 +15,6 @@ import org.slf4j.Logger;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.TimeUnit;
@@ -165,6 +164,12 @@ public class ServerPool {
 
 	public int getChannelSize() {
 		return channelsMap.size();
+	}
+
+	public void shutdown() {
+		for (PooledChannel pooledChannel : pooledChannels) {
+			pooledChannel.channel.close();
+		}
 	}
 
 

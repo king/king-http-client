@@ -70,7 +70,7 @@ public interface HttpClient {
 	HttpClientRequestBuilder createHead(String uri);
 
 	/**
-	 * Create reusable builder for http head requests. The client has to be started before this method is called.
+	 * Create reusable builder for http options requests. The client has to be started before this method is called.
 	 *
 	 * @param uri Http uri to call
 	 * @return The reusable {@link HttpClientRequestBuilder}
@@ -78,7 +78,7 @@ public interface HttpClient {
 	HttpClientRequestBuilder createOptions(String uri);
 
 	/**
-	 * Create reusable builder for http head requests. The client has to be started before this method is called.
+	 * Create reusable builder for http trace requests. The client has to be started before this method is called.
 	 *
 	 * @param uri Http uri to call
 	 * @return The reusable {@link HttpClientRequestBuilder}
@@ -94,7 +94,7 @@ public interface HttpClient {
 	HttpClientSseRequestBuilder createSSE(String uri);
 
 	/**
-	 * Create a builder for web socket conncetions. The client has to be started before this method is called.
+	 * Create reusable builder for web socket connections. The client has to be started before this method is called.
 	 * The default behavior is that {@link WebSocketListener} is called on the nio threads.
 	 * This behavior can be overridden by supplying an executor on {@link HttpClientWebSocketRequestBuilder#executingOn(Executor)}
 	 *

@@ -17,4 +17,6 @@ public interface ChannelPool {
 	void discard(ServerInfo serverInfo, Channel channel);
 
 	boolean isActive();
+
+	void shutdown();
 }

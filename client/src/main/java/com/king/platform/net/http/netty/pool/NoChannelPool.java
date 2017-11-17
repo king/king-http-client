@@ -30,4 +30,9 @@ public class NoChannelPool implements ChannelPool {
 	public boolean isActive() {
 		return false;
 	}
+
+	@Override
+	public void shutdown() {
+
+	}
 }

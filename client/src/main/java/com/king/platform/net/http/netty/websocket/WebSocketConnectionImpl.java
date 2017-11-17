@@ -64,7 +64,7 @@ public class WebSocketConnectionImpl implements WebSocketConnection {
 	}
 
 	@Override
-	public Headers getHeaders() {
+	public Headers headers() {
 		return headers;
 	}
 

@@ -15,13 +15,12 @@ import com.king.platform.net.http.netty.backpressure.EvictingBackPressure;
 import com.king.platform.net.http.netty.pool.NoChannelPool;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
 
-import static junit.framework.TestCase.assertEquals;
-
+@Ignore
 public class WebSocketAutoBahnTests {
 	private HttpClient httpClient;
 
@@ -99,6 +98,7 @@ public class WebSocketAutoBahnTests {
 
 	@Test
 	public void updateReport() throws Exception {
+		CountDownLatch countDownLatch = new CountDownLatch(1);
 		httpClient.createWebSocket("ws://127.0.0.1:9001/updateReports?agent=king-http-client").build().execute(new WebSocketListener() {
 			@Override
 			public void onConnect(WebSocketConnection connection) {
@@ -107,7 +107,7 @@ public class WebSocketAutoBahnTests {
 
 			@Override
 			public void onDisconnect(int code, String reason) {
-				System.exit(0);
+				countDownLatch.countDown();
 			}
 
 			@Override
@@ -125,7 +125,7 @@ public class WebSocketAutoBahnTests {
 				System.out.println(payload);
 			}
 		});
-		Thread.currentThread().join();
+		countDownLatch.await();
 	}
 
 	@After
