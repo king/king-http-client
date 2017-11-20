@@ -14,6 +14,7 @@ import com.king.platform.net.http.netty.ConfMap;
 import com.king.platform.net.http.netty.HttpClientCaller;
 import com.king.platform.net.http.netty.sse.VoidResponseConsumer;
 import com.king.platform.net.http.netty.websocket.WebSocketConnectionImpl;
+import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpVersion;
 
@@ -32,7 +33,7 @@ public class HttpClientWebSocketRequestBuilderImpl extends HttpClientRequestHead
 
 	@Override
 	public HttpClientWebSocketRequestBuilder subProtocols(String subProtocols) {
-		withHeader("sec-websocket-protocol", subProtocols);
+		withHeader(HttpHeaderNames.SEC_WEBSOCKET_PROTOCOL, subProtocols);
 		return this;
 	}
 
