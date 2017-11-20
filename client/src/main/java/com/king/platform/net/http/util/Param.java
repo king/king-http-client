@@ -7,19 +7,19 @@ package com.king.platform.net.http.util;
 
 
 public class Param {
-	private final String name;
-	private final String value;
+	private final CharSequence name;
+	private final CharSequence value;
 
-	public Param(String name, String value) {
+	public Param(CharSequence name, CharSequence value) {
 		this.name = name;
 		this.value = value;
 	}
 
-	public String getName() {
+	public CharSequence getName() {
 		return name;
 	}
 
-	public String getValue() {
+	public CharSequence getValue() {
 		return value;
 	}
 }

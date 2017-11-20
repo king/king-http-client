@@ -112,7 +112,7 @@ public class Headers {
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
 
-		HashMap<String, String> headers = new HashMap<>();
+		HashMap<CharSequence, CharSequence> headers = new HashMap<>();
 		headers.put(headerName, headerValue);
 
 		httpClient

@@ -12,11 +12,11 @@ import java.nio.charset.UnsupportedCharsetException;
 
 public class ParameterEncoder {
 
-	public void addParameter(StringBuilder target, String name, String value) {
-		target.append(encodeComponent(name));
+	public void addParameter(StringBuilder target, CharSequence name, CharSequence value) {
+		target.append(encodeComponent(name.toString()));
 		if (value != null) {
 			target.append("=");
-			target.append(encodeComponent(value));
+			target.append(encodeComponent(value.toString()));
 		}
 		target.append("&");
 	}

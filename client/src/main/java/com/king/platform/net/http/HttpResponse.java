@@ -31,11 +31,11 @@ public class HttpResponse<T> {
 		return responseBodyConsumer.getBody();
 	}
 
-	public String getHeader(String name) {
+	public String getHeader(CharSequence name) {
 		return headers.get(name);
 	}
 
-	public List<String> getHeaders(String name) {
+	public List<String> getHeaders(CharSequence name) {
 
 		return headers.getAll(name);
 	}

@@ -65,7 +65,7 @@ public abstract class HttpClientRequestHeaderBuilderImpl<T extends HttpClientReq
 
 
 	@Override
-	public T withHeader(String name, String value) {
+	public T withHeader(CharSequence name, CharSequence value) {
 		requireNonNull(name, "name");
 		requireNonNull(value, "value");
 		headerParameters.add(new Param(name, value));
@@ -73,8 +73,8 @@ public abstract class HttpClientRequestHeaderBuilderImpl<T extends HttpClientReq
 	}
 
 	@Override
-	public T withHeaders(Map<String, String> headers) {
-		for (Map.Entry<String, String> entry : headers.entrySet()) {
+	public T withHeaders(Map<CharSequence, CharSequence> headers) {
+		for (Map.Entry<CharSequence, CharSequence> entry : headers.entrySet()) {
 			withHeader(entry.getKey(), entry.getValue());
 		}
 

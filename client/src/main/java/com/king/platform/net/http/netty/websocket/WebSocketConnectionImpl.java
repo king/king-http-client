@@ -12,6 +12,7 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
+import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.websocketx.*;
 import org.slf4j.Logger;
 
@@ -66,6 +67,12 @@ public class WebSocketConnectionImpl implements WebSocketConnection {
 	@Override
 	public Headers headers() {
 		return headers;
+	}
+
+	@Override
+	public String getNegotiatedSubProtocol() {
+		return headers.get(HttpHeaderNames.SEC_WEBSOCKET_PROTOCOL);
+
 	}
 
 	public void connect() {

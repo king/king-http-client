@@ -12,11 +12,11 @@ public class Headers {
 		this.httpHeaders = httpHeaders;
 	}
 
-	public String get(String name) {
+	public String get(CharSequence name) {
 		return httpHeaders.get(name);
 	}
 
-	public List<String> getAll(String name) {
+	public List<String> getAll(CharSequence name) {
 		return httpHeaders.getAll(name);
 	}
 
@@ -24,7 +24,7 @@ public class Headers {
 		return httpHeaders.entries();
 	}
 
-	public boolean contains(String name) {
+	public boolean contains(CharSequence name) {
 		return httpHeaders.contains(name);
 	}
 

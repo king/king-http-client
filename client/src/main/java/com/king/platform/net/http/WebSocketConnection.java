@@ -6,6 +6,8 @@ public interface WebSocketConnection {
 
 	Headers headers();
 
+	String getNegotiatedSubProtocol();
+
 	CompletableFuture<Void> sendTextFrame(String text);
 
 	CompletableFuture<Void> sendCloseFrame();

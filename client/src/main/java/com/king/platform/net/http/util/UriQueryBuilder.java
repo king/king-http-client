@@ -29,7 +29,7 @@ public class UriQueryBuilder {
 		}
 	}
 
-	public UriQueryBuilder addParameter(String name, String value) {
+	public UriQueryBuilder addParameter(CharSequence name, CharSequence value) {
 		parameterEncoder.addParameter(completeUrl, name, value);
 		return this;
 	}
