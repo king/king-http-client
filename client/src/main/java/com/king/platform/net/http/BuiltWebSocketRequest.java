@@ -8,13 +8,13 @@ public interface BuiltWebSocketRequest {
 	 * @param webSocketListener the listener
 	 * @return the future with the connected webSocketConnection
 	 */
-	CompletableFuture<WebSocketConnection> execute(WebSocketListener webSocketListener);
+	CompletableFuture<WebSocketClient> execute(WebSocketListener webSocketListener);
 
 
 	/**
 	 * Builds a web-socket connection that is not yet connected.
-	 * It can later be connected by calling {@link WebSocketConnection#connect()}
+	 * It can later be connected by calling {@link WebSocketClient#connect()}
 	 * @return the not yet connected web-socket
 	 */
-	WebSocketConnection build();
+	WebSocketClient build();
 }

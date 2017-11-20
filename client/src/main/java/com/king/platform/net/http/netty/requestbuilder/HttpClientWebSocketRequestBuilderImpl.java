@@ -8,12 +8,12 @@ package com.king.platform.net.http.netty.requestbuilder;
 
 import com.king.platform.net.http.BuiltWebSocketRequest;
 import com.king.platform.net.http.HttpClientWebSocketRequestBuilder;
-import com.king.platform.net.http.WebSocketConnection;
+import com.king.platform.net.http.WebSocketClient;
 import com.king.platform.net.http.WebSocketListener;
 import com.king.platform.net.http.netty.ConfMap;
 import com.king.platform.net.http.netty.HttpClientCaller;
 import com.king.platform.net.http.netty.sse.VoidResponseConsumer;
-import com.king.platform.net.http.netty.websocket.WebSocketConnectionImpl;
+import com.king.platform.net.http.netty.websocket.WebSocketClientImpl;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpVersion;
@@ -48,9 +48,9 @@ public class HttpClientWebSocketRequestBuilderImpl extends HttpClientRequestHead
 		return new BuiltWebSocketRequest() {
 
 			@Override
-			public CompletableFuture<WebSocketConnection> execute(WebSocketListener webSocketListener) {
+			public CompletableFuture<WebSocketClient> execute(WebSocketListener webSocketListener) {
 
-				WebSocketConnectionImpl webSocketClient = create();
+				WebSocketClientImpl webSocketClient = create();
 
 				webSocketClient.addListener(webSocketListener);
 
@@ -59,11 +59,11 @@ public class HttpClientWebSocketRequestBuilderImpl extends HttpClientRequestHead
 			}
 
 			@Override
-			public WebSocketConnection build() {
+			public WebSocketClient build() {
 				return create();
 			}
 
-			private WebSocketConnectionImpl create() {
+			private WebSocketClientImpl create() {
 				Executor listenerExecutor = null;
 				if (defaultCallbackExecutor != HttpClientWebSocketRequestBuilderImpl.this.callbackExecutor) {
 					listenerExecutor = HttpClientWebSocketRequestBuilderImpl.this.callbackExecutor;
@@ -71,7 +71,7 @@ public class HttpClientWebSocketRequestBuilderImpl extends HttpClientRequestHead
 					listenerExecutor = Runnable::run; //if no executor has been supplied (ie, still on default executor), run on calling thread
 				}
 
-				return new WebSocketConnectionImpl(builtNettyClientRequest, listenerExecutor, callbackExecutor);
+				return new WebSocketClientImpl(builtNettyClientRequest, listenerExecutor, callbackExecutor);
 			}
 
 

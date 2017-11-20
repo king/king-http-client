@@ -69,8 +69,8 @@ public class WebSocketAutoBahnTests {
 					}
 
 					@Override
-					public void onError(Throwable t) {
-						System.out.println("Client error " + t);
+					public void onError(Throwable throwable) {
+						System.out.println("Client error " + throwable);
 						countDownLatch.countDown();
 					}
 
@@ -116,7 +116,7 @@ public class WebSocketAutoBahnTests {
 			}
 
 			@Override
-			public void onError(Throwable t) {
+			public void onError(Throwable throwable) {
 				countDownLatch.countDown();
 			}
 

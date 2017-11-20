@@ -6,10 +6,7 @@
 package com.king.platform.net.http.integration;
 
 
-import com.king.platform.net.http.ConfKeys;
-import com.king.platform.net.http.HttpClient;
-import com.king.platform.net.http.WebSocketConnection;
-import com.king.platform.net.http.WebSocketListener;
+import com.king.platform.net.http.*;
 import com.king.platform.net.http.netty.NettyHttpClientBuilder;
 import com.king.platform.net.http.netty.backpressure.EvictingBackPressure;
 import com.king.platform.net.http.netty.eventbus.DefaultEventBus;
@@ -25,6 +22,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static junit.framework.TestCase.assertEquals;
@@ -124,8 +122,8 @@ public class WebSocket {
 				}
 
 				@Override
-				public void onError(Throwable t) {
-					System.out.println("Client error " + t);
+				public void onError(Throwable throwable) {
+					System.out.println("Client error " + throwable);
 				}
 
 				@Override
@@ -174,8 +172,8 @@ public class WebSocket {
 				}
 
 				@Override
-				public void onError(Throwable t) {
-					System.out.println("Client error " + t);
+				public void onError(Throwable throwable) {
+					System.out.println("Client error " + throwable);
 				}
 
 				@Override
@@ -210,11 +208,11 @@ public class WebSocket {
 		CountDownLatch countDownLatch = new CountDownLatch(1);
 		AtomicReference<String> receivedText = new AtomicReference<>();
 
-		WebSocketConnection connection = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
+		WebSocketClient webSocketClient = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
 			.build()
 			.build();
 
-		connection.addListener(new WebSocketListener() {
+		webSocketClient.addListener(new WebSocketListener() {
 			@Override
 			public void onConnect(WebSocketConnection connection) {
 				connection.sendTextFrame("hello world");
@@ -225,7 +223,7 @@ public class WebSocket {
 			}
 
 			@Override
-			public void onError(Throwable t) {
+			public void onError(Throwable throwable) {
 				countDownLatch.countDown();
 			}
 
@@ -242,10 +240,10 @@ public class WebSocket {
 			@Override
 			public void onTextFrame(String payload, boolean finalFragment, int rsv) {
 				receivedText.set(payload);
-				connection.sendCloseFrame();
+				webSocketClient.sendCloseFrame();
 			}
 		});
-		connection.connect();
+		webSocketClient.connect();
 
 		countDownLatch.await();
 
@@ -256,13 +254,13 @@ public class WebSocket {
 	@Test
 	public void twoConnectDirectlyAfterEachOtherShouldFail() throws Exception {
 
-		WebSocketConnection connection = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
+		WebSocketClient client = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
 			.build()
 			.build();
 
-		connection.connect();
+		client.connect();
 		try {
-			connection.connect();
+			client.connect();
 			fail("Should have failed!");
 		} catch (Exception ignored) {
 		}
@@ -270,16 +268,16 @@ public class WebSocket {
 
 	@Test
 	public void connectWhenConnectedShouldFail() throws Exception {
-		WebSocketConnection connection = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
+		WebSocketClient client = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
 			.build()
 			.build();
 
-		CompletableFuture<WebSocketConnection> future = connection.connect();
+		CompletableFuture<WebSocketClient> future = client.connect();
 
 		future.join();
 
 		try {
-			connection.connect();
+			client.connect();
 			fail("Should have failed!");
 		} catch (Exception ignored) {
 		}
@@ -288,18 +286,18 @@ public class WebSocket {
 
 	@Test
 	public void awaitCloseShouldWaitUntilClosed() throws Exception {
-		WebSocketConnection connection = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
+		WebSocketClient client = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
 			.build()
 			.build();
 
-		connection.addListener(new WebSocketListener() {
+		client.addListener(new WebSocketListener() {
 			@Override
 			public void onConnect(WebSocketConnection connection) {
 				connection.sendCloseFrame();
 			}
 
 			@Override
-			public void onError(Throwable t) {
+			public void onError(Throwable throwable) {
 
 			}
 
@@ -324,16 +322,66 @@ public class WebSocket {
 			}
 		});
 
-		CompletableFuture<WebSocketConnection> future = connection.connect();
+		client.connect().join();
 
-		future.join();
-
-		connection.awaitClose();
-
+		client.awaitClose();
 
 	}
 
+	@Test(timeout = 5000L)
+	public void reconnectShouldWork() throws Exception {
+		WebSocketClient client = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
+			.build()
+			.build();
 
+		AtomicInteger connectionCounter = new AtomicInteger();
+		AtomicInteger onTextFrameCounter = new AtomicInteger();
+
+		client.addListener(new WebSocketListener() {
+			@Override
+			public void onConnect(WebSocketConnection connection) {
+				client.sendTextFrame("hello world");
+				connectionCounter.incrementAndGet();
+			}
+
+			@Override
+			public void onError(Throwable throwable) {
+
+			}
+
+			@Override
+			public void onDisconnect() {
+
+			}
+
+			@Override
+			public void onCloseFrame(int code, String reason) {
+
+			}
+
+			@Override
+			public void onBinaryFrame(byte[] payload, boolean finalFragment, int rsv) {
+
+			}
+
+			@Override
+			public void onTextFrame(String payload, boolean finalFragment, int rsv) {
+				client.sendCloseFrame();
+				onTextFrameCounter.incrementAndGet();
+			}
+		});
+
+		client.connect().join();
+		client.awaitClose();
+
+		client.connect().join();
+		client.awaitClose();
+
+		assertEquals(2, connectionCounter.get());
+		assertEquals(2, onTextFrameCounter.get());
+
+
+	}
 
 	@After
 	public void tearDown() throws Exception {
