@@ -12,6 +12,7 @@ import com.king.platform.net.http.SseClientCallback;
 import com.king.platform.net.http.netty.eventbus.Event;
 import com.king.platform.net.http.netty.eventbus.ExternalEventTrigger;
 import com.king.platform.net.http.netty.requestbuilder.BuiltNettyClientRequest;
+import com.king.platform.net.http.netty.util.AwaitLatch;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;

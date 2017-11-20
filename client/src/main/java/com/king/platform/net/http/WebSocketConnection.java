@@ -8,6 +8,14 @@ public interface WebSocketConnection {
 
 	String getNegotiatedSubProtocol();
 
+	void addListener(WebSocketListener webSocketListener);
+
+	CompletableFuture<WebSocketConnection> connect();
+
+	boolean isConnected();
+
+	void awaitClose() throws InterruptedException;
+
 	CompletableFuture<Void> sendTextFrame(String text);
 
 	CompletableFuture<Void> sendCloseFrame();

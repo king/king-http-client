@@ -64,13 +64,18 @@ public class WebSocketAutoBahnTests {
 					}
 
 					@Override
-					public void onDisconnect(int code, String reason) {
-						countDownLatch.countDown();
+					public void onCloseFrame(int code, String reason) {
+
 					}
 
 					@Override
 					public void onError(Throwable t) {
 						System.out.println("Client error " + t);
+						countDownLatch.countDown();
+					}
+
+					@Override
+					public void onDisconnect() {
 						countDownLatch.countDown();
 					}
 
@@ -106,13 +111,18 @@ public class WebSocketAutoBahnTests {
 			}
 
 			@Override
-			public void onDisconnect(int code, String reason) {
+			public void onCloseFrame(int code, String reason) {
 				countDownLatch.countDown();
 			}
 
 			@Override
 			public void onError(Throwable t) {
+				countDownLatch.countDown();
+			}
 
+			@Override
+			public void onDisconnect() {
+				countDownLatch.countDown();
 			}
 
 			@Override

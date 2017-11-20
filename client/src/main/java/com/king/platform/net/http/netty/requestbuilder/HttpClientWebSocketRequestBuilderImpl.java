@@ -46,9 +46,24 @@ public class HttpClientWebSocketRequestBuilderImpl extends HttpClientRequestHead
 
 
 		return new BuiltWebSocketRequest() {
+
 			@Override
 			public CompletableFuture<WebSocketConnection> execute(WebSocketListener webSocketListener) {
 
+				WebSocketConnectionImpl webSocketClient = create();
+
+				webSocketClient.addListener(webSocketListener);
+
+				return webSocketClient.connect();
+
+			}
+
+			@Override
+			public WebSocketConnection build() {
+				return create();
+			}
+
+			private WebSocketConnectionImpl create() {
 				Executor listenerExecutor = null;
 				if (defaultCallbackExecutor != HttpClientWebSocketRequestBuilderImpl.this.callbackExecutor) {
 					listenerExecutor = HttpClientWebSocketRequestBuilderImpl.this.callbackExecutor;
@@ -56,17 +71,15 @@ public class HttpClientWebSocketRequestBuilderImpl extends HttpClientRequestHead
 					listenerExecutor = Runnable::run; //if no executor has been supplied (ie, still on default executor), run on calling thread
 				}
 
-				CompletableFuture<WebSocketConnection> completableFuture = new CompletableFuture<>();
-
-				WebSocketConnectionImpl webSocketClient = new WebSocketConnectionImpl(webSocketListener, builtNettyClientRequest, listenerExecutor, callbackExecutor, completableFuture);
-				webSocketClient.connect();
-
-				return completableFuture;
-
+				return new WebSocketConnectionImpl(builtNettyClientRequest, listenerExecutor, callbackExecutor);
 			}
+
+
 		};
 
 	}
+
+
 
 
 }

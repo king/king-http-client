@@ -1,4 +1,4 @@
-package com.king.platform.net.http.netty.sse;
+package com.king.platform.net.http.netty.util;
 
 
 import java.util.concurrent.CountDownLatch;
