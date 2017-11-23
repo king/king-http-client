@@ -33,6 +33,7 @@ public class HttpClientResponseHandler implements ResponseHandler {
 		this.httpRedirector = httpRedirector;
 	}
 
+	@Override
 	public void handleResponse(ChannelHandlerContext ctx, Object msg) throws Exception {
 		HttpRequestContext httpRequestContext = ctx.channel().attr(HttpRequestContext.HTTP_REQUEST_ATTRIBUTE_KEY).get();
 
@@ -186,6 +187,7 @@ public class HttpClientResponseHandler implements ResponseHandler {
 	}
 
 
+	@Override
 	public void handleChannelInactive(ChannelHandlerContext ctx) {
 		HttpRequestContext httpRequestContext = ctx.channel().attr(HttpRequestContext.HTTP_REQUEST_ATTRIBUTE_KEY).get();
 

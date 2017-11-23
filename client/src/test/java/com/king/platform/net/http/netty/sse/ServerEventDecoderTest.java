@@ -12,9 +12,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.UnsupportedEncodingException;
-import java.util.LinkedList;
+import java.util.ArrayDeque;
 import java.util.Queue;
-import java.util.concurrent.Executor;
 
 import static org.junit.Assert.*;
 
@@ -250,7 +249,7 @@ public class ServerEventDecoderTest {
 
 
 	private static class CapturingSseExecutionCallback implements SseClientCallback {
-		private Queue<Event> events = new LinkedList<>();
+		private Queue<Event> events = new ArrayDeque<>();
 		int count;
 
 		@Override
