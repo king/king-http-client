@@ -227,7 +227,7 @@ public class NettyHttpClientBuilder {
 		}
 
 		if (cleanupTimer == null) {
-			cleanupTimer = new HashedWheelTimer();
+			cleanupTimer = new HashedWheelTimer(newThreadFactory("HttpClient-timers"));
 
 			shutdownJobs.add(new NettyHttpClient.ShutdownJob() {
 				@Override
