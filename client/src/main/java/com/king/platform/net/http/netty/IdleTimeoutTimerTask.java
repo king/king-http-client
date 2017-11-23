@@ -66,7 +66,7 @@ public class IdleTimeoutTimerTask implements TimeoutTimerTask {
 				requestEventBus.triggerEvent(Event.ERROR, httpRequestContext, new TimeoutException(message));
 
 				completed();
-			} else if (currentReadTimeoutInstant < requestTimeoutInstant) {
+			} else if (currentReadTimeoutInstant > requestTimeoutInstant) {
 				timeoutTimerHandler.scheduleTimeout(durationBeforeCurrentReadTimeout, TimeUnit.MILLISECONDS);
 				executing.set(false);
 			} else {
