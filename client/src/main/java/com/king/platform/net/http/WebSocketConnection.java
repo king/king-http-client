@@ -32,6 +32,17 @@ public interface WebSocketConnection {
 	/**
 	 * Send an close frame to the server. This is to inform the server about wanting to close the connection.
 	 * @return the resulting future
+	 * @param statusCode the status code
+	 * @param reason the reason to close
+	 */
+	CompletableFuture<Void> sendCloseFrame(int statusCode, String reason);
+
+
+	/**
+	 * Send an close frame to the server. This is to inform the server about wanting to close the connection.
+	 * StatusCode 1000 (Normal close) will be used.
+	 * @return the resulting future
+	 *
 	 */
 	CompletableFuture<Void> sendCloseFrame();
 
@@ -41,4 +52,20 @@ public interface WebSocketConnection {
 	 * @return the resulting future
 	 */
 	CompletableFuture<Void> sendBinaryFrame(byte[] payload);
+
+
+	/**
+	 * Send a ping frame to the server
+	 *
+	 * @return the resulting future
+	 */
+	CompletableFuture<Void> sendPingFrame();
+
+	/**
+	 * Send a ping frame with a payload to the server
+	 *
+	 * @param payload the payload
+	 * @return the resulting future
+	 */
+	CompletableFuture<Void> sendPingFrame(byte[] payload);
 }

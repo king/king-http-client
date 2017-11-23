@@ -15,17 +15,20 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.handler.codec.http.EmptyHttpHeaders;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.websocketx.*;
+import io.netty.util.concurrent.ScheduledFuture;
 import org.slf4j.Logger;
 
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CodingErrorAction;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -38,7 +41,9 @@ public class WebSocketClientImpl implements WebSocketClient {
 	private final BuiltNettyClientRequest<Void> builtNettyClientRequest;
 	private final Executor callbackExecutor;
 	private final Executor completableFutureExecutor;
-
+	private final boolean autoPong;
+	private final boolean autoCloseFrame;
+	private final Duration pingEveryDuration;
 
 	private Headers headers = new Headers(EmptyHttpHeaders.INSTANCE);
 
@@ -50,11 +55,18 @@ public class WebSocketClientImpl implements WebSocketClient {
 	private volatile boolean ready;
 	private volatile CompletableFuture<WebSocketClient> connectionFuture;
 	private final AwaitLatch awaitLatch = new AwaitLatch();
+	private ScheduledFuture<?> pingFuture;
 
-	public WebSocketClientImpl(BuiltNettyClientRequest<Void> builtNettyClientRequest, Executor listenerExecutor, Executor completableFutureExecutor) {
+
+	public WebSocketClientImpl(BuiltNettyClientRequest<Void> builtNettyClientRequest, Executor listenerExecutor, Executor completableFutureExecutor, boolean
+		autoPong, boolean autoCloseFrame, Duration pingEveryDuration) {
 		this.builtNettyClientRequest = builtNettyClientRequest;
 		this.callbackExecutor = listenerExecutor;
 		this.completableFutureExecutor = completableFutureExecutor;
+		this.autoPong = autoPong;
+		this.autoCloseFrame = autoCloseFrame;
+		this.pingEveryDuration = pingEveryDuration;
+
 
 		builtNettyClientRequest.withCustomCallbackSupplier(requestEventBus -> {
 			requestEventBus.subscribe(Event.onWsOpen, WebSocketClientImpl.this::onOpen);
@@ -99,6 +111,10 @@ public class WebSocketClientImpl implements WebSocketClient {
 
 	@Override
 	public void awaitClose() throws InterruptedException {
+		if (connectionFuture == null && channel == null) {
+			return;
+		}
+
 		awaitLatch.awaitClose();
 	}
 
@@ -118,7 +134,7 @@ public class WebSocketClientImpl implements WebSocketClient {
 	}
 
 	@Override
-	public CompletableFuture<Void> sendCloseFrame() {
+	public CompletableFuture<Void> sendCloseFrame(int statusCode, String reason) {
 		if (!ready || channel == null) {
 			CompletableFuture<Void> future = new CompletableFuture<>();
 			future.completeExceptionally(new IllegalStateException("Not connected!"));
@@ -126,10 +142,15 @@ public class WebSocketClientImpl implements WebSocketClient {
 		}
 
 		if (channel.isOpen()) {
-			channel.writeAndFlush(new CloseWebSocketFrame());
+			channel.writeAndFlush(new CloseWebSocketFrame(statusCode, reason));
 		}
 
 		return CompletableFuture.completedFuture(null);
+	}
+
+	@Override
+	public CompletableFuture<Void> sendCloseFrame() {
+		return sendCloseFrame(1000, "");
 	}
 
 	@Override
@@ -142,6 +163,29 @@ public class WebSocketClientImpl implements WebSocketClient {
 
 		return convert(channel.writeAndFlush(new BinaryWebSocketFrame(Unpooled.wrappedBuffer(payload))));
 	}
+
+	@Override
+	public CompletableFuture<Void> sendPingFrame() {
+		if (!ready || channel == null) {
+			CompletableFuture<Void> future = new CompletableFuture<>();
+			future.completeExceptionally(new IllegalStateException("Not connected!"));
+			return future;
+		}
+
+		return convert(channel.writeAndFlush(new PingWebSocketFrame()));
+	}
+
+	@Override
+	public CompletableFuture<Void> sendPingFrame(byte[] payload) {
+		if (!ready || channel == null) {
+			CompletableFuture<Void> future = new CompletableFuture<>();
+			future.completeExceptionally(new IllegalStateException("Not connected!"));
+			return future;
+		}
+
+		return convert(channel.writeAndFlush(new PingWebSocketFrame(Unpooled.copiedBuffer(payload))));
+	}
+
 
 	private CompletableFuture<Void> convert(ChannelFuture f) {
 		CompletableFuture<Void> completableFuture = new CompletableFuture<>();
@@ -179,12 +223,30 @@ public class WebSocketClientImpl implements WebSocketClient {
 	}
 
 	private void onPongFrame(PongWebSocketFrame pongWebSocketFrame) {
-		//no need to handle pong
+		byte[] bytes = getBytes(pongWebSocketFrame.content());
+
+		callbackExecutor.execute(() -> {
+			for (WebSocketListener webSocketListener : listeners) {
+				webSocketListener.onPongFrame(bytes);
+			}
+		});
+
 	}
 
 	private void onPingFrame(PingWebSocketFrame pingWebSocketFrame) {
+
 		byte[] bytes = getBytes(pingWebSocketFrame.content());
-		channel.writeAndFlush(new PongWebSocketFrame(Unpooled.copiedBuffer(bytes)));
+
+		if (autoPong) {
+			channel.writeAndFlush(new PongWebSocketFrame(Unpooled.copiedBuffer(bytes)));
+		}
+
+		callbackExecutor.execute(() -> {
+			for (WebSocketListener webSocketListener : listeners) {
+				webSocketListener.onPingFrame(bytes);
+			}
+
+		});
 
 	}
 
@@ -203,7 +265,7 @@ public class WebSocketClientImpl implements WebSocketClient {
 					handleTextFrame(continuationWebSocketFrame);
 					break;
 				default:
-					sendCloseFrame();
+					sendCloseFrame(1002, "Incorrect continuation frame!");
 			}
 		} finally {
 			if (continuationWebSocketFrame.isFinalFragment()) {
@@ -224,7 +286,7 @@ public class WebSocketClientImpl implements WebSocketClient {
 
 			});
 		} catch (CharacterCodingException e) {
-			sendCloseFrame();
+			sendCloseFrame(1007, "Invalid UTF-8 encoding");
 		}
 
 	}
@@ -259,11 +321,18 @@ public class WebSocketClientImpl implements WebSocketClient {
 	private void onClose(CloseWebSocketFrame closeWebSocketFrame) {
 		int statusCode = closeWebSocketFrame.statusCode();
 		String reasonText = closeWebSocketFrame.reasonText();
+
+		if (autoCloseFrame) {
+			sendCloseFrame(statusCode, reasonText);
+		}
+
 		callbackExecutor.execute(() -> {
 			for (WebSocketListener webSocketListener : listeners) {
 				webSocketListener.onCloseFrame(statusCode, reasonText);
 			}
 		});
+
+
 	}
 
 	private void onOpen(Channel channel, io.netty.handler.codec.http.HttpHeaders httpHeaders) {
@@ -284,16 +353,36 @@ public class WebSocketClientImpl implements WebSocketClient {
 			onWebSocketFrame(bufferedFrame);
 			bufferedFrame.release();
 		}
+
+
+		if (pingEveryDuration != null) {
+
+			if (pingFuture != null) {
+				pingFuture.cancel(true);
+			}
+
+			pingFuture = channel.eventLoop().scheduleAtFixedRate(new Runnable() {
+				@Override
+				public void run() {
+					sendPingFrame();
+				}
+			}, pingEveryDuration.toMillis(), pingEveryDuration.toMillis(), TimeUnit.MILLISECONDS);
+		}
+
 	}
 
 	private void onError(HttpRequestContext httpRequestContext, Throwable throwable) {
 		boolean wasConnected = ready;
 		ready = false;
 		channel = null;
-		CompletableFuture<WebSocketClient> future = this.connectionFuture;
+		if (this.connectionFuture != null) {
+			CompletableFuture<WebSocketClient> future = this.connectionFuture;
 
-		completableFutureExecutor.execute(() -> future.completeExceptionally(throwable));
-		this.connectionFuture = null;
+			completableFutureExecutor.execute(() -> future.completeExceptionally(throwable));
+			this.connectionFuture = null;
+
+		}
+
 		callbackExecutor.execute(() -> {
 			for (WebSocketListener webSocketListener : listeners) {
 				webSocketListener.onError(throwable);
@@ -306,6 +395,10 @@ public class WebSocketClientImpl implements WebSocketClient {
 					webSocketListener.onDisconnect();
 				}
 			});
+		}
+
+		if (pingFuture != null) {
+			pingFuture.cancel(true);
 		}
 
 		awaitLatch.closed();
@@ -325,6 +418,9 @@ public class WebSocketClientImpl implements WebSocketClient {
 			});
 		}
 
+		if (pingFuture != null) {
+			pingFuture.cancel(true);
+		}
 		awaitLatch.closed();
 	}
 

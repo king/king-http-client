@@ -22,7 +22,8 @@ public interface WebSocketListener {
 
 	/**
 	 * Callback for when the client has received a close frame from the server.
-	 * There is no need to echo close frames back to the server.
+	 * There is no need to echo close frames back to the server if {@link ConfKeys#WEB_SOCKET_AUTO_CLOSE_FRAME} or
+	 * {@link HttpClientWebSocketRequestBuilder#withAutoCloseFrame(boolean)} is true.
 	 *
 	 * @param code   the close code
 	 * @param reason the close reason
@@ -46,5 +47,26 @@ public interface WebSocketListener {
 	 * @param rsv           Bits used for extensions to the standard.
 	 */
 	void onTextFrame(String payload, boolean finalFragment, int rsv);
+
+
+	/**
+	 * Callback for when the server has sent an ping frame to the client.
+	 * There is no need to echo back an pong frame if {@link ConfKeys#WEB_SOCKET_AUTO_PONG} or {@link HttpClientWebSocketRequestBuilder#withAutoPong(boolean)}
+	 * is true.
+	 *
+	 * @param payload the payload
+	 */
+	default void onPingFrame(byte[] payload) {
+
+	}
+
+	/**
+	 * Callback for when the server has sent an pong back to the client.
+	 *
+	 * @param payload the payload
+	 */
+	default void onPongFrame(byte[] payload) {
+
+	}
 
 }

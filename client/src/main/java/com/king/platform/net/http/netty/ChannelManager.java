@@ -22,7 +22,9 @@ import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpContentDecompressor;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
-import io.netty.handler.codec.http.websocketx.*;
+import io.netty.handler.codec.http.websocketx.WebSocket13FrameDecoder;
+import io.netty.handler.codec.http.websocketx.WebSocket13FrameEncoder;
+import io.netty.handler.codec.http.websocketx.WebSocketFrameAggregator;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.ssl.SslContext;
@@ -287,6 +289,8 @@ public class ChannelManager {
 			Channel channel = httpRequestContext.getAndDetachChannel();
 
 			if (channel != null) {
+				channel.attr(HttpClientHandler.HTTP_CLIENT_HANDLER_TRIGGERED_ERROR).set(true);
+
 				channelPool.discard(serverInfo, channel);
 				channel.close();
 			}

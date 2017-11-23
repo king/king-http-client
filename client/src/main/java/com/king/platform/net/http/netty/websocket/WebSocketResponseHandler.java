@@ -9,7 +9,7 @@ import com.king.platform.net.http.netty.response.NettyHttpClientResponse;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.*;
-import io.netty.handler.codec.http.websocketx.*;
+import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import org.slf4j.Logger;
 
 import static io.netty.handler.codec.http.HttpHeaderNames.SEC_WEBSOCKET_ACCEPT;
@@ -68,11 +68,11 @@ public class WebSocketResponseHandler implements ResponseHandler {
 	private void handleFrame(WebSocketFrame frame, RequestEventBus requestEventBus, HttpRequestContext httpRequestContext, ChannelHandlerContext ctx) {
 		requestEventBus.triggerEvent(Event.onWsFrame, frame);
 
-		if (frame instanceof CloseWebSocketFrame) {
-			CloseWebSocketFrame closeWebSocketFrame = (CloseWebSocketFrame) frame;
-			ctx.channel().writeAndFlush(new CloseWebSocketFrame(closeWebSocketFrame.statusCode(), closeWebSocketFrame.reasonText()));
-			requestEventBus.triggerEvent(Event.COMPLETED, httpRequestContext);
-		}
+		//if (frame instanceof CloseWebSocketFrame) {
+		//	CloseWebSocketFrame closeWebSocketFrame = (CloseWebSocketFrame) frame;
+		//	ctx.channel().writeAndFlush(new CloseWebSocketFrame(closeWebSocketFrame.statusCode(), closeWebSocketFrame.reasonText()));
+		//	requestEventBus.triggerEvent(Event.COMPLETED, httpRequestContext);
+		//}
 
 	}
 

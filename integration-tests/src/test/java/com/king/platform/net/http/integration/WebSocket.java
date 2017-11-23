@@ -8,6 +8,7 @@ package com.king.platform.net.http.integration;
 
 import com.king.platform.net.http.*;
 import com.king.platform.net.http.netty.NettyHttpClientBuilder;
+import com.king.platform.net.http.netty.TimeoutException;
 import com.king.platform.net.http.netty.backpressure.EvictingBackPressure;
 import com.king.platform.net.http.netty.eventbus.DefaultEventBus;
 import com.king.platform.net.http.netty.eventbus.Event;
@@ -20,13 +21,15 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static junit.framework.TestCase.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 public class WebSocket {
 	IntegrationServer integrationServer;
@@ -356,7 +359,6 @@ public class WebSocket {
 
 			@Override
 			public void onCloseFrame(int code, String reason) {
-
 			}
 
 			@Override
@@ -379,6 +381,115 @@ public class WebSocket {
 
 		assertEquals(2, connectionCounter.get());
 		assertEquals(2, onTextFrameCounter.get());
+
+
+	}
+
+	@Test(timeout = 5000L)
+	public void idleTimeout() throws Exception {
+		WebSocketClient client = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
+			.idleTimeoutMillis(500)
+			.build()
+			.build();
+
+		AtomicReference<Throwable> exceptionReference = new AtomicReference<>();
+
+		client.addListener(new WebSocketListener() {
+			@Override
+			public void onConnect(WebSocketConnection connection) {
+
+			}
+
+			@Override
+			public void onError(Throwable throwable) {
+				System.out.println("Got error");
+				exceptionReference.set(throwable);
+			}
+
+			@Override
+			public void onDisconnect() {
+
+			}
+
+			@Override
+			public void onCloseFrame(int code, String reason) {
+
+			}
+
+			@Override
+			public void onBinaryFrame(byte[] payload, boolean finalFragment, int rsv) {
+
+			}
+
+			@Override
+			public void onTextFrame(String payload, boolean finalFragment, int rsv) {
+
+			}
+		});
+
+		client.connect().join();
+		client.awaitClose();
+
+		Throwable throwable = exceptionReference.get();
+		assertNotNull(throwable);
+
+		assertTrue(throwable instanceof TimeoutException);
+
+	}
+
+	@Test(timeout = 5000L)
+	public void idleTimeoutShouldNotHappenWhenAutoPingIsEnabled() throws Exception {
+		WebSocketClient client = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
+			.idleTimeoutMillis(500)
+			.withPingEvery(Duration.of(100, ChronoUnit.MILLIS))
+			.build()
+			.build();
+
+		CountDownLatch countDownLatch = new CountDownLatch(10);
+		AtomicReference<Throwable> exceptionReference = new AtomicReference<>();
+
+		client.addListener(new WebSocketListener() {
+			@Override
+			public void onConnect(WebSocketConnection connection) {
+
+			}
+
+			@Override
+			public void onError(Throwable throwable) {
+				exceptionReference.set(throwable);
+			}
+
+			@Override
+			public void onDisconnect() {
+
+			}
+
+			@Override
+			public void onCloseFrame(int code, String reason) {
+
+			}
+
+			@Override
+			public void onBinaryFrame(byte[] payload, boolean finalFragment, int rsv) {
+
+			}
+
+			@Override
+			public void onTextFrame(String payload, boolean finalFragment, int rsv) {
+
+			}
+
+			@Override
+			public void onPongFrame(byte[] payload) {
+				countDownLatch.countDown();
+			}
+		});
+
+		client.connect().join();
+
+		countDownLatch.await();
+
+		assertNull(exceptionReference.get());
 
 
 	}

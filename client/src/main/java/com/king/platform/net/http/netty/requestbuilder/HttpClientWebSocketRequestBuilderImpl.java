@@ -6,10 +6,7 @@
 package com.king.platform.net.http.netty.requestbuilder;
 
 
-import com.king.platform.net.http.BuiltWebSocketRequest;
-import com.king.platform.net.http.HttpClientWebSocketRequestBuilder;
-import com.king.platform.net.http.WebSocketClient;
-import com.king.platform.net.http.WebSocketListener;
+import com.king.platform.net.http.*;
 import com.king.platform.net.http.netty.ConfMap;
 import com.king.platform.net.http.netty.HttpClientCaller;
 import com.king.platform.net.http.netty.sse.VoidResponseConsumer;
@@ -18,17 +15,23 @@ import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpVersion;
 
+import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
 
 public class HttpClientWebSocketRequestBuilderImpl extends HttpClientRequestHeaderBuilderImpl<HttpClientWebSocketRequestBuilder> implements HttpClientWebSocketRequestBuilder {
 	private final Executor defaultCallbackExecutor;
+	private boolean autoPong;
+	private Duration pingEveryDuration;
+	private boolean autoCloseFrame;
 
 	public HttpClientWebSocketRequestBuilderImpl(HttpClientCaller httpClientCaller, String uri, ConfMap confMap,
 												 Executor callbackExecutor) {
 		super(HttpClientWebSocketRequestBuilder.class, httpClientCaller, HttpVersion.HTTP_1_1, HttpMethod.GET, uri, confMap, callbackExecutor);
 		this.defaultCallbackExecutor = callbackExecutor;
+		withAutoPong(confMap.get(ConfKeys.WEB_SOCKET_AUTO_PONG));
+		withAutoCloseFrame(confMap.get(ConfKeys.WEB_SOCKET_AUTO_CLOSE_FRAME));
 	}
 
 	@Override
@@ -38,7 +41,27 @@ public class HttpClientWebSocketRequestBuilderImpl extends HttpClientRequestHead
 	}
 
 	@Override
+	public HttpClientWebSocketRequestBuilder withPingEvery(Duration duration) {
+		this.pingEveryDuration = duration;
+		return this;
+	}
+
+	@Override
+	public HttpClientWebSocketRequestBuilder withAutoPong(boolean autoPong) {
+		this.autoPong = autoPong;
+		return this;
+	}
+
+	@Override
+	public HttpClientWebSocketRequestBuilder withAutoCloseFrame(boolean autoCloseFrame) {
+		this.autoCloseFrame = autoCloseFrame;
+		return this;
+	}
+
+	@Override
 	public BuiltWebSocketRequest build() {
+
+		totalRequestTimeoutMillis(0); //disable total timeouts
 
 		final BuiltNettyClientRequest<Void> builtNettyClientRequest = new BuiltNettyClientRequest<>(httpClientCaller, httpVersion, httpMethod, uri, defaultUserAgent,
 			idleTimeoutMillis, totalRequestTimeoutMillis, followRedirects, acceptCompressedResponse, keepAlive, null, null, null, queryParameters,
@@ -71,7 +94,7 @@ public class HttpClientWebSocketRequestBuilderImpl extends HttpClientRequestHead
 					listenerExecutor = Runnable::run; //if no executor has been supplied (ie, still on default executor), run on calling thread
 				}
 
-				return new WebSocketClientImpl(builtNettyClientRequest, listenerExecutor, callbackExecutor);
+				return new WebSocketClientImpl(builtNettyClientRequest, listenerExecutor, callbackExecutor, autoPong, autoCloseFrame, pingEveryDuration);
 			}
 
 

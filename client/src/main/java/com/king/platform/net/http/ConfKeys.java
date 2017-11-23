@@ -109,6 +109,17 @@ public class ConfKeys<T> {
 	public static final ConfKeys<Boolean> WEB_SOCKET_AGGREGATE_FRAMES = new ConfKeys<>(true);
 	public static final ConfKeys<Integer> WEB_SOCKET_MAX_BUFFER_SIZE = new ConfKeys<>(32 * 1024);
 
+	/**
+	 * Should web-socket client automatically echo back pong on ping frames
+	 */
+	public static final ConfKeys<Boolean> WEB_SOCKET_AUTO_PONG = new ConfKeys<>(true);
+
+	/**
+	 * Should the web-socket client send back an close frame
+	 */
+	public static final ConfKeys<Boolean> WEB_SOCKET_AUTO_CLOSE_FRAME = new ConfKeys<>(true);
+
+
 	private final T defaultValue;
 
 	private ConfKeys(T defaultValue) {

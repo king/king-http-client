@@ -21,4 +21,6 @@ public interface WebSocketClient extends WebSocketConnection {
 	 * @return the future containing this instance.
 	 */
 	CompletableFuture<WebSocketClient> connect();
+
+
 }
