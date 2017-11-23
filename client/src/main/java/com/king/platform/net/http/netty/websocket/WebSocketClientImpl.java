@@ -339,9 +339,12 @@ public class WebSocketClientImpl implements WebSocketClient {
 		this.channel = channel;
 		this.headers = new Headers(httpHeaders);
 		this.ready = true;
-		CompletableFuture<WebSocketClient> future = this.connectionFuture;
-		completableFutureExecutor.execute(() -> future.complete(this));
-		this.connectionFuture = null;
+		if (this.connectionFuture != null) {
+			CompletableFuture<WebSocketClient> future = this.connectionFuture;
+			completableFutureExecutor.execute(() -> future.complete(this));
+			this.connectionFuture = null;
+		}
+
 		callbackExecutor.execute(() -> {
 			for (WebSocketListener webSocketListener : listeners) {
 				webSocketListener.onConnect(this);
