@@ -19,7 +19,6 @@ import com.king.platform.net.http.netty.websocket.WebSocketUtil;
 import com.king.platform.net.http.util.Param;
 import com.king.platform.net.http.util.UriUtil;
 import io.netty.handler.codec.http.*;
-import io.netty.util.CharsetUtil;
 
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
@@ -29,7 +28,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 
-import static com.king.platform.net.http.netty.websocket.WebSocketUtil.MAGIC_GUID;
 import static io.netty.handler.codec.http.HttpHeaderNames.SEC_WEBSOCKET_VERSION;
 
 public class BuiltNettyClientRequest<T> implements BuiltClientRequest<T>, BuiltClientRequestWithBody<T> {
@@ -66,6 +64,8 @@ public class BuiltNettyClientRequest<T> implements BuiltClientRequest<T>, BuiltC
 
 	private Supplier<HttpCallback<T>> httpCallbackSupplier;
 	private Supplier<NioCallback> nioCallbackSupplier;
+	private Supplier<UploadCallback> uploadCallbackSupplier;
+
 	private CustomCallbackSubscriber customCallbackSubscriber;
 
 
@@ -136,7 +136,19 @@ public class BuiltNettyClientRequest<T> implements BuiltClientRequest<T>, BuiltC
 
 	@Override
 	public BuiltClientRequestWithBody<T> withUploadCallback(UploadCallback uploadCallback) {
+		if (uploadCallbackSupplier != null) {
+			throw new IllegalStateException("An UploadCallback supplier has already been provided");
+		}
 		this.uploadCallback = uploadCallback;
+		return this;
+	}
+
+	@Override
+	public BuiltClientRequestWithBody<T> withUploadCallback(Supplier<UploadCallback> uploadCallbackSupplier) {
+		if (uploadCallback != null) {
+			throw new IllegalStateException("An UploadCallback has already been provided");
+		}
+		this.uploadCallbackSupplier = uploadCallbackSupplier;
 		return this;
 	}
 
@@ -226,9 +238,10 @@ public class BuiltNettyClientRequest<T> implements BuiltClientRequest<T>, BuiltC
 			nettyHttpClientRequest.setKeepAlive(keepAlive);
 		}
 
-		return httpClientCaller.execute(httpMethod, nettyHttpClientRequest, httpCallback, getNioCallback(), uploadCallback, responseBodyConsumer.get(),
+		return httpClientCaller.execute(httpMethod, nettyHttpClientRequest, httpCallback, getNioCallback(), getUploadCallback(), responseBodyConsumer.get(),
 			callbackExecutor, getExternalEventTrigger(), customCallbackSubscriber, idleTimeoutMillis, totalRequestTimeoutMillis, followRedirects, keepAlive);
 	}
+
 
 	private String websocketOriginValue(String host, int wsPort) {
 		String originValue = (wsPort == HttpScheme.HTTPS.port() ?
@@ -248,6 +261,14 @@ public class BuiltNettyClientRequest<T> implements BuiltClientRequest<T>, BuiltC
 			nioCallback = nioCallbackSupplier.get();
 		}
 		return nioCallback;
+	}
+
+	private UploadCallback getUploadCallback() {
+		UploadCallback uploadCallback = this.uploadCallback;
+		if (uploadCallbackSupplier != null) {
+			uploadCallback = uploadCallbackSupplier.get();
+		}
+		return uploadCallback;
 	}
 
 	private HttpCallback<T> getHttpCallback() {

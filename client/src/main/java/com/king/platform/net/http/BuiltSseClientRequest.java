@@ -9,6 +9,7 @@ package com.king.platform.net.http;
 public interface BuiltSseClientRequest {
 	/**
 	 * Build the SseClient and execute it against the server
+	 *
 	 * @param sseExecutionCallback the callback object
 	 * @return the built SseClient
 	 */
@@ -16,11 +17,18 @@ public interface BuiltSseClientRequest {
 
 	/**
 	 * Build the SseClient and execute it against the server
+	 *
 	 * @return the built SseClient
 	 */
 	SseClient execute();
 
 
+	/**
+	 * Build the SseClient but don't connect it agaoinst the server.
+	 * The client can later be connected using the {@link SseClient#connect()} method.
+	 *
+	 * @return the built SseClient
+	 */
 	SseClient build();
 
 }

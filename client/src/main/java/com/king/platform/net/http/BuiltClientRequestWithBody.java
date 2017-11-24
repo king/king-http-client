@@ -6,6 +6,23 @@
 package com.king.platform.net.http;
 
 
+import java.util.function.Supplier;
+
 public interface BuiltClientRequestWithBody<T> extends BaseBuiltClientRequest<T, BuiltClientRequest<T>> {
+	/**
+	 * Use a specific upload callback for all execution of this request.
+	 * UploadCallbacks are executed on the HttpCallbackExecutor
+	 *
+	 * @param uploadCallback the upload callback
+	 * @return this builder
+	 */
 	BuiltClientRequestWithBody<T> withUploadCallback(UploadCallback uploadCallback);
+
+	/**
+	 * Each execution will use a UploadCallback supplied from the supplier.
+	 *
+	 * @param uploadCallback the upload callback
+	 * @return this builder
+	 */
+	BuiltClientRequestWithBody<T> withUploadCallback(Supplier<UploadCallback> uploadCallback);
 }
