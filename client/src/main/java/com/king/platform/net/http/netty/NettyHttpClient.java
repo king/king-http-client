@@ -178,6 +178,12 @@ public class NettyHttpClient implements HttpClient {
 	}
 
 	@Override
+	public HttpClientRequestBuilder createPatch(String uri) {
+		verifyStarted();
+		return new HttpClientRequestBuilderImpl(httpClientCaller, HttpVersion.HTTP_1_1, HttpMethod.PATCH, uri, confMap, defaultHttpClientCallbackExecutor);
+	}
+
+	@Override
 	public HttpClientSseRequestBuilder createSSE(String uri) {
 		verifyStarted();
 		return new HttpClientSseRequestBuilderImpl(httpClientCaller, uri, confMap, defaultHttpClientCallbackExecutor);
