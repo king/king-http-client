@@ -1,6 +1,20 @@
 # king-http-client
-
+## 'com.king.king-http-client:king-http-client:3.0.0'
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.king.king-http-client/king-http-client/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.king.king-http-client/king-http-client)
+
+## New in Version 3.0.0
+* Redesign of builder APIs.
+  * The `ResponseBodyConsumer` have been moved from the  `execute` method to the `build` method.
+  * The `HttpCallback` have been moved from the  `execute` method to the `withHttpCallback` method.
+  * The `NioCallback` have been moved from the  `execute` method to the `withNioCallback` method.
+  * A few methods have been renamed to align them between the classes.
+* Added support for websocket.
+* Added support for building multipart uploads.
+* Added support for upload progression callbacks through the `withUploadCallback` method.
+* Fixed a bug in idle timeout handling.
+
+## New in Version 2.3.1
+* Client is now waiting for ssl/tls handshake to complete before trying to push data
 
 ## New in Version 2.3.0 
 * Changed to Java 8
@@ -42,63 +56,63 @@ CompletableFuture<HttpResponse<String>> future = httpClient.createGet("http://so
 
 CompletableFuture<HttpResponse<byte[]>> byteResponseFuture = httpClient.createPost("http://someUrl")
 			.content("someContentToBePosted".getBytes())
-			.withQueryParameter("param1", "value1")
-			.withHeader("header1", "headerValue1")
-			.build()
-			.execute(new ByteArrayResponseBodyConsumer());
+			.addQueryParameter("param1", "value1")
+			.addHeader("header1", "headerValue1")
+			.build(ByteArrayResponseBodyConsumer::new)
+			.execute();
 ```
 
 Or using callback objects:
 
 ```java
-httpClient.createGet("http://some.url").build().execute(new HttpCallback<String>() {
-		@Override
-		public void onCompleted(HttpResponse<String> httpResponse) {
+httpClient.createGet("http://some.url").build().withHttpCallback(new HttpCallback<String>() {
+			@Override
+			public void onCompleted(HttpResponse<String> httpResponse) {
 
-		}
+			}
 
-		@Override
-		public void onError(Throwable throwable) {
+			@Override
+			public void onError(Throwable throwable) {
 
-		}
-	});
+			}
+		}).execute();
 ```
 
 
-For more complex cases or when the result is unfit to handle as a string, a ResponseBodyConsumer can be defined as the second parameter:
+For more complex cases or when the result is unfit to handle as a string, a ResponseBodyConsumer can be defined on the first build method:
 
 ```java
-httpClient.createGet("http://some.url").build().execute(new HttpCallback<SomeObject>() {
-		@Override
-		public void onCompleted(HttpResponse<SomeObject> httpResponse) {
+httpClient.createGet("http://some.url").build(() -> new ResponseBodyConsumer<SomeObject>() {
+	@Override
+	public void onBodyStart(String contentType, String charset, long contentLength) throws Exception {
 
-		}
+	}
 
-		@Override
-		public void onError(Throwable throwable) {
+	@Override
+	public void onReceivedContentPart(ByteBuffer buffer) throws Exception {
+		//aggregate the content from the server
+	}
 
-		}
-	}, new ResponseBodyConsumer<SomeObject>() {
-		@Override
-		public void onBodyStart(String contentType, String charset, long contentLength) throws Exception {
+	@Override
+	public void onCompletedBody() throws Exception {
+		//build the SomeObject from the aggregated data
+	}
 
-		}
+	@Override
+	public SomeObject getBody() {
+		return null;
+	}
+}).withHttpCallback(new HttpCallback<SomeObject>() {
+	@Override
+	public void onCompleted(HttpResponse<SomeObject> httpResponse) {
 
-		@Override
-		public void onReceivedContentPart(ByteBuffer buffer) throws Exception {
-			//aggregate the content from the server
-		}
+	}
 
-		@Override
-		public void onCompletedBody() throws Exception {
-			//build the SomeObject from the aggregated data
-		}
+	@Override
+	public void onError(Throwable throwable) {
 
-		@Override
-		public SomeObject getBody() {
-			return someObject;
-		}
-	});
+	}
+}).execute();
 ```
 This can also be used to stream the returned body to a file instead of buffer all bytes in memory.
 
@@ -159,6 +173,43 @@ sseClient.onDisconnect(new SseClient.DisconnectCallback() {
 	}
 });
 ```
+
+## Web-sockets
+A websocket connection can be made by calling the createWebSocket on the httpClient.
+```java
+CompletableFuture<WebSocketClient> future = httpClient.createWebSocket("ws://some.server").build().execute(new WebSocketListener() {
+	@Override
+	public void onConnect(WebSocketConnection connection) {
+
+	}
+
+	@Override
+	public void onError(Throwable throwable) {
+
+	}
+
+	@Override
+	public void onDisconnect() {
+
+	}
+
+	@Override
+	public void onCloseFrame(int code, String reason) {
+
+	}
+
+	@Override
+	public void onBinaryFrame(byte[] payload, boolean finalFragment, int rsv) {
+
+	}
+
+	@Override
+	public void onTextFrame(String payload, boolean finalFragment, int rsv) {
+
+	}
+});
+```
+If no extra executor has been supplied into the websocket builder all callbacks will be executed on the NIO thread!
 
 
 ## Thread model
