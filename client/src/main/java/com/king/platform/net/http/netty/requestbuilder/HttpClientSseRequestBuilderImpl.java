@@ -28,7 +28,7 @@ public class HttpClientSseRequestBuilderImpl extends HttpClientRequestHeaderBuil
 	@Override
 	public BuiltSseClientRequest build() {
 
-		withHeader("Accept", "text/event-stream");
+		addHeader("Accept", "text/event-stream");
 
 		final BuiltNettyClientRequest<Void> builtNettyClientRequest = new BuiltNettyClientRequest<>(httpClientCaller, httpVersion, httpMethod, uri, defaultUserAgent,
 			idleTimeoutMillis, totalRequestTimeoutMillis, followRedirects, acceptCompressedResponse, keepAlive, null, null, null, queryParameters,

@@ -59,7 +59,7 @@ public class Headers {
 
 		httpClient
 			.createGet("http://localhost:" + port + "/testOk")
-			.withHeader(headerName, headerValue)
+			.addHeader(headerName, headerValue)
 			.build().withHttpCallback(httpCallback).execute();
 
 		httpCallback.waitForCompletion();
@@ -117,7 +117,7 @@ public class Headers {
 
 		httpClient
 			.createGet("http://localhost:" + port + "/testOk")
-			.withHeaders(headers)
+			.addHeaders(headers)
 			.build().withHttpCallback(httpCallback).execute();
 
 		httpCallback.waitForCompletion();

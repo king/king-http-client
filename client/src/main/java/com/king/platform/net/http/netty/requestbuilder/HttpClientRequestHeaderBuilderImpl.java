@@ -65,7 +65,7 @@ public abstract class HttpClientRequestHeaderBuilderImpl<T extends HttpClientReq
 
 
 	@Override
-	public T withHeader(CharSequence name, CharSequence value) {
+	public T addHeader(CharSequence name, CharSequence value) {
 		requireNonNull(name, "name");
 		requireNonNull(value, "value");
 		headerParameters.add(new Param(name, value));
@@ -73,9 +73,9 @@ public abstract class HttpClientRequestHeaderBuilderImpl<T extends HttpClientReq
 	}
 
 	@Override
-	public T withHeaders(Map<CharSequence, CharSequence> headers) {
+	public T addHeaders(Map<CharSequence, CharSequence> headers) {
 		for (Map.Entry<CharSequence, CharSequence> entry : headers.entrySet()) {
-			withHeader(entry.getKey(), entry.getValue());
+			addHeader(entry.getKey(), entry.getValue());
 		}
 
 		return implClass.cast(this);
@@ -94,7 +94,7 @@ public abstract class HttpClientRequestHeaderBuilderImpl<T extends HttpClientReq
 	}
 
 	@Override
-	public T withQueryParameter(String name, String value) {
+	public T addQueryParameter(String name, String value) {
 		requireNonNull(name, "name");
 		requireNonNull(value, "value");
 		queryParameters.add(new Param(name, value));
@@ -102,7 +102,7 @@ public abstract class HttpClientRequestHeaderBuilderImpl<T extends HttpClientReq
 	}
 
 	@Override
-	public T withQueryParameters(Map<String, String> parameters) {
+	public T addQueryParameters(Map<String, String> parameters) {
 		for (Map.Entry<String, String> entry : parameters.entrySet()) {
 			queryParameters.add(new Param(entry.getKey(), entry.getValue()));
 		}

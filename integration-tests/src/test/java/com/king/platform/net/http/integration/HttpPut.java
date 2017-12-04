@@ -117,7 +117,7 @@ public class HttpPut {
 
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
 		httpClient.createPut("http://localhost:" + port + "/testOk").content(content.getBytes(StandardCharsets.UTF_8))
-			.withHeader("Expect", "100-continue")
+			.addHeader("Expect", "100-continue")
 			.build().withHttpCallback(httpCallback).execute();
 
 		httpCallback.waitForCompletion();

@@ -23,7 +23,7 @@ public interface WebSocketListener {
 	/**
 	 * Callback for when the client has received a close frame from the server.
 	 * There is no need to echo close frames back to the server if {@link ConfKeys#WEB_SOCKET_AUTO_CLOSE_FRAME} or
-	 * {@link HttpClientWebSocketRequestBuilder#withAutoCloseFrame(boolean)} is true.
+	 * {@link HttpClientWebSocketRequestBuilder#autoCloseFrame(boolean)} is true.
 	 *
 	 * @param code   the close code
 	 * @param reason the close reason
@@ -51,7 +51,7 @@ public interface WebSocketListener {
 
 	/**
 	 * Callback for when the server has sent an ping frame to the client.
-	 * There is no need to echo back an pong frame if {@link ConfKeys#WEB_SOCKET_AUTO_PONG} or {@link HttpClientWebSocketRequestBuilder#withAutoPong(boolean)}
+	 * There is no need to echo back an pong frame if {@link ConfKeys#WEB_SOCKET_AUTO_PONG} or {@link HttpClientWebSocketRequestBuilder#autoPong(boolean)}
 	 * is true.
 	 *
 	 * @param payload the payload

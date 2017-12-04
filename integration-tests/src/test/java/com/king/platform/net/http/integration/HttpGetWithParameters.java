@@ -58,8 +58,8 @@ public class HttpGetWithParameters {
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
 		httpClient
 			.createGet("http://localhost:" + port + "/testOk")
-			.withQueryParameter("param1", "value1")
-			.withQueryParameter("param2", "value2")
+			.addQueryParameter("param1", "value1")
+			.addQueryParameter("param2", "value2")
 			.build().withHttpCallback(httpCallback).execute();
 
 		httpCallback.waitForCompletion();
@@ -124,8 +124,8 @@ public class HttpGetWithParameters {
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
 		httpClient
 			.createGet("http://localhost:" + port + "/testOk?param0=value0")
-			.withQueryParameter("param1", "value1")
-			.withQueryParameter("param2", "value2")
+			.addQueryParameter("param1", "value1")
+			.addQueryParameter("param2", "value2")
 			.build().withHttpCallback(httpCallback).execute();
 
 		httpCallback.waitForCompletion();
@@ -170,7 +170,7 @@ public class HttpGetWithParameters {
 		HttpClientRequestBuilder request = httpClient.createGet("http://localhost:" + port + "/testOk");
 
 		for (int i = 0; i < values.length; i++) {
-			request.withQueryParameter("param" + i, values[i]);
+			request.addQueryParameter("param" + i, values[i]);
 		}
 
 		request.build().withHttpCallback(httpCallback).execute();
@@ -211,7 +211,7 @@ public class HttpGetWithParameters {
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
 		httpClient
 			.createGet("http://localhost:" + port + "/testOk")
-			.withQueryParameters(parameterMap)
+			.addQueryParameters(parameterMap)
 			.build().withHttpCallback(httpCallback).execute();
 
 		httpCallback.waitForCompletion();

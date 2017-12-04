@@ -30,30 +30,30 @@ public class HttpClientWebSocketRequestBuilderImpl extends HttpClientRequestHead
 												 Executor callbackExecutor) {
 		super(HttpClientWebSocketRequestBuilder.class, httpClientCaller, HttpVersion.HTTP_1_1, HttpMethod.GET, uri, confMap, callbackExecutor);
 		this.defaultCallbackExecutor = callbackExecutor;
-		withAutoPong(confMap.get(ConfKeys.WEB_SOCKET_AUTO_PONG));
-		withAutoCloseFrame(confMap.get(ConfKeys.WEB_SOCKET_AUTO_CLOSE_FRAME));
+		autoPong(confMap.get(ConfKeys.WEB_SOCKET_AUTO_PONG));
+		autoCloseFrame(confMap.get(ConfKeys.WEB_SOCKET_AUTO_CLOSE_FRAME));
 	}
 
 	@Override
 	public HttpClientWebSocketRequestBuilder subProtocols(String subProtocols) {
-		withHeader(HttpHeaderNames.SEC_WEBSOCKET_PROTOCOL, subProtocols);
+		addHeader(HttpHeaderNames.SEC_WEBSOCKET_PROTOCOL, subProtocols);
 		return this;
 	}
 
 	@Override
-	public HttpClientWebSocketRequestBuilder withPingEvery(Duration duration) {
+	public HttpClientWebSocketRequestBuilder pingEvery(Duration duration) {
 		this.pingEveryDuration = duration;
 		return this;
 	}
 
 	@Override
-	public HttpClientWebSocketRequestBuilder withAutoPong(boolean autoPong) {
+	public HttpClientWebSocketRequestBuilder autoPong(boolean autoPong) {
 		this.autoPong = autoPong;
 		return this;
 	}
 
 	@Override
-	public HttpClientWebSocketRequestBuilder withAutoCloseFrame(boolean autoCloseFrame) {
+	public HttpClientWebSocketRequestBuilder autoCloseFrame(boolean autoCloseFrame) {
 		this.autoCloseFrame = autoCloseFrame;
 		return this;
 	}

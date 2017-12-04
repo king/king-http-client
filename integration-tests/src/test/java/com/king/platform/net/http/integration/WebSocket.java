@@ -441,7 +441,7 @@ public class WebSocket {
 	public void idleTimeoutShouldNotHappenWhenAutoPingIsEnabled() throws Exception {
 		WebSocketClient client = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
 			.idleTimeoutMillis(500)
-			.withPingEvery(Duration.of(100, ChronoUnit.MILLIS))
+			.pingEvery(Duration.of(100, ChronoUnit.MILLIS))
 			.build()
 			.build();
 

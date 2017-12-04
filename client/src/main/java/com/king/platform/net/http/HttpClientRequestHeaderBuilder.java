@@ -17,7 +17,7 @@ public interface HttpClientRequestHeaderBuilder<T extends HttpClientRequestHeade
 	 * @param value Header value
 	 * @return the builder
 	 */
-	T withHeader(CharSequence name, CharSequence value);
+	T addHeader(CharSequence name, CharSequence value);
 
 
 	/**
@@ -25,7 +25,7 @@ public interface HttpClientRequestHeaderBuilder<T extends HttpClientRequestHeade
 	 * @param headers Key Value map of header values
 	 * @return the builder
 	 */
-	T withHeaders(Map<CharSequence, CharSequence> headers);
+	T addHeaders(Map<CharSequence, CharSequence> headers);
 
 	/**
 	 * Set if the connection should be kept alive or not.<br>
@@ -77,7 +77,7 @@ public interface HttpClientRequestHeaderBuilder<T extends HttpClientRequestHeade
 	 * @param value value of the query parameter
 	 * @return the builder
 	 */
-	T withQueryParameter(String name, String value);
+	T addQueryParameter(String name, String value);
 
 
 	/**
@@ -85,7 +85,7 @@ public interface HttpClientRequestHeaderBuilder<T extends HttpClientRequestHeade
 	 * @param parameters the map of query parameters
 	 * @return the builder
 	 */
-	T withQueryParameters(Map<String, String> parameters);
+	T addQueryParameters(Map<String, String> parameters);
 
 	/**
 	 * Provide a custom executor that will be used for this request.
