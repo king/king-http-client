@@ -90,15 +90,12 @@ public class MultiPartHttpBody implements HttpBody {
 
 		MultiPartEntry entry = iterator.next();
 
-		System.out.println("Writing " + entry);
 
 		ChannelFuture channelFuture = entry.writeContent(ctx, isSecure, totalProgressionTracker);
 		channelFuture.addListener((ChannelFutureListener) future -> {
 			if (future.isSuccess()) {
-				System.out.println("Write success, writing next");
 				writeNext(ctx, totalProgressionTracker, isSecure, iterator);
 			} else {
-				System.out.println("Write failed!" + future.cause());
 				totalProgressionTracker.setFailure(future.cause());
 			}
 		});

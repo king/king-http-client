@@ -38,40 +38,9 @@ public class MultiPartBuilder {
 		return this;
 	}
 
-
-	public MultiPartBuilder createPart(String name, byte[] content, MultiPartHeaderConfigurer multiPartHeaderConfigurer) {
-		ByteArrayPartBody partBody = new ByteArrayPartBody(content);
-		multiPartHeaderConfigurer.configure(new MultiPartHeader(name, partBody));
-		partBodies.add(partBody);
+	public MultiPartBuilder addPart(MultiPart multiPart) {
+		partBodies.add(multiPart.partBody);
 		return this;
-	}
-
-	public MultiPartBuilder createPart(String name, File file, MultiPartHeaderConfigurer multiPartHeaderConfigurer) {
-		FilePartBody partBody = new FilePartBody(file);
-		multiPartHeaderConfigurer.configure(new MultiPartHeader(name, partBody));
-		partBodies.add(partBody);
-		return this;
-	}
-
-	public MultiPartBuilder createPart(String name, InputStream inputStream, MultiPartHeaderConfigurer multiPartHeaderConfigurer) {
-		InputStreamPartBody partBody = new InputStreamPartBody(inputStream);
-		multiPartHeaderConfigurer.configure(new MultiPartHeader(name, partBody));
-		partBodies.add(partBody);
-		return this;
-	}
-
-	public MultiPartBuilder createPart(String name, String content, Charset charset, MultiPartHeaderConfigurer multiPartHeaderConfigurer) {
-		byte[] bytes = content.getBytes(charset);
-		ByteArrayPartBody partBody = new ByteArrayPartBody(bytes);
-		partBody.setCharset(charset);
-		multiPartHeaderConfigurer.configure(new MultiPartHeader(name, partBody));
-		partBodies.add(partBody);
-		return this;
-	}
-
-
-	public interface MultiPartHeaderConfigurer {
-		void configure(MultiPartHeader multiPartHeader);
 	}
 
 	public BuiltMultiPart build() {
@@ -84,45 +53,66 @@ public class MultiPartBuilder {
 		return new BuiltMultiPart(multiPartEntries, boundary);
 	}
 
-	public static class MultiPartHeader {
+
+	public static MultiPart create(String name, byte[] content) {
+		ByteArrayPartBody partBody = new ByteArrayPartBody(content);
+		return new MultiPart(name, partBody);
+	}
+
+	public static MultiPart create(String name, File file) {
+		return new MultiPart(name, new FilePartBody(file));
+	}
+
+	public static MultiPart create(String name, InputStream inputStream) {
+		return new MultiPart(name, new InputStreamPartBody(inputStream));
+	}
+
+	public static MultiPart create(String name, String content, Charset charset) {
+		byte[] bytes = content.getBytes(charset);
+		ByteArrayPartBody partBody = new ByteArrayPartBody(bytes);
+		partBody.setCharset(charset);
+		return new MultiPart(name, partBody);
+	}
+
+	public static class MultiPart {
 		private final AbstractPartBody partBody;
 
-		public MultiPartHeader(String name, AbstractPartBody partBody) {
+		public MultiPart(String name, AbstractPartBody partBody) {
 			this.partBody = partBody;
 			partBody.setName(name);
 		}
 
-		public MultiPartHeader contentType(String contentType) {
+		public MultiPart contentType(String contentType) {
 			partBody.setContentType(contentType);
 			return this;
 		}
 
-		public MultiPartHeader charset(Charset charset) {
+		public MultiPart charset(Charset charset) {
 			partBody.setCharset(charset);
 			return this;
 		}
 
-		public MultiPartHeader transferEncoding(String transferEncoding) {
+		public MultiPart transferEncoding(String transferEncoding) {
 			partBody.setTransferEncoding(transferEncoding);
 			return this;
 		}
 
-		public MultiPartHeader contentId(String contentId) {
+		public MultiPart contentId(String contentId) {
 			partBody.setContentId(contentId);
 			return this;
 		}
 
-		public MultiPartHeader dispositionType(String dispositionType) {
+		public MultiPart dispositionType(String dispositionType) {
 			partBody.setDispositionType(dispositionType);
 			return this;
 		}
 
-		public MultiPartHeader addCustomHeader(Param customHeader) {
+		public MultiPart addCustomHeader(Param customHeader) {
 			partBody.addCustomHeader(customHeader);
 			return this;
 		}
 
-		public MultiPartHeader fileName(String fileName) {
+		public MultiPart fileName(String fileName) {
 			partBody.setFileName(fileName);
 			return this;
 		}

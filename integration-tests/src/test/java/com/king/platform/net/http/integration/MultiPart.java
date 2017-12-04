@@ -78,15 +78,13 @@ public class MultiPart {
 			.idleTimeoutMillis(0)
 			.totalRequestTimeoutMillis(0)
 			.content(new MultiPartBuilder()
-				.createPart("text1", "Message 1", StandardCharsets.ISO_8859_1, multiPartHeader -> multiPartHeader.contentType("multipart/form-data"))
-
-				.createPart("binary1", new byte[]{0x00, 0x01, 0x02},
-					multiPartHeader -> multiPartHeader.contentType("application/octet-stream")
-						.charset(StandardCharsets.UTF_8)
-						.fileName("application.bin"))
-
-				.createPart("text2", "Message 2", StandardCharsets.ISO_8859_1, multiPartHeader -> multiPartHeader.contentType("multipart/form-data"))
-
+				.addPart(MultiPartBuilder.create("text1", "Message 1", StandardCharsets.ISO_8859_1).contentType("multipart/form-data"))
+				.addPart(MultiPartBuilder
+					.create("binary1", new byte[]{0x00, 0x01, 0x02})
+					.contentType("application/octet-stream")
+					.charset(StandardCharsets.UTF_8)
+					.fileName("application.bin"))
+				.addPart(MultiPartBuilder.create("text2", "Message 2", StandardCharsets.ISO_8859_1))
 				.build())
 			.build()
 			.execute()

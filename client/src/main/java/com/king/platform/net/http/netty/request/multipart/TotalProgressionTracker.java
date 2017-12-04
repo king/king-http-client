@@ -28,7 +28,6 @@ public class TotalProgressionTracker {
 	}
 
 	public void setSuccess() {
-		System.out.println("Tottal write success!");
 		channelProgressivePromise.setSuccess();
 	}
 
