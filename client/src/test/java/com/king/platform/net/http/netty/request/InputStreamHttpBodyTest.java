@@ -48,7 +48,7 @@ public class InputStreamHttpBodyTest {
 			}
 		});
 
-		inputStreamHttpBody.writeContent(ctx);
+		inputStreamHttpBody.writeContent(ctx, false);
 
 		verifyOnce().on(inputStream).close();
 	}

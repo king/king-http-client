@@ -43,7 +43,7 @@ public class InputStreamHttpBody implements HttpBody {
 	}
 
 	@Override
-	public ChannelFuture writeContent(ChannelHandlerContext ctx) throws IOException {
+	public ChannelFuture writeContent(ChannelHandlerContext ctx, boolean isSecure) throws IOException {
 		final InputStream is = inputStream;
 
 		Channel channel = ctx.channel();

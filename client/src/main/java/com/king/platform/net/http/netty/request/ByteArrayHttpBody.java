@@ -25,7 +25,7 @@ public class ByteArrayHttpBody implements HttpBody {
 	}
 
 	@Override
-	public ChannelFuture writeContent(ChannelHandlerContext ctx) {
+	public ChannelFuture writeContent(ChannelHandlerContext ctx, boolean isSecure) {
 		ByteBuf byteBuf = ctx.alloc().buffer(content.length).writeBytes(content);
 		return ctx.write(byteBuf, ctx.newProgressivePromise());
 	}

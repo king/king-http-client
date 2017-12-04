@@ -173,7 +173,7 @@ public class BuiltNettyClientRequest<T> implements BuiltClientRequest<T>, BuiltC
 		HttpBody httpBody = null;
 
 		if (requestBodyBuilder != null) {
-			httpBody = requestBodyBuilder.createHttpBody(contentType, bodyCharset, serverInfo.isSecure());
+			httpBody = requestBodyBuilder.createHttpBody(contentType, bodyCharset);
 		}
 
 		NettyHttpClientRequest<T> nettyHttpClientRequest = new NettyHttpClientRequest<>(serverInfo, defaultHttpRequest, httpBody);

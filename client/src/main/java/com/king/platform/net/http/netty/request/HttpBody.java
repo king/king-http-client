@@ -19,5 +19,5 @@ public interface HttpBody {
 
 	Charset getCharacterEncoding();
 
-	ChannelFuture writeContent(ChannelHandlerContext ctx) throws IOException;
+	ChannelFuture writeContent(ChannelHandlerContext ctx, boolean isSecure) throws IOException;
 }

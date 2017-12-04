@@ -113,7 +113,7 @@ public class HttpClientRequestHandler {
 		try {
 			httpRequestContext.getTimeRecorder().startWriteBody();
 			requestEventBus.triggerEvent(Event.onWroteContentStarted, httpBody.getContentLength());
-			ChannelFuture channelFuture = httpBody.writeContent(ctx);
+			ChannelFuture channelFuture = httpBody.writeContent(ctx, httpRequestContext.getServerInfo().isSecure());
 
 			channelFuture.addListener(new ChannelProgressiveFutureListener() {
 				@Override

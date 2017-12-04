@@ -51,6 +51,16 @@ public interface HttpClientRequestWithBodyBuilder extends HttpClientRequestHeade
 	 */
 	HttpClientRequestWithBodyBuilder content(InputStream inputStream);
 
+
+	/**
+	 * Set what multi part to send to the server.
+	 * The multi part is built by {@link MultiPartBuilder}
+	 *
+	 * @param builtMultiPart the built multi part
+	 * @return this builder
+	 */
+	HttpClientRequestWithBodyBuilder content(BuiltMultiPart builtMultiPart);
+
 	/**
 	 * Set the encoding of the body
 	 * @param charset the charset encoding type

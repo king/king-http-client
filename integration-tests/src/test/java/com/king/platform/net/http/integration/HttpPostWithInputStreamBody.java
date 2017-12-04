@@ -151,7 +151,7 @@ public class HttpPostWithInputStreamBody {
             }
 
 			@Override
-			public ChannelFuture writeContent(final ChannelHandlerContext ctx) throws IOException {
+			public ChannelFuture writeContent(final ChannelHandlerContext ctx, boolean isSecure) throws IOException {
 				final ChannelProgressivePromise promise = ctx.newProgressivePromise();
 				promise.setProgress(0, content.length);
 				new Thread(new Runnable() {

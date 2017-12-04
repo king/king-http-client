@@ -9,18 +9,21 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.DefaultFileRegion;
+import io.netty.handler.stream.ChunkedNioFile;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 
-public class FileRegionHttpBody implements HttpBody {
+public class FileHttpBody implements HttpBody {
 	private final File file;
 	private final String contentType;
 	private final long contentLength;
 	private Charset characterEncoding;
 
-	public FileRegionHttpBody(File file, String contentType, Charset characterEncoding) {
+	public FileHttpBody(File file, String contentType, Charset characterEncoding) {
 		this.file = file;
 		this.contentType = contentType;
 		this.contentLength = file.length();
@@ -47,9 +50,24 @@ public class FileRegionHttpBody implements HttpBody {
 	}
 
 	@Override
-	public ChannelFuture writeContent(ChannelHandlerContext ctx) throws IOException {
+	public ChannelFuture writeContent(ChannelHandlerContext ctx, boolean isSecure) throws IOException {
+		if (isSecure) {
+			return writeChunkedContent(ctx);
+		} else {
+			return writeStreamedContent(ctx);
+		}
+	}
+
+	private ChannelFuture writeStreamedContent(ChannelHandlerContext ctx) {
 		Channel channel = ctx.channel();
 		return channel.write(new DefaultFileRegion(file, 0, file.length()), channel.newProgressivePromise());
+	}
+
+	private ChannelFuture writeChunkedContent(ChannelHandlerContext ctx) throws IOException {
+		Channel channel = ctx.channel();
+		FileChannel fileChannel = new FileInputStream(file).getChannel();
+		long length = file.length();
+		return channel.write(new ChunkedNioFile(fileChannel, 0, length, 1024 * 8), channel.newProgressivePromise());
 	}
 
 }

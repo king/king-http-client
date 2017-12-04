@@ -18,7 +18,7 @@ class ByteArrayHttpBodyBuilder implements RequestBodyBuilder {
 	}
 
 	@Override
-	public HttpBody createHttpBody(String contentType, Charset characterEncoding, boolean isSecure) {
+	public HttpBody createHttpBody(String contentType, Charset characterEncoding) {
 		return new ByteArrayHttpBody(content, contentType, characterEncoding);
 	}
 }

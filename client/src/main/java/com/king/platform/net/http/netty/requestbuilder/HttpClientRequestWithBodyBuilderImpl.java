@@ -145,6 +145,19 @@ public class HttpClientRequestWithBodyBuilderImpl extends HttpClientRequestHeade
 	}
 
 	@Override
+	public HttpClientRequestWithBodyBuilder content(BuiltMultiPart builtMultiPart) {
+		requireNonNull(builtMultiPart, "Built multi part can't be null");
+
+		if (requestBodyBuilder != null) {
+			throw new RuntimeException("Already defined request body as type  " + requestBodyBuilder.getClass());
+		}
+
+		requestBodyBuilder = new MultiPartHttpBodyBuilder(builtMultiPart);
+
+		return this;
+	}
+
+	@Override
 	public <T> BuiltClientRequestWithBody<T> build(Supplier<ResponseBodyConsumer<T>> responseBodyConsumer) {
 		requireNonNull(responseBodyConsumer, "Supplier of ResponseBodyConsumer can't be null");
 

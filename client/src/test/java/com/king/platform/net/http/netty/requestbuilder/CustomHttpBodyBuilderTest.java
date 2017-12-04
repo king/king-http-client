@@ -19,7 +19,7 @@ public class CustomHttpBodyBuilderTest {
 	public void createHttpBodyShouldReturnProvidedBody() throws Exception {
 		HttpBody httpBody = mock(HttpBody.class);
 		CustomHttpBodyBuilder customHttpBodyBuilder = new CustomHttpBodyBuilder(httpBody);
-		assertSame(httpBody, customHttpBodyBuilder.createHttpBody("contentType", Charset.defaultCharset(), false));
+		assertSame(httpBody, customHttpBodyBuilder.createHttpBody("contentType", Charset.defaultCharset()));
 
 	}
 }

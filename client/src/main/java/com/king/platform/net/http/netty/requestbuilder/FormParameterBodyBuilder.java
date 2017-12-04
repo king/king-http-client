@@ -7,8 +7,8 @@ package com.king.platform.net.http.netty.requestbuilder;
 
 import com.king.platform.net.http.netty.request.ByteArrayHttpBody;
 import com.king.platform.net.http.netty.request.HttpBody;
-import com.king.platform.net.http.util.Param;
 import com.king.platform.net.http.netty.util.ParameterEncoder;
+import com.king.platform.net.http.util.Param;
 
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -28,7 +28,7 @@ class FormParameterBodyBuilder implements RequestBodyBuilder {
 	}
 
 	@Override
-	public HttpBody createHttpBody(String contentType, Charset characterEncoding, boolean isSecure) {
+	public HttpBody createHttpBody(String contentType, Charset characterEncoding) {
 		if (contentType == null) {
 			contentType = "application/x-www-form-urlencoded";
 		}

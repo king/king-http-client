@@ -5,8 +5,7 @@
 
 package com.king.platform.net.http.netty.requestbuilder;
 
-import com.king.platform.net.http.netty.request.ChunkedFileHttpBody;
-import com.king.platform.net.http.netty.request.FileRegionHttpBody;
+import com.king.platform.net.http.netty.request.FileHttpBody;
 import com.king.platform.net.http.netty.request.HttpBody;
 
 import java.io.File;
@@ -20,11 +19,7 @@ class FileHttpBodyBuilder implements RequestBodyBuilder {
 	}
 
 	@Override
-	public HttpBody createHttpBody(String contentType, Charset characterEncoding, boolean isSecure) {
-		if (isSecure) {
-			return new ChunkedFileHttpBody(file, contentType, characterEncoding);
-		} else {
-			return new FileRegionHttpBody(file, contentType, characterEncoding);
-		}
+	public HttpBody createHttpBody(String contentType, Charset characterEncoding) {
+		return new FileHttpBody(file, contentType, characterEncoding);
 	}
 }
