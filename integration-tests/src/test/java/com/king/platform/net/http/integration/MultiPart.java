@@ -8,7 +8,6 @@ package com.king.platform.net.http.integration;
 
 import com.king.platform.net.http.ConfKeys;
 import com.king.platform.net.http.HttpClient;
-import com.king.platform.net.http.HttpResponse;
 import com.king.platform.net.http.MultiPartBuilder;
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileUploadException;
@@ -45,8 +44,7 @@ public class MultiPart {
 		port = integrationServer.getPort();
 
 		httpClient = new TestingHttpClientFactory()
-			.setOption(ConfKeys.TOTAL_REQUEST_TIMEOUT_MILLIS, 0)
-			.setOption(ConfKeys.IDLE_TIMEOUT_MILLIS, 1000)
+			.setOption(ConfKeys.HTTP_CODEC_MAX_CHUNK_SIZE, 1024)
 			.create();
 		httpClient.start();
 
@@ -97,23 +95,6 @@ public class MultiPart {
 		assertEquals("application/octet-stream; charset=UTF-8", fileItem.getContentType());
 		assertEquals("binary1", fileItem.getFieldName());
 		assertEquals("application.bin", fileItem.getName());
-
-	}
-
-	@Test
-	public void name() throws Exception {
-
-		integrationServer.addServlet(new HttpServlet() {
-			@Override
-			protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-				resp.getWriter().write("FOUND PATH");
-			}
-		}, "/repo/*");
-
-		HttpResponse<String> join = httpClient.createGet("http://localhost:" + port + "/repo/asd")
-			.build().execute().join();
-
-		System.out.println(join.getBody());
 
 	}
 

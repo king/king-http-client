@@ -147,15 +147,13 @@ public class MultiPartEntry {
 	public ChannelFuture writeContent(ChannelHandlerContext ctx, boolean isSecure, TotalProgressionTracker totalProgressionTracker) throws IOException {
 		ByteBuf preContentByteBuf = ctx.alloc().buffer(preContent.length).writeBytes(preContent);
 
-		ChannelFuture future = ctx.write(preContentByteBuf, ctx.newProgressivePromise());
-		future.addListener(new TotalProgressiveFutureListener(totalProgressionTracker));
+		ctx.writeAndFlush(preContentByteBuf, ctx.newProgressivePromise().addListener(new TotalProgressiveFutureListener(totalProgressionTracker)));
 
 		partBody.writeContent(ctx, isSecure, totalProgressionTracker);
 
 		ByteBuf postContentByteBuf = ctx.alloc().buffer(postContent.length).writeBytes(postContent);
 
-		return ctx.writeAndFlush(postContentByteBuf, ctx.newProgressivePromise())
-			.addListener(new TotalProgressiveFutureListener(totalProgressionTracker));
+		return ctx.writeAndFlush(postContentByteBuf, ctx.newProgressivePromise().addListener(new TotalProgressiveFutureListener(totalProgressionTracker)));
 
 	}
 
