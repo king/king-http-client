@@ -91,7 +91,7 @@ public interface HttpClient {
 	 * @param uri Http uri to call
 	 * @return The reusable {@link HttpClientRequestBuilder}
 	 */
-	HttpClientRequestBuilder createPatch(String uri);
+	HttpClientRequestWithBodyBuilder createPatch(String uri);
 
 	/**
 	 * Create reusable builder for http server side events.The client has to be started before this method is called.

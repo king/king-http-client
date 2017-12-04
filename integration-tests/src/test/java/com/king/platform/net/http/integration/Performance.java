@@ -45,7 +45,7 @@ public class Performance {
 
 	}
 
-	@Test
+	@Test(timeout = 5000L)
 	public void getParallel() throws Exception {
 
 		final AtomicInteger successCounter = new AtomicInteger();
