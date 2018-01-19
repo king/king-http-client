@@ -119,10 +119,36 @@ public class DefaultEventBus implements RequestEventBus, RootEventBus {
 	@Override
 	public RequestEventBus createRequestEventBus() {
 		DefaultEventBus cleanEventBus = new DefaultEventBus();
-		cleanEventBus.persistentEvent1Callbacks.putAll(this.persistentEvent1Callbacks);
-		cleanEventBus.persistentEvent2Callbacks.putAll(this.persistentEvent2Callbacks);
+
+		for (Map.Entry<Event, ArrayList<EventBusCallback>> entry : persistentEvent1Callbacks.entrySet()) {
+			for (EventBusCallback eventBusCallback : entry.getValue()) {
+				cleanEventBus.subscribePermanently((Event1) entry.getKey(), (EventBusCallback1) eventBusCallback);
+			}
+		}
+
+		for (Map.Entry<Event, ArrayList<EventBusCallback>> entry : persistentEvent2Callbacks.entrySet()) {
+			for (EventBusCallback eventBusCallback : entry.getValue()) {
+				cleanEventBus.subscribePermanently((Event2) entry.getKey(), (EventBusCallback2) eventBusCallback);
+			}
+		}
+
 		return cleanEventBus;
 	}
 
 
+	ConcurrentHashMap<Event, ArrayList<EventBusCallback>> getEvent1Callbacks() {
+		return event1Callbacks;
+	}
+
+	ConcurrentHashMap<Event, ArrayList<EventBusCallback>> getEvent2Callbacks() {
+		return event2Callbacks;
+	}
+
+	ConcurrentHashMap<Event, ArrayList<EventBusCallback>> getPersistentEvent1Callbacks() {
+		return persistentEvent1Callbacks;
+	}
+
+	ConcurrentHashMap<Event, ArrayList<EventBusCallback>> getPersistentEvent2Callbacks() {
+		return persistentEvent2Callbacks;
+	}
 }
