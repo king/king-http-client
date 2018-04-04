@@ -20,6 +20,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
@@ -57,6 +61,13 @@ public class WebSocket {
 
 
 		httpClient.start();
+
+		integrationServer.addServlet(new HttpServlet() {
+			@Override
+			protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+				resp.sendRedirect("ws://localhost:" + port + "/websocket/test");
+			}
+		}, "/redirect");
 
 		integrationServer.addServlet(new WebSocketServlet() {
 			@Override
@@ -492,6 +503,56 @@ public class WebSocket {
 		assertNull(exceptionReference.get());
 
 
+	}
+
+	@Test
+	public void endpointRedirects302() throws InterruptedException {
+		CountDownLatch countDownLatch = new CountDownLatch(1);
+		AtomicReference<String> receivedText = new AtomicReference<>();
+
+		httpClient.createWebSocket("ws://localhost:" + port + "/redirect")
+			.followRedirects(true)
+			.build()
+			.execute(new WebSocketListener() {
+				WebSocketConnection client;
+
+				@Override
+				public void onConnect(WebSocketConnection connection) {
+					this.client = connection;
+					connection.sendTextFrame("hello world");
+				}
+
+				@Override
+				public void onCloseFrame(int code, String reason) {
+
+				}
+
+				@Override
+				public void onError(Throwable throwable) {
+					System.out.println("Client error " + throwable);
+				}
+
+				@Override
+				public void onDisconnect() {
+					countDownLatch.countDown();
+				}
+
+				@Override
+				public void onBinaryFrame(byte[] payload, boolean finalFragment, int rsv) {
+
+				}
+
+				@Override
+				public void onTextFrame(String payload, boolean finalFragment, int rsv) {
+					receivedText.set(payload);
+					client.sendCloseFrame();
+				}
+			});
+
+
+		countDownLatch.await();
+
+		assertEquals("HELLO WORLD", receivedText.get());
 	}
 
 	@After

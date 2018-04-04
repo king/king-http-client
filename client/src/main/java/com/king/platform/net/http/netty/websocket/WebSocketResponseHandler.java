@@ -5,6 +5,7 @@ import com.king.platform.net.http.netty.HttpRequestContext;
 import com.king.platform.net.http.netty.ResponseHandler;
 import com.king.platform.net.http.netty.eventbus.Event;
 import com.king.platform.net.http.netty.eventbus.RequestEventBus;
+import com.king.platform.net.http.netty.response.HttpRedirector;
 import com.king.platform.net.http.netty.response.NettyHttpClientResponse;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
@@ -49,10 +50,15 @@ public class WebSocketResponseHandler implements ResponseHandler {
 
 			HttpResponse response = (HttpResponse) msg;
 
-			if (response.status().equals(HttpResponseStatus.SWITCHING_PROTOCOLS)) {
-				upgrade(response, requestEventBus, ctx.channel(), httpRequestContext);
+			if (HttpRedirector.isRedirectResponse(response.status())) {
+				HttpRedirector httpRedirector = new HttpRedirector();
+				httpRedirector.redirectRequest(httpRequestContext, response.headers());
 			} else {
-				abort(requestEventBus, httpRequestContext);
+				if (response.status().equals(HttpResponseStatus.SWITCHING_PROTOCOLS)) {
+					upgrade(response, requestEventBus, ctx.channel(), httpRequestContext);
+				} else {
+					abort(requestEventBus, httpRequestContext);
+				}
 			}
 
 

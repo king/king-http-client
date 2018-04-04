@@ -24,6 +24,7 @@ public interface Event {
 
 	Event1<HttpRequestContext> EXECUTE_REQUEST = new Event1<>("ExecuteRequest");
 	Event1<ChannelHandlerContext> WRITE_BODY = new Event1<>("WriteDelayedBody");
+	Event2<ServerInfo, HttpHeaders> POPULATE_CONNECTION_SPECIFIC_HEADERS = new Event2<>("PopulateConnectionSpecificHeaders");
 
 	Event1<ServerInfo> CREATED_CONNECTION = new Event1<>("CreatedConnection");
 	Event1<ServerInfo> REUSED_CONNECTION = new Event1<>("ReusedConnection");

@@ -11,7 +11,6 @@ import com.king.platform.net.http.netty.metric.TimeStampRecorder;
 import com.king.platform.net.http.netty.request.NettyHttpClientRequest;
 import com.king.platform.net.http.netty.response.NettyHttpClientResponse;
 import io.netty.channel.Channel;
-import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.util.AttributeKey;
 
@@ -58,7 +57,6 @@ public class HttpRequestContext<T> {
 			idleTimeoutMillis, totalRequestTimeoutMillis, followRedirects, keepAlive, timeStampRecorder);
 		httpRequestContext.redirectionCount = this.redirectionCount + 1;
 
-		nettyHttpClientRequest.getNettyHeaders().set(HttpHeaderNames.HOST, redirectServerInfo.getHost() + ":" + redirectServerInfo.getPort());
 		nettyHttpClientRequest.setKeepAlive(keepAlive);
 		return httpRequestContext;
 	}

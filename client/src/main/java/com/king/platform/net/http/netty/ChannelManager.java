@@ -18,10 +18,7 @@ import io.netty.channel.epoll.Epoll;
 import io.netty.channel.epoll.EpollSocketChannel;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.codec.http.HttpClientCodec;
-import io.netty.handler.codec.http.HttpContentDecompressor;
-import io.netty.handler.codec.http.HttpHeaderNames;
-import io.netty.handler.codec.http.HttpHeaderValues;
+import io.netty.handler.codec.http.*;
 import io.netty.handler.codec.http.websocketx.WebSocket13FrameDecoder;
 import io.netty.handler.codec.http.websocketx.WebSocket13FrameEncoder;
 import io.netty.handler.codec.http.websocketx.WebSocketFrameAggregator;
@@ -54,7 +51,7 @@ public class ChannelManager {
 	private Timer nettyTimer;
 
 
-	public ChannelManager(EventLoopGroup nioEventLoop, final HttpClientHandler httpClientHandler, WebSocketHandler webSocketHandler,  Timer nettyTimer, TimeProvider timeProvider, ChannelPool
+	public ChannelManager(EventLoopGroup nioEventLoop, final HttpClientHandler httpClientHandler, WebSocketHandler webSocketHandler, Timer nettyTimer, TimeProvider timeProvider, ChannelPool
 		channelPool, final ConfMap confMap, RootEventBus rootEventBus) {
 		this.eventLoopGroup = nioEventLoop;
 		this.nettyTimer = nettyTimer;
@@ -65,9 +62,9 @@ public class ChannelManager {
 		final Class <? extends SocketChannel> socketChannelClass;
 
 		if (Epoll.isAvailable() && confMap.get(ConfKeys.USE_EPOLL)) {
-		    socketChannelClass = EpollSocketChannel.class;
+			socketChannelClass = EpollSocketChannel.class;
 		} else {
-		    socketChannelClass = NioSocketChannel.class;
+			socketChannelClass = NioSocketChannel.class;
 		}
 
 		httpBootstrap = new Bootstrap().channel(socketChannelClass).group(eventLoopGroup);
@@ -114,6 +111,15 @@ public class ChannelManager {
 		rootEventBus.subscribePermanently(Event.COMPLETED, new CompletedCallback());
 		rootEventBus.subscribePermanently(Event.EXECUTE_REQUEST, new ExecuteRequestCallback());
 		rootEventBus.subscribePermanently(Event.WS_UPGRADE_PIPELINE, this::upgradePipelineToWebSocket);
+		rootEventBus.subscribePermanently(Event.POPULATE_CONNECTION_SPECIFIC_HEADERS, this::populateServerSpecificHeaders);
+	}
+
+	private void populateServerSpecificHeaders(ServerInfo serverInfo, HttpHeaders headers) {
+		if (serverInfo.getPort() == 80 || serverInfo.getPort() == 443) {    //Don't write the ports for default ports: Host = "Host" ":" host [ ":" port ] ;
+			headers.set(HttpHeaderNames.HOST, serverInfo.getHost());
+		} else {
+			headers.set(HttpHeaderNames.HOST, serverInfo.getHost() + ":" + serverInfo.getPort());
+		}
 	}
 
 

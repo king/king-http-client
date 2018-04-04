@@ -73,9 +73,11 @@ public class WebSocketClientImpl implements WebSocketClient {
 			requestEventBus.subscribe(Event.onWsFrame, WebSocketClientImpl.this::onWebSocketFrame);
 			requestEventBus.subscribe(Event.ERROR, WebSocketClientImpl.this::onError);
 			requestEventBus.subscribe(Event.COMPLETED, WebSocketClientImpl.this::onCompleted);
+			requestEventBus.subscribe(Event.POPULATE_CONNECTION_SPECIFIC_HEADERS, WebSocketUtil::populateHeaders);
 		});
 
 	}
+
 
 	@Override
 	public Headers headers() {

@@ -15,7 +15,6 @@ import com.king.platform.net.http.netty.ServerInfo;
 import com.king.platform.net.http.netty.eventbus.ExternalEventTrigger;
 import com.king.platform.net.http.netty.request.HttpBody;
 import com.king.platform.net.http.netty.request.NettyHttpClientRequest;
-import com.king.platform.net.http.netty.websocket.WebSocketUtil;
 import com.king.platform.net.http.util.Param;
 import com.king.platform.net.http.util.UriUtil;
 import io.netty.handler.codec.http.*;
@@ -27,8 +26,6 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Supplier;
-
-import static io.netty.handler.codec.http.HttpHeaderNames.SEC_WEBSOCKET_VERSION;
 
 public class BuiltNettyClientRequest<T> implements BuiltClientRequest<T>, BuiltClientRequestWithBody<T> {
 
@@ -216,42 +213,12 @@ public class BuiltNettyClientRequest<T> implements BuiltClientRequest<T>, BuiltC
 			headers.set(HttpHeaderNames.USER_AGENT, defaultUserAgent);
 		}
 
-		if (serverInfo.getPort() == 80 || serverInfo.getPort() == 443) {	//Don't write the ports for default ports: Host = "Host" ":" host [ ":" port ] ;
-			headers.set(HttpHeaderNames.HOST, serverInfo.getHost());
-		} else {
-			headers.set(HttpHeaderNames.HOST, serverInfo.getHost() + ":" + serverInfo.getPort());
-		}
-
-		if (serverInfo.isWebSocket()) {
-
-			byte[] nonce = WebSocketUtil.randomBytes(16);
-			String key = WebSocketUtil.base64(nonce);
-
-			headers.set(HttpHeaderNames.UPGRADE, HttpHeaderValues.WEBSOCKET)
-				.set(HttpHeaderNames.CONNECTION, HttpHeaderValues.UPGRADE)
-				.set(HttpHeaderNames.SEC_WEBSOCKET_KEY, key)
-				.set(HttpHeaderNames.SEC_WEBSOCKET_ORIGIN, websocketOriginValue(serverInfo.getHost(), serverInfo.getPort()))
-				.set(SEC_WEBSOCKET_VERSION, "13");
-
-
-		} else {
+		if (!serverInfo.isWebSocket()) {
 			nettyHttpClientRequest.setKeepAlive(keepAlive);
 		}
 
 		return httpClientCaller.execute(httpMethod, nettyHttpClientRequest, httpCallback, getNioCallback(), getUploadCallback(), responseBodyConsumer.get(),
 			callbackExecutor, getExternalEventTrigger(), customCallbackSubscriber, idleTimeoutMillis, totalRequestTimeoutMillis, followRedirects, keepAlive);
-	}
-
-
-	private String websocketOriginValue(String host, int wsPort) {
-		String originValue = (wsPort == HttpScheme.HTTPS.port() ?
-			HttpScheme.HTTPS.name() : HttpScheme.HTTP.name()) + "://" + host;
-		if (wsPort != HttpScheme.HTTP.port() && wsPort != HttpScheme.HTTPS.port()) {
-			// if the port is not standard (80/443) its needed to add the port to the header.
-			// See http://tools.ietf.org/html/rfc6454#section-6.2
-			return originValue + ':' + wsPort;
-		}
-		return originValue;
 	}
 
 

@@ -50,6 +50,7 @@ public class HttpClientRequestHandler {
 			NettyHttpClientResponse nettyHttpClientResponse = new NettyHttpClientResponse(httpRequestContext.getResponseBodyConsumer(), requestEventBus);
 			httpRequestContext.setNettyHttpClientResponse(nettyHttpClientResponse);
 
+			requestEventBus.triggerEvent(Event.POPULATE_CONNECTION_SPECIFIC_HEADERS, httpRequestContext.getServerInfo(), request.getNettyRequest().headers());
 
 			writeHeaders(ctx, httpRequestContext, request.getNettyRequest(), requestEventBus);
 
