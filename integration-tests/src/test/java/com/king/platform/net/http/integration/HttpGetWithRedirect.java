@@ -21,6 +21,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -207,6 +208,41 @@ public class HttpGetWithRedirect {
 		assertEquals(200, httpCallback.getStatusCode());
 
 
+	}
+
+	@Test
+	public void redirectShouldPreserveHeaders() throws InterruptedException {
+		AtomicReference<String> headerValue1 = new AtomicReference<>();
+		AtomicReference<String> headerValue2 = new AtomicReference<>();
+
+		integrationServer.addServlet(new HttpServlet() {
+			@Override
+			protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+				headerValue1.set(req.getHeader("x-test-header"));
+				resp.sendRedirect("/test2");
+			}
+		}, "/test1");
+
+
+		integrationServer.addServlet(new HttpServlet() {
+			@Override
+			protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+				headerValue2.set(req.getHeader("x-test-header"));
+				resp.getWriter().write(okBody);
+				resp.getWriter().flush();
+			}
+		}, "/test2");
+
+		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
+		httpClient.createGet("http://localhost:" + port + "/test1").addHeader("x-test-header", "should-exist").build().withHttpCallback(httpCallback)
+			.execute();
+		httpCallback.waitForCompletion();
+
+		assertEquals(okBody, httpCallback.getBody());
+		assertEquals("should-exist", headerValue1.get());
+		assertEquals("should-exist", headerValue2.get());
+
+		assertEquals(200, httpCallback.getStatusCode());
 	}
 
 	@After
