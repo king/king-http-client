@@ -328,18 +328,22 @@ public class ChannelManager {
 				keepAlive = false;
 			} else {
 				String connection = nettyHttpClientResponse.getHttpHeaders().get(HttpHeaderNames.CONNECTION);
-				if (connection != null && HttpHeaderValues.CLOSE.contentEqualsIgnoreCase(connection)) {
+				if (HttpHeaderValues.CLOSE.contentEqualsIgnoreCase(connection)) {
 					keepAlive = false;
 				}
 			}
 
 			if (keepAlive) {
-				channelPool.offer(serverInfo, channel);
-				requestEventBus.triggerEvent(Event.POOLED_CONNECTION, serverInfo);
+				if (channel != null) {
+					channelPool.offer(serverInfo, channel);
+					requestEventBus.triggerEvent(Event.POOLED_CONNECTION, serverInfo);
+				}
 
 			} else {
-				channelPool.discard(serverInfo, channel);
-				channel.close();
+				if (channel != null) {
+					channelPool.discard(serverInfo, channel);
+					channel.close();
+				}
 				requestEventBus.triggerEvent(Event.CLOSED_CONNECTION, serverInfo);
 			}
 		}
