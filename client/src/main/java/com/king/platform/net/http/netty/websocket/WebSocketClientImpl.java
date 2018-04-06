@@ -206,20 +206,24 @@ public class WebSocketClientImpl implements WebSocketClient {
 			bufferedFrames.add(frame);
 			frame.retain();
 		} else {
-			if (frame instanceof TextWebSocketFrame) {
-				onTextFrame((TextWebSocketFrame) frame);
-			} else if (frame instanceof BinaryWebSocketFrame) {
-				onBinaryFrame((BinaryWebSocketFrame) frame);
-			} else if (frame instanceof CloseWebSocketFrame) {
-				onClose((CloseWebSocketFrame) frame);
-			} else if (frame instanceof PingWebSocketFrame) {
-				onPingFrame((PingWebSocketFrame) frame);
-			} else if (frame instanceof PongWebSocketFrame) {
-				onPongFrame((PongWebSocketFrame) frame);
-			} else if (frame instanceof ContinuationWebSocketFrame) {
-				onContinuationFrame((ContinuationWebSocketFrame) frame);
-			} else {
-				logger.error("Invalid message {}", frame);
+			try {
+				if (frame instanceof TextWebSocketFrame) {
+					onTextFrame((TextWebSocketFrame) frame);
+				} else if (frame instanceof BinaryWebSocketFrame) {
+					onBinaryFrame((BinaryWebSocketFrame) frame);
+				} else if (frame instanceof CloseWebSocketFrame) {
+					onClose((CloseWebSocketFrame) frame);
+				} else if (frame instanceof PingWebSocketFrame) {
+					onPingFrame((PingWebSocketFrame) frame);
+				} else if (frame instanceof PongWebSocketFrame) {
+					onPongFrame((PongWebSocketFrame) frame);
+				} else if (frame instanceof ContinuationWebSocketFrame) {
+					onContinuationFrame((ContinuationWebSocketFrame) frame);
+				} else {
+					logger.error("Invalid message {}", frame);
+				}
+			} finally {
+				frame.release();
 			}
 		}
 	}
