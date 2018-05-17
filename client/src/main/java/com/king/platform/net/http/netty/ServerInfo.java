@@ -43,22 +43,24 @@ public class ServerInfo {
 			throw new URISyntaxException(uriString, "Scheme is null");
 		}
 
+		scheme = scheme.toLowerCase();
+
+		boolean isSecure = false;
+
+		if ("https".equals(scheme) || "wss".equals(scheme)) {
+			isSecure = true;
+		}
 
 		if (port < 0) {
-			if ("http".equalsIgnoreCase(scheme)) {
-				port = 80;
-			} else if ("https".equalsIgnoreCase(scheme)) {
+			if (isSecure) {
 				port = 443;
+			} else {
+				port = 80;
 			}
-		}
-		boolean isSecure= false;
-
-		if ("https".equalsIgnoreCase(scheme)  || "wss".equalsIgnoreCase(scheme)) {
-				isSecure = true;
 		}
 
 		boolean isWebSocket = false;
-		if ("ws".equalsIgnoreCase(scheme)  || "wss".equalsIgnoreCase(scheme)) {
+		if ("ws".equals(scheme) || "wss".equals(scheme)) {
 			isWebSocket = true;
 		}
 
