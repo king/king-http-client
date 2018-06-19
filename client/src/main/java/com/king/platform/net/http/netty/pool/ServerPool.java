@@ -168,7 +168,7 @@ public class ServerPool {
 
 	public void shutdown() {
 		for (PooledChannel pooledChannel : pooledChannels) {
-			pooledChannel.channel.close();
+			pooledChannel.channel.close().awaitUninterruptibly();
 		}
 	}
 
