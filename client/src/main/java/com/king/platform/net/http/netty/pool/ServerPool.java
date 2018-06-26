@@ -65,6 +65,10 @@ public class ServerPool {
 	}
 
 	private boolean isValidConnection(PooledChannel pooledChannel) {
+		if (pooledChannel == null) {
+			return false;
+		}
+
 		Channel channel = pooledChannel.channel;
 		long currentTime = timeProvider.currentTimeInMillis();
 
@@ -80,6 +84,9 @@ public class ServerPool {
 	}
 
 	public void offer(Channel channel) {
+		if (channel == null) {
+			return;
+		}
 
 		PooledChannel pooledChannel = channelsMap.get(channel);
 
@@ -109,6 +116,10 @@ public class ServerPool {
 	}
 
 	public void discard(Channel channel) {
+		if (channel == null) {
+			return;
+		}
+
 		channel.close();
 		PooledChannel remove = channelsMap.remove(channel);
 		if (remove != null) {
