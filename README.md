@@ -2,6 +2,18 @@
 ## 'com.king.king-http-client:king-http-client:3.0.2'
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.king.king-http-client/king-http-client/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.king.king-http-client/king-http-client)
 
+## New in Version 3.0.6
+* Improved shutdown by waiting for all channels to close
+* Fixed potential NPE
+* Removed duplicate AttributeKey
+* Added `HttpClient.isStarted()` method
+
+## New in Version 3.0.5
+* Fixed port parsing issue for WSS
+
+## New in Version 3.0.4
+* Correctly release retained frames in WS
+
 ## New in Version 3.0.2
 * Added support for handling http redirects for websocket connections.
 
