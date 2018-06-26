@@ -134,6 +134,11 @@ public class NettyHttpClient implements HttpClient {
 	}
 
 	@Override
+	public boolean isStarted() {
+		return started.get();
+	}
+
+	@Override
 	public HttpClientRequestBuilder createGet(String uri) {
 		verifyStarted();
 		return new HttpClientRequestBuilderImpl(httpClientCaller, HttpVersion.HTTP_1_1, HttpMethod.GET, uri, confMap, defaultHttpClientCallbackExecutor);

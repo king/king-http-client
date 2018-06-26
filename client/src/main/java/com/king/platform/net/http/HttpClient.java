@@ -29,6 +29,14 @@ public interface HttpClient {
 	 */
 	void shutdown();
 
+
+	/**
+	 * Is the client started or not?
+	 *
+	 * @return true if client is started
+	 */
+	boolean isStarted();
+
 	/**
 	 * Create reusable builder for http get requests. The client has to be started before this method is called.
 	 *
