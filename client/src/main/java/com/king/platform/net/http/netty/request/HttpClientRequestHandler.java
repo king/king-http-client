@@ -6,7 +6,7 @@
 package com.king.platform.net.http.netty.request;
 
 
-import com.king.platform.net.http.netty.HttpClientHandler;
+import com.king.platform.net.http.netty.BaseHttpRequestHandler;
 import com.king.platform.net.http.netty.HttpRequestContext;
 import com.king.platform.net.http.netty.eventbus.Event;
 import com.king.platform.net.http.netty.eventbus.RequestEventBus;
@@ -31,7 +31,7 @@ public class HttpClientRequestHandler {
 	}
 
 	public void handleRequest(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) {
-		Attribute<Boolean> errorAttribute = ctx.channel().attr(HttpClientHandler.HTTP_CLIENT_HANDLER_TRIGGERED_ERROR);
+		Attribute<Boolean> errorAttribute = ctx.channel().attr(BaseHttpRequestHandler.HTTP_CLIENT_HANDLER_TRIGGERED_ERROR);
 		if (errorAttribute.get() != null && errorAttribute.get()) {
 			logger.trace("This channel has already triggered error, ignoring this invocation");
 			return;

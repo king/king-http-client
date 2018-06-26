@@ -296,7 +296,7 @@ public class ChannelManager {
 			Channel channel = httpRequestContext.getAndDetachChannel();
 
 			if (channel != null) {
-				channel.attr(HttpClientHandler.HTTP_CLIENT_HANDLER_TRIGGERED_ERROR).set(true);
+				channel.attr(BaseHttpRequestHandler.HTTP_CLIENT_HANDLER_TRIGGERED_ERROR).set(true);
 
 				channelPool.discard(serverInfo, channel);
 				channel.close();
