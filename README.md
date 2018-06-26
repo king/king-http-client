@@ -1,5 +1,5 @@
 # king-http-client
-## 'com.king.king-http-client:king-http-client:3.0.2'
+## 'com.king.king-http-client:king-http-client:3.0.6'
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.king.king-http-client/king-http-client/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.king.king-http-client/king-http-client)
 
 ## New in Version 3.0.6
