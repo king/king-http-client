@@ -19,8 +19,7 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 @Sharable
 public abstract class BaseHttpRequestHandler extends ChannelDuplexHandler {
-
-	public static final AttributeKey<Boolean> HTTP_CLIENT_HANDLER_TRIGGERED_ERROR = AttributeKey.valueOf("__HttpClientHandler_ErrorTriggered");
+	public static final AttributeKey<Boolean> HTTP_CLIENT_HANDLER_TRIGGERED_ERROR = AttributeKey.valueOf("__BaseHttpRequestHandler_ErrorTriggered");
 
 	private final Logger logger = getLogger(getClass());
 	private final ResponseHandler responseHandler;
