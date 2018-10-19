@@ -178,8 +178,8 @@ public class HttpClientResponseHandler implements ResponseHandler {
 		requestEventBus.triggerEvent(Event.onReceivedCompleted, httpResponseStatus, httpHeaders);
 		httpRequestContext.getTimeRecorder().responseBodyCompleted();
 
-		@SuppressWarnings("unchecked") com.king.platform.net.http.HttpResponse httpResponse = new com.king.platform.net.http.HttpResponse(httpResponseStatus
-			.code(), responseBodyConsumer, httpHeaders);
+		@SuppressWarnings("unchecked") com.king.platform.net.http.HttpResponse httpResponse =
+			new com.king.platform.net.http.HttpResponse(httpVersion(httpRequestContext), httpResponseStatus, responseBodyConsumer, httpHeaders);
 
 		requestEventBus.triggerEvent(Event.onHttpResponseDone, httpResponse);
 
@@ -228,6 +228,10 @@ public class HttpClientResponseHandler implements ResponseHandler {
 			requestEventBus.triggerEvent(Event.ERROR, httpRequestContext, e);
 		}
 
+	}
+
+	private static HttpVersion httpVersion(final HttpRequestContext httpRequestContext) {
+		return httpRequestContext.getNettyHttpClientRequest().getNettyRequest().protocolVersion();
 	}
 
 	private boolean incomnpleteReadOfData(HttpRequestContext httpRequestContext) {

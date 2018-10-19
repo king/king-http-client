@@ -6,6 +6,8 @@
 package com.king.platform.net.http;
 
 import io.netty.handler.codec.http.DefaultHttpHeaders;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpVersion;
 import org.junit.Test;
 
 import java.util.AbstractMap;
@@ -13,8 +15,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThat;
 
 @SuppressWarnings("unchecked")
 public class HttpResponseTest {
@@ -25,7 +29,7 @@ public class HttpResponseTest {
 		DefaultHttpHeaders defaultHttpHeaders = new DefaultHttpHeaders();
 		defaultHttpHeaders.add("Accept", "*/*");
 
-		HttpResponse httpResponse = new HttpResponse(200, null, defaultHttpHeaders);
+		HttpResponse httpResponse = new HttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, null, defaultHttpHeaders);
 
 		assertEquals("*/*", httpResponse.getHeader("Accept"));
 		assertEquals("*/*", httpResponse.getHeader("ACCEPT"));
@@ -41,7 +45,7 @@ public class HttpResponseTest {
 		defaultHttpHeaders.add("ACCEPT", "*/*");
 		defaultHttpHeaders.add("accept", "*/*");
 
-		HttpResponse httpResponse = new HttpResponse(200, null, defaultHttpHeaders);
+		HttpResponse httpResponse = new HttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, null, defaultHttpHeaders);
 		List<String> headers = httpResponse.getHeaders("accept");
 		assertEquals(3, headers.size());
 		for (String header : headers) {
@@ -51,7 +55,7 @@ public class HttpResponseTest {
 
 	@Test
 	public void getUnknownHeaderShouldReturnNull() throws Exception {
-		HttpResponse httpResponse = new HttpResponse(200, null, new DefaultHttpHeaders());
+		HttpResponse httpResponse = new HttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, null, new DefaultHttpHeaders());
 		String value = httpResponse.getHeader("undefined");
 		assertNull(value);
 	}
@@ -63,12 +67,25 @@ public class HttpResponseTest {
 		defaultHttpHeaders.add("ACCEPT", "*/*");
 		defaultHttpHeaders.add("accept", "*/*");
 
-		HttpResponse httpResponse = new HttpResponse(200, null, defaultHttpHeaders);
+		HttpResponse httpResponse = new HttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, null, defaultHttpHeaders);
 		List<Map.Entry<String, String>> allHeaders = httpResponse.getAllHeaders();
 		assertEquals(3, allHeaders.size());
 		for (Map.Entry<String, String> entry : allHeaders) {
 			assertEquals("*/*", entry.getValue());
 		}
 
+	}
+
+	@Test
+	public void getStatus() {
+		final HttpResponse httpResponse = new HttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, null, new DefaultHttpHeaders());
+		assertThat(httpResponse.getStatusCode(), is(HttpResponseStatus.OK.code()));
+		assertThat(httpResponse.getStatusReason(), is(HttpResponseStatus.OK.reasonPhrase()));
+	}
+
+	@Test
+	public void getHttpVersion() {
+		final HttpResponse httpResponse = new HttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, null, new DefaultHttpHeaders());
+		assertThat(httpResponse.getHttpVersion(), is(HttpVersion.HTTP_1_1.toString()));
 	}
 }
