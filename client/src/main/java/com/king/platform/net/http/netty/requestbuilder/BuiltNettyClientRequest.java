@@ -18,6 +18,7 @@ import com.king.platform.net.http.netty.request.NettyHttpClientRequest;
 import com.king.platform.net.http.util.Param;
 import com.king.platform.net.http.util.UriUtil;
 import io.netty.handler.codec.http.*;
+import io.netty.handler.codec.http.HttpMethod;
 
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;

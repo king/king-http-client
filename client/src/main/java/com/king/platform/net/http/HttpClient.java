@@ -38,6 +38,15 @@ public interface HttpClient {
 	boolean isStarted();
 
 	/**
+	 * Create reusable builder for http requests. The client has to be started before this method is called.
+	 *
+	 * @param httpMethod Http method to use
+	 * @param uri Http uri to call
+	 * @return The reusable {@link HttpClientRequestBuilder}
+	 */
+	HttpClientRequestBuilder create(HttpMethod httpMethod, String uri);
+
+	/**
 	 * Create reusable builder for http get requests. The client has to be started before this method is called.
 	 *
 	 * @param uri Http uri to call
