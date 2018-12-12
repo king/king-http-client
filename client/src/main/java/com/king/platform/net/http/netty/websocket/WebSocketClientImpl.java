@@ -345,17 +345,18 @@ public class WebSocketClientImpl implements WebSocketClient {
 		this.channel = channel;
 		this.headers = new Headers(httpHeaders);
 		this.ready = true;
-		if (this.connectionFuture != null) {
-			CompletableFuture<WebSocketClient> future = this.connectionFuture;
-			completableFutureExecutor.execute(() -> future.complete(this));
-			this.connectionFuture = null;
-		}
 
 		callbackExecutor.execute(() -> {
 			for (WebSocketListener webSocketListener : listeners) {
 				webSocketListener.onConnect(this);
 			}
 		});
+
+		if (this.connectionFuture != null) {
+			CompletableFuture<WebSocketClient> future = this.connectionFuture;
+			completableFutureExecutor.execute(() -> future.complete(this));
+			this.connectionFuture = null;
+		}
 
 
 		for (WebSocketFrame bufferedFrame : bufferedFrames) {
@@ -384,6 +385,14 @@ public class WebSocketClientImpl implements WebSocketClient {
 		boolean wasConnected = ready;
 		ready = false;
 		channel = null;
+
+
+		callbackExecutor.execute(() -> {
+			for (WebSocketListener webSocketListener : listeners) {
+				webSocketListener.onError(throwable);
+			}
+		});
+
 		if (this.connectionFuture != null) {
 			CompletableFuture<WebSocketClient> future = this.connectionFuture;
 
@@ -391,12 +400,6 @@ public class WebSocketClientImpl implements WebSocketClient {
 			this.connectionFuture = null;
 
 		}
-
-		callbackExecutor.execute(() -> {
-			for (WebSocketListener webSocketListener : listeners) {
-				webSocketListener.onError(throwable);
-			}
-		});
 
 		if (wasConnected) {
 			callbackExecutor.execute(() -> {
