@@ -29,6 +29,7 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -553,6 +554,30 @@ public class WebSocket {
 
 		assertEquals("HELLO WORLD", receivedText.get());
 	}
+
+
+	@Test(timeout = 5000)
+	public void webSocketShouldCallOnConnectBeforeItReturns() throws Exception {
+
+		AtomicBoolean onConnect = new AtomicBoolean();
+
+		WebSocketClient webSocketClient = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
+			.build()
+			.execute(new WebSocketListenerAdapter() {
+				@Override
+				public void onConnect(WebSocketConnection connection) {
+					onConnect.set(true);
+				}
+			}).get();
+
+		assertTrue(onConnect.get());
+
+		webSocketClient.sendTextFrame("hello");
+		webSocketClient.sendCloseFrame();
+		webSocketClient.awaitClose();
+
+	}
+
 
 	@After
 	public void tearDown() throws Exception {
