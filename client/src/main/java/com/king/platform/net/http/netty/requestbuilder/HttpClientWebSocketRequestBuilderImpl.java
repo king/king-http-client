@@ -94,7 +94,7 @@ public class HttpClientWebSocketRequestBuilderImpl extends HttpClientRequestHead
 					listenerExecutor = Runnable::run; //if no executor has been supplied (ie, still on default executor), run on calling thread
 				}
 
-				return new WebSocketClientImpl(builtNettyClientRequest, listenerExecutor, callbackExecutor, autoPong, autoCloseFrame, pingEveryDuration);
+				return new WebSocketClientImpl(builtNettyClientRequest, listenerExecutor, listenerExecutor, autoPong, autoCloseFrame, pingEveryDuration);
 			}
 
 
