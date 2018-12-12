@@ -45,21 +45,17 @@ public class WebSocketClientImpl implements WebSocketClient {
 	private final boolean autoPong;
 	private final boolean autoCloseFrame;
 	private final Duration pingEveryDuration;
+	private final AwaitLatch awaitLatch = new AwaitLatch();
+	private final ReentrantLock lock;
 
 	private Headers headers = new Headers(EmptyHttpHeaders.INSTANCE);
-
 	private FragmentedFrameType expectedFragmentedFrameType;
-
 	private List<WebSocketFrame> bufferedFrames = new ArrayList<>();
 
 	private volatile Channel channel;
 	private volatile boolean ready;
 	private volatile CompletableFuture<WebSocketClient> connectionFuture;
-	private final AwaitLatch awaitLatch = new AwaitLatch();
-	private ScheduledFuture<?> pingFuture;
-
-
-	private final ReentrantLock lock;
+	private volatile ScheduledFuture<?> pingFuture;
 
 	public WebSocketClientImpl(BuiltNettyClientRequest<Void> builtNettyClientRequest, Executor listenerExecutor, Executor completableFutureExecutor, boolean
 		autoPong, boolean autoCloseFrame, Duration pingEveryDuration) {
@@ -93,41 +89,6 @@ public class WebSocketClientImpl implements WebSocketClient {
 	public String getNegotiatedSubProtocol() {
 		return headers.get(HttpHeaderNames.SEC_WEBSOCKET_PROTOCOL);
 
-	}
-
-	@Override
-	public void addListener(WebSocketListener webSocketListener) {
-		listeners.add(webSocketListener);
-	}
-
-	@Override
-	public CompletableFuture<WebSocketClient> connect() {
-		lock.lock();
-		try {
-			if (connectionFuture != null) {
-				throw new IllegalStateException("Already trying to connect!");
-			}
-
-			if (!ready) {
-				connectionFuture = new CompletableFuture<>();
-				builtNettyClientRequest.execute();
-				return connectionFuture;
-			} else {
-				throw new IllegalStateException("Already connected");
-			}
-		} finally {
-			lock.unlock();
-		}
-
-	}
-
-	@Override
-	public void awaitClose() throws InterruptedException {
-		if (connectionFuture == null && channel == null) {
-			return;
-		}
-
-		awaitLatch.awaitClose();
 	}
 
 	@Override
@@ -203,7 +164,6 @@ public class WebSocketClientImpl implements WebSocketClient {
 		return convert(channel.writeAndFlush(new PingWebSocketFrame(Unpooled.copiedBuffer(payload))));
 	}
 
-
 	@Override
 	public CompletableFuture<Void> close() {
 		lock.lock();
@@ -236,6 +196,41 @@ public class WebSocketClientImpl implements WebSocketClient {
 			}
 		});
 		return completableFuture;
+	}
+
+	@Override
+	public void addListener(WebSocketListener webSocketListener) {
+		listeners.add(webSocketListener);
+	}
+
+	@Override
+	public void awaitClose() throws InterruptedException {
+		if (connectionFuture == null && channel == null) {
+			return;
+		}
+
+		awaitLatch.awaitClose();
+	}
+
+	@Override
+	public CompletableFuture<WebSocketClient> connect() {
+		lock.lock();
+		try {
+			if (connectionFuture != null) {
+				throw new IllegalStateException("Already trying to connect!");
+			}
+
+			if (!ready) {
+				connectionFuture = new CompletableFuture<>();
+				builtNettyClientRequest.execute();
+				return connectionFuture;
+			} else {
+				throw new IllegalStateException("Already connected");
+			}
+		} finally {
+			lock.unlock();
+		}
+
 	}
 
 	private void onWebSocketFrame(WebSocketFrame frame) {
@@ -380,16 +375,16 @@ public class WebSocketClientImpl implements WebSocketClient {
 	}
 
 	private void onOpen(Channel channel, io.netty.handler.codec.http.HttpHeaders httpHeaders) {
+		CompletableFuture<WebSocketClient> future = this.connectionFuture;
+
 		lock.lock();
+
 		try {
 			this.channel = channel;
 			this.headers = new Headers(httpHeaders);
 			this.ready = true;
-			if (this.connectionFuture != null) {
-				CompletableFuture<WebSocketClient> future = this.connectionFuture;
-				completableFutureExecutor.execute(() -> future.complete(this));
-				this.connectionFuture = null;
-			}
+			this.connectionFuture = null;
+
 		} finally {
 			lock.unlock();
 		}
@@ -400,6 +395,9 @@ public class WebSocketClientImpl implements WebSocketClient {
 			}
 		});
 
+		if (future != null) {
+			completableFutureExecutor.execute(() -> future.complete(this));
+		}
 
 		for (WebSocketFrame bufferedFrame : bufferedFrames) {
 			onWebSocketFrame(bufferedFrame);
@@ -421,7 +419,6 @@ public class WebSocketClientImpl implements WebSocketClient {
 			}, pingEveryDuration.toMillis(), pingEveryDuration.toMillis(), TimeUnit.MILLISECONDS);
 		}
 
-
 	}
 
 	private void onError(HttpRequestContext httpRequestContext, Throwable throwable) {
@@ -437,15 +434,16 @@ public class WebSocketClientImpl implements WebSocketClient {
 			lock.unlock();
 		}
 
-		if (future != null) {
-			completableFutureExecutor.execute(() -> future.completeExceptionally(throwable));
-		}
-
 		callbackExecutor.execute(() -> {
 			for (WebSocketListener webSocketListener : listeners) {
 				webSocketListener.onError(throwable);
 			}
 		});
+
+		if (future != null) {
+			completableFutureExecutor.execute(() -> future.completeExceptionally(throwable));
+		}
+
 
 		if (wasConnected) {
 			callbackExecutor.execute(() -> {
@@ -504,15 +502,15 @@ public class WebSocketClientImpl implements WebSocketClient {
 		return array;
 	}
 
-	private enum FragmentedFrameType {
-		TEXT, BINARY;
-	}
-
 	@Override
 	public String toString() {
 		return "WebSocketClientImpl{" +
 			"channel=" + channel +
 			", ready=" + ready +
 			'}';
+	}
+
+	private enum FragmentedFrameType {
+		TEXT, BINARY;
 	}
 }
