@@ -1,6 +1,16 @@
 # king-http-client
-## 'com.king.king-http-client:king-http-client:3.0.6'
+## 'com.king.king-http-client:king-http-client:3.0.9'
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.king.king-http-client/king-http-client/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.king.king-http-client/king-http-client)
+
+## New in Version 3.0.9
+* Bug fix for an race condition in WebSocket connection. Now onConnected callback is called before the CompletableFuture is completed. Both the onConnected and CompletableFuture is called on the netto io threads, so avoid blocking!
+
+## New in Version 3.0.8
+* Added support for fetching http version as well as status reason from `HttpResponse`
+* Added support for supplying what http verb should be used in HttpClient
+
+## New in Version 3.0.7
+* Bumped netty version to 4.1.29.Final
 
 ## New in Version 3.0.6
 * Improved shutdown by waiting for all channels to close
