@@ -46,7 +46,6 @@ public class WebSocketClientImpl implements WebSocketClient {
 	private final boolean autoCloseFrame;
 	private final Duration pingEveryDuration;
 	private final AwaitLatch awaitLatch = new AwaitLatch();
-	private final ReentrantLock lock;
 
 	private Headers headers = new Headers(EmptyHttpHeaders.INSTANCE);
 	private FragmentedFrameType expectedFragmentedFrameType;
@@ -56,6 +55,8 @@ public class WebSocketClientImpl implements WebSocketClient {
 	private volatile boolean ready;
 	private volatile CompletableFuture<WebSocketClient> connectionFuture;
 	private volatile ScheduledFuture<?> pingFuture;
+
+	private final ReentrantLock lock;
 
 	public WebSocketClientImpl(BuiltNettyClientRequest<Void> builtNettyClientRequest, Executor listenerExecutor, Executor completableFutureExecutor, boolean
 		autoPong, boolean autoCloseFrame, Duration pingEveryDuration) {
@@ -89,6 +90,41 @@ public class WebSocketClientImpl implements WebSocketClient {
 	public String getNegotiatedSubProtocol() {
 		return headers.get(HttpHeaderNames.SEC_WEBSOCKET_PROTOCOL);
 
+	}
+
+	@Override
+	public void addListener(WebSocketListener webSocketListener) {
+		listeners.add(webSocketListener);
+	}
+
+	@Override
+	public CompletableFuture<WebSocketClient> connect() {
+		lock.lock();
+		try {
+			if (connectionFuture != null) {
+				throw new IllegalStateException("Already trying to connect!");
+			}
+
+			if (!ready) {
+				connectionFuture = new CompletableFuture<>();
+				builtNettyClientRequest.execute();
+				return connectionFuture;
+			} else {
+				throw new IllegalStateException("Already connected");
+			}
+		} finally {
+			lock.unlock();
+		}
+
+	}
+
+	@Override
+	public void awaitClose() throws InterruptedException {
+		if (connectionFuture == null && channel == null) {
+			return;
+		}
+
+		awaitLatch.awaitClose();
 	}
 
 	@Override
@@ -196,41 +232,6 @@ public class WebSocketClientImpl implements WebSocketClient {
 			}
 		});
 		return completableFuture;
-	}
-
-	@Override
-	public void addListener(WebSocketListener webSocketListener) {
-		listeners.add(webSocketListener);
-	}
-
-	@Override
-	public void awaitClose() throws InterruptedException {
-		if (connectionFuture == null && channel == null) {
-			return;
-		}
-
-		awaitLatch.awaitClose();
-	}
-
-	@Override
-	public CompletableFuture<WebSocketClient> connect() {
-		lock.lock();
-		try {
-			if (connectionFuture != null) {
-				throw new IllegalStateException("Already trying to connect!");
-			}
-
-			if (!ready) {
-				connectionFuture = new CompletableFuture<>();
-				builtNettyClientRequest.execute();
-				return connectionFuture;
-			} else {
-				throw new IllegalStateException("Already connected");
-			}
-		} finally {
-			lock.unlock();
-		}
-
 	}
 
 	private void onWebSocketFrame(WebSocketFrame frame) {
