@@ -68,4 +68,10 @@ public interface WebSocketConnection {
 	 * @return the resulting future
 	 */
 	CompletableFuture<Void> sendPingFrame(byte[] payload);
+
+	/**
+	 * Close the connection to the server (without sending any close frame)
+	 * @return the resulting future
+	 */
+	CompletableFuture<Void> close();
 }

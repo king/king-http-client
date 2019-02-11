@@ -9,7 +9,9 @@ import com.king.platform.net.http.netty.eventbus.*;
 import org.slf4j.Logger;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -23,6 +25,8 @@ public class RecordingEventBus implements RequestEventBus, RootEventBus {
 	private final int id;
 
 	private RecordingEventBus childEventBus;
+
+	private static ConcurrentHashMap<Event, CountDownLatch> lockMap = new ConcurrentHashMap<>();
 
 	public RecordingEventBus(RequestEventBus realRequestEventBus) {
 		this.realRequestEventBus = realRequestEventBus;
@@ -58,6 +62,10 @@ public class RecordingEventBus implements RequestEventBus, RootEventBus {
 	public <T> void triggerEvent(Event1<T> event, T payload) {
 		recordInteraction(event, InteractionType.TRIGGER);
 		realRequestEventBus.triggerEvent(event, payload);
+		CountDownLatch countDownLatch = lockMap.get(event);
+		if (countDownLatch != null) {
+			countDownLatch.countDown();
+		}
 	}
 
 
@@ -66,6 +74,11 @@ public class RecordingEventBus implements RequestEventBus, RootEventBus {
 		recordInteraction(event, InteractionType.TRIGGER);
 
 		realRequestEventBus.triggerEvent(event);
+
+		CountDownLatch countDownLatch = lockMap.get(event);
+		if (countDownLatch != null) {
+			countDownLatch.countDown();
+		}
 	}
 
 	@Override
@@ -73,6 +86,11 @@ public class RecordingEventBus implements RequestEventBus, RootEventBus {
 		recordInteraction(event, InteractionType.TRIGGER);
 
 		realRequestEventBus.triggerEvent(event, payload1, payload2);
+
+		CountDownLatch countDownLatch = lockMap.get(event);
+		if (countDownLatch != null) {
+			countDownLatch.countDown();
+		}
 	}
 
 	private void recordInteraction(Event event, InteractionType interactionType) {
@@ -164,6 +182,19 @@ public class RecordingEventBus implements RequestEventBus, RootEventBus {
 			}
 		}
 		return count;
+	}
+
+
+	public void waitFor(Event event) throws InterruptedException {
+		if (hasTriggered(event)) {
+			return;
+		}
+		lockMap.computeIfAbsent(event, event1 -> new CountDownLatch(1)).await();
+	}
+
+
+	public void waitFor(Event event, int count) throws InterruptedException {
+		lockMap.computeIfAbsent(event, event1 -> new CountDownLatch(1)).await();
 	}
 
 
