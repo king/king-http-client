@@ -20,8 +20,6 @@ import static org.junit.Assert.assertNull;
 public class HttpResponseTest {
 	@Test
 	public void getHeaderShouldBeCaseInsensitive() throws Exception {
-		List<Map.Entry<String, String>> entries = new ArrayList<>();
-		entries.add(new AbstractMap.SimpleEntry<>("Accept", "*/*"));
 		DefaultHttpHeaders defaultHttpHeaders = new DefaultHttpHeaders();
 		defaultHttpHeaders.add("Accept", "*/*");
 

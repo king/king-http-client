@@ -5,6 +5,7 @@
 
 package com.king.platform.net.http.integration;
 
+import com.king.platform.net.http.netty.HttpRequestContext;
 import com.king.platform.net.http.netty.eventbus.*;
 import org.slf4j.Logger;
 
@@ -203,6 +204,10 @@ public class RecordingEventBus implements RequestEventBus, RootEventBus {
 		if (childEventBus != null) {
 			childEventBus.forEachCreatedEventBus(visitedEventBusCallback);
 		}
+	}
+
+	public void registerEventToWaitFor(Event event) {
+		lockMap.putIfAbsent(event, new CountDownLatch(1));
 	}
 
 	public interface VisitedEventBusCallback {

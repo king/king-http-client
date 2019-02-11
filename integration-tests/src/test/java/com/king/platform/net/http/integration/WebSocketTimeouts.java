@@ -18,6 +18,7 @@ import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -28,8 +29,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.Assert.assertFalse;
+import static org.slf4j.LoggerFactory.getLogger;
 
 public class WebSocketTimeouts {
+
 	IntegrationServer integrationServer;
 	private HttpClient httpClient;
 	private int port;
@@ -76,8 +79,7 @@ public class WebSocketTimeouts {
 					System.out.println("About to sleep servlet for 5s!");
 					Thread.sleep(800);
 
-				} catch (InterruptedException e) {
-					e.printStackTrace();
+				} catch (InterruptedException ignored) {
 				}
 				super.service(request, response);
 			}
@@ -112,8 +114,7 @@ public class WebSocketTimeouts {
 		public void onWebSocketText(String message) {
 			try {
 				session.getRemote().sendString(message.toUpperCase());
-			} catch (IOException e) {
-				e.printStackTrace();
+			} catch (IOException ignored) {
 			}
 		}
 	}
@@ -128,6 +129,8 @@ public class WebSocketTimeouts {
 
 
 		AtomicBoolean connected = new AtomicBoolean();
+
+		recordingEventBus.registerEventToWaitFor(Event.COMPLETED);
 
 		WebSocketClient webSocketClient = builtWebSocketRequest.build();
 		webSocketClient.addListener(new WebSocketListenerAdapter() {

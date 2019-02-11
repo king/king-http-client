@@ -166,11 +166,12 @@ public class HttpPostWithInputStreamBody {
 							if (index >= content.length) {
 								break;
 							}
+
 							try {
 								Thread.sleep(100);
-							} catch (InterruptedException e) {
-								e.printStackTrace();
+							} catch (InterruptedException ignored) {
 							}
+
 							promise.setProgress(index, content.length);
 						}
 

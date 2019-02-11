@@ -12,6 +12,7 @@ import com.king.platform.net.http.netty.eventbus.Event;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,8 +23,11 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 import static org.junit.Assert.*;
+import static org.slf4j.LoggerFactory.getLogger;
 
 public class ServerCloses {
+	private final Logger logger = getLogger(getClass());
+
 	private HttpClient httpClient;
 	private int port;
 
@@ -67,7 +71,7 @@ public class ServerCloses {
 					outputStream.close();
 					clientSocket.close();
 				} catch (IOException e) {
-					e.printStackTrace();
+					logger.error("Failed to write to socket", e);
 				}
 			}
 		}).start();
@@ -106,14 +110,14 @@ public class ServerCloses {
 					outputStream.flush();
 					try {
 						Thread.sleep(200);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
+					} catch (InterruptedException ignored) {
+
 					}
 
 					clientSocket.setSoLinger(true, 0); //forces TCP RST package instead of FIN
 					clientSocket.close();
 				} catch (IOException e) {
-					e.printStackTrace();
+					logger.error("Failed to write to socket", e);
 				}
 			}
 		}).start();
@@ -157,7 +161,7 @@ public class ServerCloses {
 					outputStream.flush();
 					outputStream.close();
 				} catch (IOException e) {
-					e.printStackTrace();
+					logger.error("Failed to write to socket", e);
 				}
 			}
 		}).start();
@@ -187,7 +191,7 @@ public class ServerCloses {
 					outputStream.flush();
 					outputStream.close();
 				} catch (IOException e) {
-					e.printStackTrace();
+					logger.error("Failed to write to socket", e);
 				}
 			}
 

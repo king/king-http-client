@@ -663,7 +663,7 @@ public class HttpSse {
 		}
 	}
 
-	private static class EventData {
+	private final static class EventData {
 		String name;
 		String data;
 

@@ -463,14 +463,18 @@ public class WebSocketClientImpl implements WebSocketClient {
 	}
 
 	private void onCompleted(HttpRequestContext httpRequestContext) {
+		boolean wasConnected;
+
 		lock.lock();
 
-		boolean wasConnected = ready;
+		try {
+			wasConnected = ready;
+			ready = false;
+			channel = null;
+		} finally {
+			lock.unlock();
+		}
 
-		ready = false;
-		channel = null;
-
-		lock.unlock();
 
 		if (wasConnected) {
 			callbackExecutor.execute(() -> {
