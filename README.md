@@ -1,6 +1,10 @@
 # king-http-client
-## 'com.king.king-http-client:king-http-client:3.0.9'
+## 'com.king.king-http-client:king-http-client:3.0.10'
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.king.king-http-client/king-http-client/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.king.king-http-client/king-http-client)
+
+
+## New in Version 3.0.10
+* Made it possible to close an `WebSocketConnection`
 
 ## New in Version 3.0.9
 * Bug fix for an race condition in WebSocket connection. Now onConnected callback is called before the CompletableFuture is completed. Both the onConnected and CompletableFuture is called on the netto io threads, so avoid blocking!
