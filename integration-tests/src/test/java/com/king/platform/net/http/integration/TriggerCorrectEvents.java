@@ -69,6 +69,7 @@ public class TriggerCorrectEvents {
 		expectedEvents.add(Event.onConnecting);
 		expectedEvents.add(Event.CREATED_CONNECTION);
 		expectedEvents.add(Event.onConnected);
+		expectedEvents.add(Event.onAttachedToChannel);
 		expectedEvents.add(Event.POPULATE_CONNECTION_SPECIFIC_HEADERS);
 		expectedEvents.add(Event.onWroteHeaders);
 		expectedEvents.add(Event.onWroteContentCompleted);

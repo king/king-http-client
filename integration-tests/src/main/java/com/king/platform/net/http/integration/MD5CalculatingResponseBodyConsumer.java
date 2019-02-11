@@ -7,13 +7,17 @@ package com.king.platform.net.http.integration;
 
 
 import com.king.platform.net.http.ResponseBodyConsumer;
+import org.slf4j.Logger;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.WritableByteChannel;
 import java.security.NoSuchAlgorithmException;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 public class MD5CalculatingResponseBodyConsumer implements ResponseBodyConsumer<byte[]> {
+	private final Logger logger = getLogger(getClass());
 
 	private final MD5CalculatingOutputStream outputStream;
 	private WritableByteChannel channel;
@@ -36,7 +40,8 @@ public class MD5CalculatingResponseBodyConsumer implements ResponseBodyConsumer<
 		try {
 			channel.write(buffer);
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("Failed to write", e);
+			throw e;
 		}
 
 	}

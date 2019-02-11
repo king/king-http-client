@@ -107,8 +107,7 @@ public class WebSocket {
 		public void onWebSocketText(String message) {
 			try {
 				session.getRemote().sendString(message.toUpperCase());
-			} catch (IOException e) {
-				e.printStackTrace();
+			} catch (IOException ignored) {
 			}
 		}
 	}

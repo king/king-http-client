@@ -278,7 +278,7 @@ public class ServerEventDecoderTest {
 		}
 	}
 
-	private static class Event {
+	private static final class Event {
 		private String lastSentId;
 		private String event;
 		private String data;

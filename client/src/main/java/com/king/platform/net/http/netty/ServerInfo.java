@@ -11,7 +11,7 @@ import io.netty.util.AttributeKey;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-public class ServerInfo {
+public final class ServerInfo {
 	public static final AttributeKey<ServerInfo> ATTRIBUTE_KEY = AttributeKey.valueOf("HttpNetty__ServerInfo");
 
 	private final String scheme;

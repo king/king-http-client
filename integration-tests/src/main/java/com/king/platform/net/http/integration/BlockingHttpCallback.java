@@ -8,11 +8,15 @@ package com.king.platform.net.http.integration;
 
 import com.king.platform.net.http.HttpCallback;
 import com.king.platform.net.http.HttpResponse;
+import org.slf4j.Logger;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static org.slf4j.LoggerFactory.getLogger;
+
 public class BlockingHttpCallback implements HttpCallback<String> {
+	private final Logger logger = getLogger(getClass());
 	private HttpResponse<String> httpResponse;
 	private Throwable exception;
 
@@ -28,9 +32,9 @@ public class BlockingHttpCallback implements HttpCallback<String> {
 		this.httpResponse = httpResponse;
 		try {
 			Thread.sleep(50);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
+		} catch (InterruptedException ignored) {
 		}
+
 		countDownLatch.countDown();
 	}
 
@@ -41,8 +45,7 @@ public class BlockingHttpCallback implements HttpCallback<String> {
 
 		try {
 			Thread.sleep(50);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
+		} catch (InterruptedException ignored) {
 		}
 
 		countDownLatch.countDown();

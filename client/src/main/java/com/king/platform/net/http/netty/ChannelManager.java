@@ -197,6 +197,7 @@ public class ChannelManager {
 	private void sendOnChannel(final Channel channel, final HttpRequestContext httpRequestContext, final RequestEventBus requestEventBus) {
 
 		httpRequestContext.attachedToChannel(channel);
+		requestEventBus.triggerEvent(Event.onAttachedToChannel, channel);
 
 		scheduleTimeOutTasks(requestEventBus, httpRequestContext, httpRequestContext.getTotalRequestTimeoutMillis(), httpRequestContext.getIdleTimeoutMillis
 			());

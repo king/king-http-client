@@ -32,6 +32,7 @@ public interface Event {
 	Event1<ServerInfo> CLOSED_CONNECTION = new Event1<>("CloseConnection");
 
 	Event1<Void> onConnecting = new Event1<>("onConnecting");
+	Event1<Channel> onAttachedToChannel = new Event1<>("onAttachedToChannel");
 	Event1<Void> onConnected = new Event1<>("onConnected");
 	Event1<Void> onWroteHeaders = new Event1<>("onWroteHeaders");
 	Event1<Long> onWroteContentStarted = new Event1<>("onWroteContentStarted");

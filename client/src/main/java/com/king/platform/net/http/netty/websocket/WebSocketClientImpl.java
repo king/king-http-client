@@ -29,6 +29,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -44,19 +45,18 @@ public class WebSocketClientImpl implements WebSocketClient {
 	private final boolean autoPong;
 	private final boolean autoCloseFrame;
 	private final Duration pingEveryDuration;
+	private final AwaitLatch awaitLatch = new AwaitLatch();
 
 	private Headers headers = new Headers(EmptyHttpHeaders.INSTANCE);
-
 	private FragmentedFrameType expectedFragmentedFrameType;
-
 	private List<WebSocketFrame> bufferedFrames = new ArrayList<>();
 
 	private volatile Channel channel;
 	private volatile boolean ready;
 	private volatile CompletableFuture<WebSocketClient> connectionFuture;
-	private final AwaitLatch awaitLatch = new AwaitLatch();
-	private ScheduledFuture<?> pingFuture;
+	private volatile ScheduledFuture<?> pingFuture;
 
+	private final ReentrantLock lock;
 
 	public WebSocketClientImpl(BuiltNettyClientRequest<Void> builtNettyClientRequest, Executor listenerExecutor, Executor completableFutureExecutor, boolean
 		autoPong, boolean autoCloseFrame, Duration pingEveryDuration) {
@@ -67,8 +67,10 @@ public class WebSocketClientImpl implements WebSocketClient {
 		this.autoCloseFrame = autoCloseFrame;
 		this.pingEveryDuration = pingEveryDuration;
 
+		lock = new ReentrantLock();
 
 		builtNettyClientRequest.withCustomCallbackSupplier(requestEventBus -> {
+			requestEventBus.subscribe(Event.onAttachedToChannel, currentChannel -> channel = currentChannel);
 			requestEventBus.subscribe(Event.onWsOpen, WebSocketClientImpl.this::onOpen);
 			requestEventBus.subscribe(Event.onWsFrame, WebSocketClientImpl.this::onWebSocketFrame);
 			requestEventBus.subscribe(Event.ERROR, WebSocketClientImpl.this::onError);
@@ -97,16 +99,21 @@ public class WebSocketClientImpl implements WebSocketClient {
 
 	@Override
 	public CompletableFuture<WebSocketClient> connect() {
-		if (connectionFuture != null) {
-			throw new IllegalStateException("Already trying to connect!");
-		}
+		lock.lock();
+		try {
+			if (connectionFuture != null) {
+				throw new IllegalStateException("Already trying to connect!");
+			}
 
-		if (!ready) {
-			connectionFuture = new CompletableFuture<>();
-			builtNettyClientRequest.execute();
-			return connectionFuture;
-		} else {
-			throw new IllegalStateException("Already connected");
+			if (!ready) {
+				connectionFuture = new CompletableFuture<>();
+				builtNettyClientRequest.execute();
+				return connectionFuture;
+			} else {
+				throw new IllegalStateException("Already connected");
+			}
+		} finally {
+			lock.unlock();
 		}
 
 	}
@@ -127,7 +134,9 @@ public class WebSocketClientImpl implements WebSocketClient {
 
 	@Override
 	public CompletableFuture<Void> sendTextFrame(String text) {
-		if (!ready || channel == null) {
+		Channel channel = this.channel;
+
+		if (!ready || channel == null || !channel.isOpen()) {
 			CompletableFuture<Void> future = new CompletableFuture<>();
 			future.completeExceptionally(new IllegalStateException("Not connected!"));
 			return future;
@@ -137,15 +146,15 @@ public class WebSocketClientImpl implements WebSocketClient {
 
 	@Override
 	public CompletableFuture<Void> sendCloseFrame(int statusCode, String reason) {
-		if (!ready || channel == null) {
+		Channel channel = this.channel;
+
+		if (!ready || channel == null || !channel.isOpen()) {
 			CompletableFuture<Void> future = new CompletableFuture<>();
 			future.completeExceptionally(new IllegalStateException("Not connected!"));
 			return future;
 		}
 
-		if (channel.isOpen()) {
-			channel.writeAndFlush(new CloseWebSocketFrame(statusCode, reason));
-		}
+		channel.writeAndFlush(new CloseWebSocketFrame(statusCode, reason));
 
 		return CompletableFuture.completedFuture(null);
 	}
@@ -157,7 +166,8 @@ public class WebSocketClientImpl implements WebSocketClient {
 
 	@Override
 	public CompletableFuture<Void> sendBinaryFrame(byte[] payload) {
-		if (!ready || channel == null) {
+		Channel channel = this.channel;
+		if (!ready || channel == null || !channel.isOpen()) {
 			CompletableFuture<Void> future = new CompletableFuture<>();
 			future.completeExceptionally(new IllegalStateException("Not connected!"));
 			return future;
@@ -168,7 +178,8 @@ public class WebSocketClientImpl implements WebSocketClient {
 
 	@Override
 	public CompletableFuture<Void> sendPingFrame() {
-		if (!ready || channel == null) {
+		Channel channel = this.channel;
+		if (!ready || channel == null || !channel.isOpen()) {
 			CompletableFuture<Void> future = new CompletableFuture<>();
 			future.completeExceptionally(new IllegalStateException("Not connected!"));
 			return future;
@@ -179,7 +190,8 @@ public class WebSocketClientImpl implements WebSocketClient {
 
 	@Override
 	public CompletableFuture<Void> sendPingFrame(byte[] payload) {
-		if (!ready || channel == null) {
+		Channel channel = this.channel;
+		if (!ready || channel == null || !channel.isOpen()) {
 			CompletableFuture<Void> future = new CompletableFuture<>();
 			future.completeExceptionally(new IllegalStateException("Not connected!"));
 			return future;
@@ -188,6 +200,27 @@ public class WebSocketClientImpl implements WebSocketClient {
 		return convert(channel.writeAndFlush(new PingWebSocketFrame(Unpooled.copiedBuffer(payload))));
 	}
 
+	@Override
+	public CompletableFuture<Void> close() {
+		lock.lock();
+		try {
+			if (connectionFuture != null) {
+				connectionFuture.complete(this);
+			}
+
+			ready = false;
+
+			if (channel != null) {
+				Channel activeChannel = channel;
+				channel = null;
+				return convert(activeChannel.close());
+			}
+
+			return CompletableFuture.completedFuture(null);
+		} finally {
+			lock.unlock();
+		}
+	}
 
 	private CompletableFuture<Void> convert(ChannelFuture f) {
 		CompletableFuture<Void> completableFuture = new CompletableFuture<>();
@@ -243,7 +276,8 @@ public class WebSocketClientImpl implements WebSocketClient {
 
 		byte[] bytes = getBytes(pingWebSocketFrame.content());
 
-		if (autoPong) {
+		Channel channel = this.channel;
+		if (autoPong && channel != null && channel.isOpen()) {
 			channel.writeAndFlush(new PongWebSocketFrame(Unpooled.copiedBuffer(bytes)));
 		}
 
@@ -342,9 +376,19 @@ public class WebSocketClientImpl implements WebSocketClient {
 	}
 
 	private void onOpen(Channel channel, io.netty.handler.codec.http.HttpHeaders httpHeaders) {
-		this.channel = channel;
-		this.headers = new Headers(httpHeaders);
-		this.ready = true;
+		CompletableFuture<WebSocketClient> future = this.connectionFuture;
+
+		lock.lock();
+
+		try {
+			this.channel = channel;
+			this.headers = new Headers(httpHeaders);
+			this.ready = true;
+			this.connectionFuture = null;
+
+		} finally {
+			lock.unlock();
+		}
 
 		callbackExecutor.execute(() -> {
 			for (WebSocketListener webSocketListener : listeners) {
@@ -352,10 +396,9 @@ public class WebSocketClientImpl implements WebSocketClient {
 			}
 		});
 
-		if (this.connectionFuture != null) {
-			CompletableFuture<WebSocketClient> future = this.connectionFuture;
+
+		if (future != null) {
 			completableFutureExecutor.execute(() -> future.complete(this));
-			this.connectionFuture = null;
 		}
 
 
@@ -382,10 +425,17 @@ public class WebSocketClientImpl implements WebSocketClient {
 	}
 
 	private void onError(HttpRequestContext httpRequestContext, Throwable throwable) {
+		CompletableFuture<WebSocketClient> future = this.connectionFuture;
 		boolean wasConnected = ready;
-		ready = false;
-		channel = null;
 
+		lock.lock();
+		try {
+			channel = null;
+			ready = false;
+			this.connectionFuture = null;
+		} finally {
+			lock.unlock();
+		}
 
 		callbackExecutor.execute(() -> {
 			for (WebSocketListener webSocketListener : listeners) {
@@ -393,12 +443,8 @@ public class WebSocketClientImpl implements WebSocketClient {
 			}
 		});
 
-		if (this.connectionFuture != null) {
-			CompletableFuture<WebSocketClient> future = this.connectionFuture;
-
+		if (future != null) {
 			completableFutureExecutor.execute(() -> future.completeExceptionally(throwable));
-			this.connectionFuture = null;
-
 		}
 
 		if (wasConnected) {
@@ -417,10 +463,18 @@ public class WebSocketClientImpl implements WebSocketClient {
 	}
 
 	private void onCompleted(HttpRequestContext httpRequestContext) {
-		boolean wasConnected = ready;
+		boolean wasConnected;
 
-		ready = false;
-		channel = null;
+		lock.lock();
+
+		try {
+			wasConnected = ready;
+			ready = false;
+			channel = null;
+		} finally {
+			lock.unlock();
+		}
+
 
 		if (wasConnected) {
 			callbackExecutor.execute(() -> {
@@ -448,6 +502,14 @@ public class WebSocketClientImpl implements WebSocketClient {
 		byte[] array = new byte[readable];
 		buf.getBytes(readerIndex, array);
 		return array;
+	}
+
+	@Override
+	public String toString() {
+		return "WebSocketClientImpl{" +
+			"channel=" + channel +
+			", ready=" + ready +
+			'}';
 	}
 
 	private enum FragmentedFrameType {
