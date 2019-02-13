@@ -47,6 +47,10 @@ public class HttpClientResponseHandler implements ResponseHandler {
 			return;
 		}
 
+		if (httpRequestContext.hasCompletedContent()) {
+			logger.trace("This request has already been processed completely, ignoring the rest");
+			return;
+		}
 
 		NettyHttpClientResponse nettyHttpClientResponse = httpRequestContext.getNettyHttpClientResponse();
 
@@ -54,12 +58,20 @@ public class HttpClientResponseHandler implements ResponseHandler {
 
 		ResponseBodyConsumer responseBodyConsumer = nettyHttpClientResponse.getResponseBodyConsumer();
 
+
 		try {
 
 			if (msg instanceof HttpResponse) {
+
+				if (((HttpResponse) msg).decoderResult().isFailure()) {
+					logger.trace("Got invalid data from server: {}", msg);
+					requestEventBus.triggerEvent(Event.ERROR, httpRequestContext, new IllegalStateException("Invalid http data from server! " + msg));
+					return;
+				}
+
 				requestEventBus.triggerEvent(Event.TOUCH);
 
-				logger.trace("read HttpResponse");
+				logger.trace("read HttpResponse {}", msg);
 				HttpResponse response = (HttpResponse) msg;
 
 				HttpResponseStatus httpResponseStatus = response.status();
@@ -81,7 +93,6 @@ public class HttpClientResponseHandler implements ResponseHandler {
 				if (httpRequestContext.getHttpMethod().equals(HttpMethod.HEAD)) {
 					httpRequestContext.getTimeRecorder().responseBodyStart();
 					httpRequestContext.getTimeRecorder().responseBodyCompleted();
-					handleCompletedTransfer(httpRequestContext, requestEventBus, nettyHttpClientResponse);
 					return;
 				}
 
@@ -156,7 +167,7 @@ public class HttpClientResponseHandler implements ResponseHandler {
 						triggerServerClosedException(httpRequestContext, requestEventBus, "Connection closed before all response data was read!");
 						return;
 					}
-
+					logger.trace("Got LastHttpContent, completing request");
 					handleCompletedTransfer(httpRequestContext, requestEventBus, nettyHttpClientResponse);
 				}
 			}
@@ -189,6 +200,7 @@ public class HttpClientResponseHandler implements ResponseHandler {
 
 	@Override
 	public void handleChannelInactive(ChannelHandlerContext ctx) {
+		logger.trace("Channel {} became inactive", ctx.channel());
 		HttpRequestContext httpRequestContext = ctx.channel().attr(HttpRequestContext.HTTP_REQUEST_ATTRIBUTE_KEY).get();
 
 		if (httpRequestContext == null) {
@@ -223,6 +235,7 @@ public class HttpClientResponseHandler implements ResponseHandler {
 		}
 
 		try {
+			logger.trace("Completing the pending request due to channel {} became idle", ctx.channel());
 			handleCompletedTransfer(httpRequestContext, requestEventBus, nettyHttpClientResponse);
 		} catch (Exception e) {
 			requestEventBus.triggerEvent(Event.ERROR, httpRequestContext, e);

@@ -58,7 +58,7 @@ public class HttpPost {
 			protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 				contentTypeValue.set(req.getContentType());
 
-				byte[] body = readPostBody(req);
+				byte[] body = integrationServer.readPostBody(req);
 				readBodyContent.set(body);
 
 				resp.getWriter().write(okBody);
@@ -107,23 +107,7 @@ public class HttpPost {
 	}
 
 
-	private byte[] readPostBody(HttpServletRequest req) throws IOException {
-		try {
-			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-			byte[] data = new byte[4096];
-			int bytesRead;
-			while ((bytesRead = req.getInputStream().read(data, 0, data.length)) >= 0) {
-				baos.write(data, 0, bytesRead);
-			}
-
-			return baos.toByteArray();
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw e;
-		}
-
-	}
 
 
 	@After

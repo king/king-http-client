@@ -12,9 +12,13 @@ import com.king.platform.net.http.netty.backpressure.BackPressure;
 import com.king.platform.net.http.netty.eventbus.DefaultEventBus;
 import com.king.platform.net.http.netty.eventbus.RootEventBus;
 import com.king.platform.net.http.netty.metric.MetricCallback;
+import com.king.platform.net.http.netty.metric.RecordedTimeStamps;
 import com.king.platform.net.http.netty.pool.ChannelPool;
 import com.king.platform.net.http.netty.pool.NoChannelPool;
+import com.king.platform.net.http.netty.pool.PoolingChannelPool;
+import com.king.platform.net.http.netty.util.SystemTimeProvider;
 import com.king.platform.net.http.netty.util.TimeProvider;
+import io.netty.util.HashedWheelTimer;
 import io.netty.util.Timer;
 
 import java.util.concurrent.Executor;
@@ -87,6 +91,59 @@ public class TestingHttpClientFactory {
 	public TestingHttpClientFactory setChannelPool(ChannelPool channelPool) {
 		nettyHttpClientBuilder.setChannelPool(channelPool);
 		return this;
+	}
+
+	public TestingHttpClientFactory useChannelPool() {
+		HashedWheelTimer cleanupTimer = new HashedWheelTimer();
+		SystemTimeProvider timeProvider = new SystemTimeProvider();
+		nettyHttpClientBuilder.setChannelPool(new PoolingChannelPool(cleanupTimer, timeProvider, 15000, new MetricCallback() {
+			@Override
+			public void onClosedConnectionTo(String host) {
+
+			}
+
+			@Override
+			public void onCreatedConnectionTo(String host) {
+
+			}
+
+			@Override
+			public void onReusedConnectionTo(String host) {
+
+			}
+
+			@Override
+			public void onError(String host, RecordedTimeStamps timeStampRecorder) {
+
+			}
+
+			@Override
+			public void onCompletedRequest(String host, RecordedTimeStamps recordedTimeStamps) {
+
+			}
+
+			@Override
+			public void onCreatedServerPool(String host) {
+
+			}
+
+			@Override
+			public void onRemovedServerPool(String host) {
+
+			}
+
+			@Override
+			public void onServerPoolClosedConnection(String host, int poolSize) {
+
+			}
+
+			@Override
+			public void onServerPoolAddedConnection(String host, int poolSize) {
+
+			}
+		}));
+		return this;
+
 	}
 
 	public TestingHttpClientFactory setKeepAliveTimeoutMs(int ms) {
