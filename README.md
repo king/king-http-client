@@ -1,7 +1,13 @@
 # king-http-client
-## 'com.king.king-http-client:king-http-client:3.0.10'
+## 'com.king.king-http-client:king-http-client:3.0.12'
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.king.king-http-client/king-http-client/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.king.king-http-client/king-http-client)
 
+## New in Version 3.0.12
+* Added support for disabling / enabling automatic decompression of gziped response bodies. This can either be configured globaly through `ConfKeys.AUTOMATICALLY_DECOMPRESS_RESPONSE` or per request through `.automaticallyDecompressResponse(boolean)`.
+
+## New in Version 3.0.11
+* Added checks for bad servers sending invalid http responses
+* Fixed issue where HEAD requests completed twice
 
 ## New in Version 3.0.10
 * Made it possible to close an `WebSocketConnection`
