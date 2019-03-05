@@ -167,7 +167,7 @@ public class HttpClientRequestWithBodyBuilderImpl extends HttpClientRequestHeade
 		}
 
 		return new BuiltNettyClientRequest<T>(httpClientCaller, httpVersion, httpMethod, uri, defaultUserAgent, idleTimeoutMillis, totalRequestTimeoutMillis, followRedirects,
-			acceptCompressedResponse, keepAlive, immutableBodyBuilder, contentType, bodyCharset, queryParameters, headerParameters, callbackExecutor, responseBodyConsumer);
+			acceptCompressedResponse, keepAlive, automaticallyDecompressResponse, immutableBodyBuilder, contentType, bodyCharset, queryParameters, headerParameters, callbackExecutor, responseBodyConsumer);
 	}
 
 

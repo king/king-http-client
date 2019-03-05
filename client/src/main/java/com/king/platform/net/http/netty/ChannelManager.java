@@ -75,7 +75,6 @@ public class ChannelManager {
 
 				addLoggingIfDesired(pipeline, confMap.get(ConfKeys.NETTY_TRACE_LOGS));
 				pipeline.addLast("http-codec", newHttpClientCodec());
-				pipeline.addLast("inflater", new HttpContentDecompressor());
 				pipeline.addLast("chunkedWriter", new ChunkedWriteHandler());
 				pipeline.addLast("httpClientHandler", httpClientHandler);
 
@@ -195,6 +194,7 @@ public class ChannelManager {
 	}
 
 	private void sendOnChannel(final Channel channel, final HttpRequestContext httpRequestContext, final RequestEventBus requestEventBus) {
+		addOrRemoveInflaterFromChannel(channel, httpRequestContext);
 
 		httpRequestContext.attachedToChannel(channel);
 		requestEventBus.triggerEvent(Event.onAttachedToChannel, channel);
@@ -212,6 +212,14 @@ public class ChannelManager {
         });
 
 		logger.trace("Wrote {} to channel {}", httpRequestContext, channel);
+	}
+
+	private void addOrRemoveInflaterFromChannel(Channel channel, HttpRequestContext httpRequestContext) {
+		if (httpRequestContext.automaticallyDecompressResponse() && channel.pipeline().get("inflater") == null) {
+			channel.pipeline().addAfter("http-codec", "inflater", new HttpContentDecompressor());
+		} else if (channel.pipeline().get("inflater") != null) {
+			channel.pipeline().remove("inflater");
+		}
 	}
 
 	private void scheduleTimeOutTasks(RequestEventBus requestEventBus, HttpRequestContext httpRequestContext, int totalRequestTimeoutMillis, int idleTimeoutMillis) {

@@ -37,8 +37,9 @@ public class HttpRequestContext<T> {
 	private long readBytes;
 	private boolean isRedirecting;
 
+	private boolean automaticallyDecompressResponse;
 
-	public HttpRequestContext(HttpMethod httpMethod, NettyHttpClientRequest<T> nettyHttpClientRequest, RequestEventBus requestEventBus, ResponseBodyConsumer<T> responseBodyConsumer, int idleTimeoutMillis, int totalRequestTimeoutMillis, boolean followRedirects, boolean keepAlive, TimeStampRecorder timeStampRecorder) {
+	public HttpRequestContext(HttpMethod httpMethod, NettyHttpClientRequest<T> nettyHttpClientRequest, RequestEventBus requestEventBus, ResponseBodyConsumer<T> responseBodyConsumer, int idleTimeoutMillis, int totalRequestTimeoutMillis, boolean followRedirects, boolean keepAlive, TimeStampRecorder timeStampRecorder, boolean automaticallyDecompressResponse) {
 		this.httpMethod = httpMethod;
 		this.nettyHttpClientRequest = nettyHttpClientRequest;
 		this.requestEventBus = requestEventBus;
@@ -48,13 +49,14 @@ public class HttpRequestContext<T> {
 		this.followRedirects = followRedirects;
 		this.keepAlive = keepAlive;
 		this.timeStampRecorder = timeStampRecorder;
+		this.automaticallyDecompressResponse = automaticallyDecompressResponse;
 		timeStampRecorder.recordCreatedRequest();
 	}
 
 	public HttpRequestContext createRedirectRequest(ServerInfo redirectServerInfo, String redirectLocation) {
 		NettyHttpClientRequest redirectRequest = nettyHttpClientRequest.createRedirectRequest(redirectServerInfo, redirectLocation);
 		HttpRequestContext httpRequestContext = new HttpRequestContext(httpMethod, redirectRequest, requestEventBus, responseBodyConsumer,
-			idleTimeoutMillis, totalRequestTimeoutMillis, followRedirects, keepAlive, timeStampRecorder);
+			idleTimeoutMillis, totalRequestTimeoutMillis, followRedirects, keepAlive, timeStampRecorder, automaticallyDecompressResponse);
 		httpRequestContext.redirectionCount = this.redirectionCount + 1;
 
 		nettyHttpClientRequest.setKeepAlive(keepAlive);
@@ -155,5 +157,9 @@ public class HttpRequestContext<T> {
 
 	public HttpMethod getHttpMethod() {
 		return httpMethod;
+	}
+
+	public boolean automaticallyDecompressResponse() {
+		return automaticallyDecompressResponse;
 	}
 }

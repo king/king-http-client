@@ -64,7 +64,7 @@ public class HttpClientWebSocketRequestBuilderImpl extends HttpClientRequestHead
 		totalRequestTimeoutMillis(0); //disable total timeouts
 
 		final BuiltNettyClientRequest<Void> builtNettyClientRequest = new BuiltNettyClientRequest<>(httpClientCaller, httpVersion, httpMethod, uri, defaultUserAgent,
-			idleTimeoutMillis, totalRequestTimeoutMillis, followRedirects, acceptCompressedResponse, keepAlive, null, null, null, queryParameters,
+			idleTimeoutMillis, totalRequestTimeoutMillis, followRedirects, acceptCompressedResponse, keepAlive, automaticallyDecompressResponse, null, null, null, queryParameters,
 			headerParameters, callbackExecutor, VoidResponseConsumer::new);
 
 

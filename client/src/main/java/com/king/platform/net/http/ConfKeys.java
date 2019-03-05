@@ -89,6 +89,11 @@ public class ConfKeys<T> {
 	public static final ConfKeys<Boolean> ACCEPT_COMPRESSED_RESPONSE = new ConfKeys<>(false);
 
 	/**
+	 * Should the client automatically decompress responses, defaults to true
+	 */
+	public static final ConfKeys<Boolean> AUTOMATICALLY_DECOMPRESS_RESPONSE = new ConfKeys<>(true);
+
+	/**
 	 * Should the client keep the connections alive between reqCuests, defaults to true
 	 */
 	public static final ConfKeys<Boolean> KEEP_ALIVE = new ConfKeys<>(true);

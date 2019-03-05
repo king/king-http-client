@@ -95,4 +95,11 @@ public interface HttpClientRequestHeaderBuilder<T extends HttpClientRequestHeade
 	 */
 	T executingOn(Executor executor);
 
+	/**
+	 * Set if the response should automatically be decompressed (if gziped).
+	 * Overrides {@link ConfKeys#AUTOMATICALLY_DECOMPRESS_RESPONSE}
+	 * @param automaticallyDecompressResponse if the response should be decompressed
+	 * @return the builder
+	 */
+	T automaticallyDecompressResponse(boolean automaticallyDecompressResponse);
 }

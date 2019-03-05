@@ -6,7 +6,10 @@
 package com.king.platform.net.http.integration;
 
 
+import com.king.platform.net.http.ByteArrayResponseBodyConsumer;
+import com.king.platform.net.http.ConfKeys;
 import com.king.platform.net.http.HttpClient;
+import com.king.platform.net.http.HttpResponse;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlets.GzipFilter;
 import org.junit.After;
@@ -14,10 +17,15 @@ import org.junit.Before;
 import org.junit.Test;
 
 import javax.servlet.ServletException;
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import static org.junit.Assert.assertEquals;
 
@@ -45,33 +53,62 @@ public class CompressedResponse {
 
 		integrationServer.addFilter(gzipHolder, "/*");
 
-		httpClient = new TestingHttpClientFactory().create();
+		httpClient = new TestingHttpClientFactory().useChannelPool().create();
 		httpClient.start();
-
-	}
-
-	@Test
-	public void getLocal() throws Exception {
 
 		integrationServer.addServlet(new HttpServlet() {
 			@Override
 			protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-				resp.getWriter().write(okBody);
-				resp.getWriter().flush();
+				byte[] compress = compress(okBody.getBytes());
+				resp.setHeader("content-encoding", "gzip");
 				resp.setStatus(200);
+				resp.setContentLength(compress.length);
+				ServletOutputStream outputStream = resp.getOutputStream();
+				outputStream.write(compress);
+				outputStream.flush();
+
 			}
 		}, "/testOk");
 
+	}
 
-		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createGet("http://localhost:" + port + "/testOk").acceptCompressedResponse(true).build().withHttpCallback(httpCallback).execute();
-		httpCallback.waitForCompletion();
+	@Test
+	public void getLocalWithDecompression() throws Exception {
+		HttpResponse<byte[]> httpResponse = httpClient.createGet("http://localhost:" + port + "/testOk")
+			.acceptCompressedResponse(true)
+			.automaticallyDecompressResponse(true)
+			.build(ByteArrayResponseBodyConsumer::new)
+			.execute()
+			.join();
 
-		assertEquals(okBody, httpCallback.getBody());
-		assertEquals(200, httpCallback.getStatusCode());
 
+
+		assertEquals(okBody, new String(httpResponse.getBody()));
+		assertEquals("chunked", httpResponse.getHeader("transfer-encoding"));
+
+		assertEquals(200, httpResponse.getStatusCode());
 
 	}
+
+	@Test
+	public void getLocalWithoutDecompression() throws Exception {
+
+		HttpResponse<byte[]> httpResponse = httpClient.createGet("http://localhost:" + port + "/testOk")
+			.acceptCompressedResponse(true)
+			.automaticallyDecompressResponse(false)
+			.build(ByteArrayResponseBodyConsumer::new)
+			.execute()
+			.join();
+
+
+		byte[] body = httpResponse.getBody();
+		assertEquals(okBody, new String(deflate(body)));
+		assertEquals("" + body.length, httpResponse.getHeader("content-length"));
+		assertEquals(200, httpResponse.getStatusCode());
+
+	}
+
+
 
 	@Test
 	public void get404() throws Exception {
@@ -92,6 +129,30 @@ public class CompressedResponse {
 
 	}
 
+
+	private static byte[] compress(byte[] dataToCompress) throws IOException {
+		ByteArrayOutputStream byteStream = new ByteArrayOutputStream(dataToCompress.length);
+
+		GZIPOutputStream zipStream = new GZIPOutputStream(byteStream);
+		zipStream.write(dataToCompress);
+		zipStream.close();
+		byteStream.close();
+
+		return byteStream.toByteArray();
+	}
+
+	private static byte[] deflate(byte[] dataToDeflate) throws IOException {
+		ByteArrayInputStream inputStream = new ByteArrayInputStream(dataToDeflate);
+		GZIPInputStream gzipInputStream = new GZIPInputStream(inputStream);
+		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+		byte[] buffer = new byte[1024];
+		int len = 0;
+
+		while ((len = gzipInputStream.read(buffer)) > 0) {
+			outputStream.write(buffer, 0, len);
+		}
+		return outputStream.toByteArray();
+	}
 
 	@After
 	public void tearDown() throws Exception {

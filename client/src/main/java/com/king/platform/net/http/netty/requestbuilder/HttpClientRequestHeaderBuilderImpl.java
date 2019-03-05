@@ -39,7 +39,9 @@ public abstract class HttpClientRequestHeaderBuilderImpl<T extends HttpClientReq
 	protected boolean followRedirects;
 	protected boolean acceptCompressedResponse;
 	protected boolean keepAlive;
+	protected  boolean automaticallyDecompressResponse;
 	protected Executor callbackExecutor;
+
 
 
 	protected HttpClientRequestHeaderBuilderImpl(Class<T> implClass, HttpClientCaller httpClientCaller, HttpVersion httpVersion, HttpMethod httpMethod, String uri, ConfMap confMap, Executor callbackExecutor) {
@@ -55,6 +57,8 @@ public abstract class HttpClientRequestHeaderBuilderImpl<T extends HttpClientReq
 
 
 		acceptCompressedResponse = confMap.get(ConfKeys.ACCEPT_COMPRESSED_RESPONSE);
+
+		automaticallyDecompressResponse = confMap.get(ConfKeys.AUTOMATICALLY_DECOMPRESS_RESPONSE);
 
 		keepAlive = confMap.get(ConfKeys.KEEP_ALIVE);
 
@@ -130,6 +134,12 @@ public abstract class HttpClientRequestHeaderBuilderImpl<T extends HttpClientReq
 	@Override
 	public T executingOn(Executor executor) {
 		this.callbackExecutor = requireNonNull(executor, "Executor can't be null");
+		return implClass.cast(this);
+	}
+
+	@Override
+	public T automaticallyDecompressResponse(boolean automaticallyDecompressResponse) {
+		this.automaticallyDecompressResponse = automaticallyDecompressResponse;
 		return implClass.cast(this);
 	}
 }
