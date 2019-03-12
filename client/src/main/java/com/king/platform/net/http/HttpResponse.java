@@ -6,6 +6,7 @@
 package com.king.platform.net.http;
 
 
+import com.king.platform.net.http.netty.NettyHeaders;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
@@ -26,7 +27,7 @@ public class HttpResponse<T> {
 		this.httpVersion = httpVersion;
 		this.status = status;
 		this.responseBodyConsumer = responseBodyConsumer;
-		this.headers = new Headers(httpHeaders);
+		this.headers = new NettyHeaders(httpHeaders);
 	}
 
 	public String getHttpVersion() {
@@ -56,5 +57,9 @@ public class HttpResponse<T> {
 
 	public List<Map.Entry<String, String>> getAllHeaders() {
 		return headers.entries();
+	}
+
+	public Headers headers() {
+		return headers;
 	}
 }

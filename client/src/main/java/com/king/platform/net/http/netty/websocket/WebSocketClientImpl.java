@@ -4,6 +4,7 @@ import com.king.platform.net.http.Headers;
 import com.king.platform.net.http.WebSocketClient;
 import com.king.platform.net.http.WebSocketListener;
 import com.king.platform.net.http.netty.HttpRequestContext;
+import com.king.platform.net.http.netty.NettyHeaders;
 import com.king.platform.net.http.netty.eventbus.Event;
 import com.king.platform.net.http.netty.requestbuilder.BuiltNettyClientRequest;
 import com.king.platform.net.http.netty.util.AwaitLatch;
@@ -47,7 +48,7 @@ public class WebSocketClientImpl implements WebSocketClient {
 	private final Duration pingEveryDuration;
 	private final AwaitLatch awaitLatch = new AwaitLatch();
 
-	private Headers headers = new Headers(EmptyHttpHeaders.INSTANCE);
+	private Headers headers = new NettyHeaders(EmptyHttpHeaders.INSTANCE);
 	private FragmentedFrameType expectedFragmentedFrameType;
 	private List<WebSocketFrame> bufferedFrames = new ArrayList<>();
 
@@ -382,7 +383,7 @@ public class WebSocketClientImpl implements WebSocketClient {
 
 		try {
 			this.channel = channel;
-			this.headers = new Headers(httpHeaders);
+			this.headers = new NettyHeaders(httpHeaders);
 			this.ready = true;
 			this.connectionFuture = null;
 

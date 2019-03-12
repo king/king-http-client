@@ -1,42 +1,23 @@
 package com.king.platform.net.http;
 
+
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class Headers {
-	private final io.netty.handler.codec.http.HttpHeaders httpHeaders;
+public interface Headers {
+	String get(CharSequence name);
 
-	public Headers(io.netty.handler.codec.http.HttpHeaders httpHeaders) {
-		this.httpHeaders = httpHeaders;
-	}
+	List<String> getAll(CharSequence name);
 
-	public String get(CharSequence name) {
-		return httpHeaders.get(name);
-	}
+	List<Map.Entry<String, String>> entries();
 
-	public List<String> getAll(CharSequence name) {
-		return httpHeaders.getAll(name);
-	}
+	boolean contains(CharSequence name);
 
-	public List<Map.Entry<String, String>> entries() {
-		return httpHeaders.entries();
-	}
+	int size();
 
-	public boolean contains(CharSequence name) {
-		return httpHeaders.contains(name);
-	}
+	Set<String> names();
 
-	public int size() {
-		return httpHeaders.size();
-	}
-
-	public Set<String> names() {
-		return httpHeaders.names();
-	}
-
-	public Iterator<Map.Entry<String, String>> iterator() {
-		return httpHeaders.iteratorAsString();
-	}
+	Iterator<Map.Entry<String, String>> iterator();
 }
