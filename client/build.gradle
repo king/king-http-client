@@ -21,7 +21,7 @@ apply plugin: "net.ltgt.errorprone"
 
 
 group 'com.king.king-http-client'
-version '3.0.12'
+version '3.0.13'
 
 ext.isReleaseVersion = !version.endsWith("SNAPSHOT")
 
