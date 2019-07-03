@@ -215,11 +215,16 @@ public class ChannelManager {
 	}
 
 	private void addOrRemoveInflaterFromChannel(Channel channel, HttpRequestContext httpRequestContext) {
-		if (httpRequestContext.automaticallyDecompressResponse() && channel.pipeline().get("inflater") == null) {
-			channel.pipeline().addAfter("http-codec", "inflater", new HttpContentDecompressor());
-		} else if (channel.pipeline().get("inflater") != null) {
-			channel.pipeline().remove("inflater");
+		if (httpRequestContext.automaticallyDecompressResponse()) {
+			if (channel.pipeline().get("inflater") == null) {
+				channel.pipeline().addAfter("http-codec", "inflater", new HttpContentDecompressor());
+			}
+		} else {
+			if (channel.pipeline().get("inflater") != null) {
+				channel.pipeline().remove("inflater");
+			}
 		}
+
 	}
 
 	private void scheduleTimeOutTasks(RequestEventBus requestEventBus, HttpRequestContext httpRequestContext, int totalRequestTimeoutMillis, int idleTimeoutMillis) {

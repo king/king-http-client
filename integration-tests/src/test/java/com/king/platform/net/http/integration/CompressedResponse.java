@@ -7,7 +7,6 @@ package com.king.platform.net.http.integration;
 
 
 import com.king.platform.net.http.ByteArrayResponseBodyConsumer;
-import com.king.platform.net.http.ConfKeys;
 import com.king.platform.net.http.HttpClient;
 import com.king.platform.net.http.HttpResponse;
 import org.eclipse.jetty.servlet.FilterHolder;
@@ -24,6 +23,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -59,7 +59,7 @@ public class CompressedResponse {
 		integrationServer.addServlet(new HttpServlet() {
 			@Override
 			protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-				byte[] compress = compress(okBody.getBytes());
+				byte[] compress = compress(okBody.getBytes(StandardCharsets.UTF_8));
 				resp.setHeader("content-encoding", "gzip");
 				resp.setStatus(200);
 				resp.setContentLength(compress.length);
@@ -74,59 +74,103 @@ public class CompressedResponse {
 
 	@Test
 	public void getLocalWithDecompression() throws Exception {
-		HttpResponse<byte[]> httpResponse = httpClient.createGet("http://localhost:" + port + "/testOk")
-			.acceptCompressedResponse(true)
-			.automaticallyDecompressResponse(true)
-			.build(ByteArrayResponseBodyConsumer::new)
-			.execute()
-			.join();
+		HttpResponse<byte[]> httpResponse = getDeflatedResponse();
+
+		verifyDeflated(httpResponse);
+	}
+
+	@Test
+	public void getLocalWithDecompressionTwice() throws Exception {
+		HttpResponse<byte[]> httpResponse = getDeflatedResponse();
+
+		verifyDeflated(httpResponse);
+
+		Thread.sleep(10);
+
+		httpResponse = getDeflatedResponse();
 
 
+		verifyDeflated(httpResponse);
 
-		assertEquals(okBody, new String(httpResponse.getBody()));
-		assertEquals("chunked", httpResponse.getHeader("transfer-encoding"));
-
-		assertEquals(200, httpResponse.getStatusCode());
 
 	}
+
 
 	@Test
 	public void getLocalWithoutDecompression() throws Exception {
 
-		HttpResponse<byte[]> httpResponse = httpClient.createGet("http://localhost:" + port + "/testOk")
+		HttpResponse<byte[]> httpResponse = getCompressedResponse();
+
+		verifyCompressed(httpResponse);
+
+	}
+
+	@Test
+	public void getMultipleOnSameChannel() throws Exception {
+		HttpResponse<byte[]> httpResponse = getDeflatedResponse();
+
+		verifyDeflated(httpResponse);
+
+		Thread.sleep(10);
+
+
+		httpResponse = getCompressedResponse();
+
+
+		verifyCompressed(httpResponse);
+
+		Thread.sleep(10);
+
+		httpResponse = getDeflatedResponse();
+
+
+		verifyDeflated(httpResponse);
+
+
+		Thread.sleep(10);
+
+		httpResponse = getDeflatedResponse();
+
+
+		verifyDeflated(httpResponse);
+
+
+	}
+
+	private HttpResponse<byte[]> getCompressedResponse() {
+		HttpResponse<byte[]> httpResponse;
+		httpResponse = httpClient.createGet("http://localhost:" + port + "/testOk")
 			.acceptCompressedResponse(true)
 			.automaticallyDecompressResponse(false)
 			.build(ByteArrayResponseBodyConsumer::new)
 			.execute()
 			.join();
+		return httpResponse;
+	}
 
+	private HttpResponse<byte[]> getDeflatedResponse() {
+		HttpResponse<byte[]> httpResponse;
+		httpResponse = httpClient.createGet("http://localhost:" + port + "/testOk")
+			.acceptCompressedResponse(true)
+			.automaticallyDecompressResponse(true)
+			.build(ByteArrayResponseBodyConsumer::new)
+			.execute()
+			.join();
+		return httpResponse;
+	}
 
-		byte[] body = httpResponse.getBody();
-		assertEquals(okBody, new String(deflate(body)));
-		assertEquals("" + body.length, httpResponse.getHeader("content-length"));
+	private void verifyDeflated(HttpResponse<byte[]> httpResponse) {
+		assertEquals(okBody, new String(httpResponse.getBody(), StandardCharsets.UTF_8));
+		assertEquals("chunked", httpResponse.getHeader("transfer-encoding"));
 		assertEquals(200, httpResponse.getStatusCode());
-
 	}
 
 
-
-	@Test
-	public void get404() throws Exception {
-
-		integrationServer.addServlet(new HttpServlet() {
-			@Override
-			protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-				resp.setStatus(404);
-			}
-		}, "/test404");
-
-		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createGet("http://localhost:" + port + "/test404").build().withHttpCallback(httpCallback).execute();
-		httpCallback.waitForCompletion();
-		assertEquals("", httpCallback.getBody());
-		assertEquals(404, httpCallback.getStatusCode());
-
-
+	private void verifyCompressed(HttpResponse<byte[]> httpResponse) throws IOException {
+		byte[] body = httpResponse.getBody();
+		assertEquals(okBody, new String(deflate(body), StandardCharsets.UTF_8));
+		assertEquals("" + body.length, httpResponse.getHeader("content-length"));
+		assertEquals(200, httpResponse.getStatusCode());
 	}
 
 
