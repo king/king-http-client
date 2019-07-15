@@ -39,7 +39,8 @@ public class HttpClientCallerImpl implements HttpClientCaller {
 														  HttpCallback<T> httpCallback, final NioCallback nioCallback, UploadCallback uploadCallback,
 														  ResponseBodyConsumer<T> responseBodyConsumer, Executor callbackExecutor,
 														  ExternalEventTrigger externalEventTrigger, CustomCallbackSubscriber customCallbackSubscriber, int idleTimeoutMillis, int totalRequestTimeoutMillis,
-														  boolean followRedirects, boolean keepAlive, boolean automaticallyDecompressResponse) {
+														  boolean followRedirects, boolean keepAlive, boolean automaticallyDecompressResponse,
+														  WebSocketConf webSocketConf) {
 
 		final RequestEventBus requestRequestEventBus = rootEventBus.createRequestEventBus();
 
@@ -73,7 +74,8 @@ public class HttpClientCallerImpl implements HttpClientCaller {
 
 		final HttpRequestContext<T> httpRequestContext = new HttpRequestContext<>(httpMethod, nettyHttpClientRequest, requestRequestEventBus,
 			responseBodyConsumer,
-			idleTimeoutMillis, totalRequestTimeoutMillis, followRedirects, keepAlive, new TimeStampRecorder(timeProvider), automaticallyDecompressResponse);
+			idleTimeoutMillis, totalRequestTimeoutMillis, followRedirects, keepAlive, new TimeStampRecorder(timeProvider), automaticallyDecompressResponse,
+			webSocketConf);
 
 		ResponseFuture<T> future = new ResponseFuture<>(requestRequestEventBus, httpRequestContext, callbackExecutor);
 

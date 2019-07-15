@@ -39,7 +39,9 @@ public class HttpRequestContext<T> {
 
 	private boolean automaticallyDecompressResponse;
 
-	public HttpRequestContext(HttpMethod httpMethod, NettyHttpClientRequest<T> nettyHttpClientRequest, RequestEventBus requestEventBus, ResponseBodyConsumer<T> responseBodyConsumer, int idleTimeoutMillis, int totalRequestTimeoutMillis, boolean followRedirects, boolean keepAlive, TimeStampRecorder timeStampRecorder, boolean automaticallyDecompressResponse) {
+	private WebSocketConf webSocketConf;
+
+	public HttpRequestContext(HttpMethod httpMethod, NettyHttpClientRequest<T> nettyHttpClientRequest, RequestEventBus requestEventBus, ResponseBodyConsumer<T> responseBodyConsumer, int idleTimeoutMillis, int totalRequestTimeoutMillis, boolean followRedirects, boolean keepAlive, TimeStampRecorder timeStampRecorder, boolean automaticallyDecompressResponse, WebSocketConf webSocketConf) {
 		this.httpMethod = httpMethod;
 		this.nettyHttpClientRequest = nettyHttpClientRequest;
 		this.requestEventBus = requestEventBus;
@@ -50,13 +52,14 @@ public class HttpRequestContext<T> {
 		this.keepAlive = keepAlive;
 		this.timeStampRecorder = timeStampRecorder;
 		this.automaticallyDecompressResponse = automaticallyDecompressResponse;
+		this.webSocketConf = webSocketConf;
 		timeStampRecorder.recordCreatedRequest();
 	}
 
 	public HttpRequestContext createRedirectRequest(ServerInfo redirectServerInfo, String redirectLocation) {
 		NettyHttpClientRequest redirectRequest = nettyHttpClientRequest.createRedirectRequest(redirectServerInfo, redirectLocation);
 		HttpRequestContext httpRequestContext = new HttpRequestContext(httpMethod, redirectRequest, requestEventBus, responseBodyConsumer,
-			idleTimeoutMillis, totalRequestTimeoutMillis, followRedirects, keepAlive, timeStampRecorder, automaticallyDecompressResponse);
+			idleTimeoutMillis, totalRequestTimeoutMillis, followRedirects, keepAlive, timeStampRecorder, automaticallyDecompressResponse, webSocketConf);
 		httpRequestContext.redirectionCount = this.redirectionCount + 1;
 
 		nettyHttpClientRequest.setKeepAlive(keepAlive);
@@ -161,5 +164,9 @@ public class HttpRequestContext<T> {
 
 	public boolean automaticallyDecompressResponse() {
 		return automaticallyDecompressResponse;
+	}
+
+	public WebSocketConf webSocketConf() {
+		return webSocketConf;
 	}
 }

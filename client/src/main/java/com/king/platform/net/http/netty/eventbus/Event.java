@@ -8,6 +8,7 @@ package com.king.platform.net.http.netty.eventbus;
 import com.king.platform.net.http.HttpResponse;
 import com.king.platform.net.http.netty.HttpRequestContext;
 import com.king.platform.net.http.netty.ServerInfo;
+import com.king.platform.net.http.netty.WebSocketConf;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
@@ -46,7 +47,7 @@ public interface Event {
 	Event1<HttpResponse> onHttpResponseDone = new Event1<>("onHttpResponseDone");
 
 
-	Event1<ChannelPipeline> WS_UPGRADE_PIPELINE = new Event1<>("WS_UPGRADE_PIPELINE");
+	Event2<ChannelPipeline, WebSocketConf> WS_UPGRADE_PIPELINE = new Event2<>("WS_UPGRADE_PIPELINE");
 	Event2<Channel, HttpHeaders> onWsOpen = new Event2<>("onWsOpen");
 	Event1<WebSocketFrame> onWsFrame = new Event1<>("onWsFrame");
 

@@ -27,8 +27,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
+import java.util.Random;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -57,6 +57,7 @@ public class WebSocket {
 			.setChannelPool(new NoChannelPool()).setExecutionBackPressure(new EvictingBackPressure(10))
 			.setOption(ConfKeys.IDLE_TIMEOUT_MILLIS, 0)
 			.setOption(ConfKeys.TOTAL_REQUEST_TIMEOUT_MILLIS, 0)
+			.setOption(ConfKeys.NETTY_TRACE_LOGS, true)
 			.setRootEventBus(recordingEventBus)
 			.createHttpClient();
 
@@ -73,43 +74,13 @@ public class WebSocket {
 		integrationServer.addServlet(new WebSocketServlet() {
 			@Override
 			public void configure(WebSocketServletFactory factory) {
-
+				factory.getPolicy().setMaxBinaryMessageBufferSize(1024 * 1024);
+				factory.getPolicy().setMaxBinaryMessageSize(1024 * 1024);
 				factory.register(EchoWebSocketEndpoint.class);
 			}
 		}, "/websocket/test");
 
 
-	}
-
-	public static class EchoWebSocketEndpoint implements org.eclipse.jetty.websocket.api.WebSocketListener {
-
-		private Session session;
-
-		@Override
-		public void onWebSocketBinary(byte[] payload, int offset, int len) {
-
-		}
-
-		@Override
-		public void onWebSocketClose(int statusCode, String reason) {
-		}
-
-		@Override
-		public void onWebSocketConnect(Session session) {
-			this.session = session;
-		}
-
-		@Override
-		public void onWebSocketError(Throwable cause) {
-		}
-
-		@Override
-		public void onWebSocketText(String message) {
-			try {
-				session.getRemote().sendString(message.toUpperCase());
-			} catch (IOException ignored) {
-			}
-		}
 	}
 
 	@Test(timeout = 5000)
@@ -131,11 +102,6 @@ public class WebSocket {
 				}
 
 				@Override
-				public void onCloseFrame(int code, String reason) {
-
-				}
-
-				@Override
 				public void onError(Throwable throwable) {
 					System.out.println("Client error " + throwable);
 				}
@@ -143,6 +109,11 @@ public class WebSocket {
 				@Override
 				public void onDisconnect() {
 					countDownLatch.countDown();
+				}
+
+				@Override
+				public void onCloseFrame(int code, String reason) {
+
 				}
 
 				@Override
@@ -182,10 +153,6 @@ public class WebSocket {
 				}
 
 				@Override
-				public void onCloseFrame(int code, String reason) {
-				}
-
-				@Override
 				public void onError(Throwable throwable) {
 					System.out.println("Client error " + throwable);
 				}
@@ -194,6 +161,10 @@ public class WebSocket {
 				public void onDisconnect() {
 					countDownLatch.countDown();
 
+				}
+
+				@Override
+				public void onCloseFrame(int code, String reason) {
 				}
 
 				@Override
@@ -233,10 +204,6 @@ public class WebSocket {
 			}
 
 			@Override
-			public void onCloseFrame(int code, String reason) {
-			}
-
-			@Override
 			public void onError(Throwable throwable) {
 				countDownLatch.countDown();
 			}
@@ -244,6 +211,10 @@ public class WebSocket {
 			@Override
 			public void onDisconnect() {
 				countDownLatch.countDown();
+			}
+
+			@Override
+			public void onCloseFrame(int code, String reason) {
 			}
 
 			@Override
@@ -523,11 +494,6 @@ public class WebSocket {
 				}
 
 				@Override
-				public void onCloseFrame(int code, String reason) {
-
-				}
-
-				@Override
 				public void onError(Throwable throwable) {
 					System.out.println("Client error " + throwable);
 				}
@@ -535,6 +501,11 @@ public class WebSocket {
 				@Override
 				public void onDisconnect() {
 					countDownLatch.countDown();
+				}
+
+				@Override
+				public void onCloseFrame(int code, String reason) {
+
 				}
 
 				@Override
@@ -554,7 +525,6 @@ public class WebSocket {
 
 		assertEquals("HELLO WORLD", receivedText.get());
 	}
-
 
 	@Test(timeout = 5000)
 	public void webSocketShouldCallOnConnectBeforeItReturns() throws Exception {
@@ -578,12 +548,106 @@ public class WebSocket {
 
 	}
 
+	@Test
+	public void sendingLargeContentShouldSplitIntoFrames() throws ExecutionException, InterruptedException {
+		AtomicReference<String> receivedContent = new AtomicReference<>();
+		CountDownLatch countDownLatch = new CountDownLatch(1);
+		WebSocketClient webSocketClient = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
+			.build()
+			.execute(new WebSocketListenerAdapter() {
+				@Override
+				public void onConnect(WebSocketConnection connection) {
+
+				}
+
+				@Override
+				public void onBinaryFrame(byte[] payload, boolean finalFragment, int rsv) {
+				}
+
+				@Override
+				public void onTextFrame(String payload, boolean finalFragment, int rsv) {
+					receivedContent.set(payload);
+					countDownLatch.countDown();
+				}
+			}).get();
+
+		byte[] content = new byte[67933];
+		new Random().nextBytes(content);
+
+		CompletableFuture<Void> voidCompletableFuture = webSocketClient.sendBinaryFrame(content);
+		voidCompletableFuture.join();
+
+		countDownLatch.await(1, TimeUnit.SECONDS);
+
+		assertEquals(Md5Util.getChecksum(content), receivedContent.get());
+	}
+
+	@Test
+	public void tooLargeFrameShouldTriggerIllegalStateException() {
+		byte[] content = new byte[1000];
+		try {
+			WebSocketClient client = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
+				.maxFrameSize(800)
+				.splitLargeFrames(false)
+				.build()
+				.execute(new WebSocketListenerAdapter() {})
+				.join();
+
+			client.sendBinaryFrame(content).join();
+			fail("Should have thrown exception!");
+		} catch (CompletionException ce) {
+			assertTrue(ce.getCause() instanceof IllegalStateException);
+		}
+	}
 
 	@After
 	public void tearDown() throws Exception {
 		integrationServer.shutdown();
 		httpClient.shutdown();
 
+	}
+
+	public static class EchoWebSocketEndpoint implements org.eclipse.jetty.websocket.api.WebSocketListener {
+
+		private Session session;
+
+		@Override
+		public void onWebSocketBinary(byte[] payload, int offset, int len) {
+			String checksum = Md5Util.getChecksum(payload);
+			try {
+				session.getRemote().sendString(checksum);
+			} catch (IOException ignored) {
+			}
+		}
+
+		@Override
+		public void onWebSocketClose(int statusCode, String reason) {
+		}
+
+		@Override
+		public void onWebSocketConnect(Session session) {
+			this.session = session;
+		}
+
+		@Override
+		public void onWebSocketError(Throwable cause) {
+		}
+
+		@Override
+		public void onWebSocketText(String message) {
+			if ("disconnect".equalsIgnoreCase(message)) {
+				try {
+					System.out.println("Forcing disconnect of client!");
+					session.disconnect();
+				} catch (IOException e) {
+				}
+			} else {
+				try {
+					session.getRemote().sendString(message.toUpperCase());
+				} catch (IOException ignored) {
+				}
+			}
+		}
 	}
 
 

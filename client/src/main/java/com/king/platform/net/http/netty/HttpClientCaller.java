@@ -19,6 +19,6 @@ public interface HttpClientCaller {
 												   NioCallback nioCallback, UploadCallback uploadCallback, ResponseBodyConsumer<T> responseBodyConsumer,
 												   Executor callbackExecutor, ExternalEventTrigger externalEventTrigger, CustomCallbackSubscriber customCallbackSubscriber, int idleTimeoutMillis,
 												   int totalRequestTimeoutMillis, boolean followRedirects, boolean keepAlive, boolean
-													   automaticallyDecompressResponse);
+													   automaticallyDecompressResponse, WebSocketConf webSocketConf);
 
 }

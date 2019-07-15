@@ -12,9 +12,9 @@
 		</encoder>
 	</appender>
 
-	<logger name="org.eclipse.jetty" level="error"/>
+	<logger name="org.eclipse.jetty" level="trace"/>
 
-	<root level="ERROR">
+	<root level="trace">
 		<appender-ref ref="STDOUT"/>
 	</root>
 

@@ -109,7 +109,7 @@ public class WebSocketResponseHandler implements ResponseHandler {
 		}
 
 
-		requestEventBus.triggerEvent(Event.WS_UPGRADE_PIPELINE, channel.pipeline());
+		requestEventBus.triggerEvent(Event.WS_UPGRADE_PIPELINE, channel.pipeline(), httpRequestContext.webSocketConf());
 
 		requestEventBus.triggerEvent(Event.onWsOpen, channel, response.headers());
 

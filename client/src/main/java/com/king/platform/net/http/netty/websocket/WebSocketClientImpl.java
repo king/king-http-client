@@ -16,6 +16,7 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.handler.codec.http.EmptyHttpHeaders;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.websocketx.*;
+import io.netty.util.CharsetUtil;
 import io.netty.util.concurrent.ScheduledFuture;
 import org.slf4j.Logger;
 
@@ -45,25 +46,29 @@ public class WebSocketClientImpl implements WebSocketClient {
 	private final Executor completableFutureExecutor;
 	private final boolean autoPong;
 	private final boolean autoCloseFrame;
+
+	private final boolean splitLargeFrames;
+	private final int maxFrameSize;
+
 	private final Duration pingEveryDuration;
 	private final AwaitLatch awaitLatch = new AwaitLatch();
-
+	private final ReentrantLock lock;
 	private Headers headers = new NettyHeaders(EmptyHttpHeaders.INSTANCE);
 	private FragmentedFrameType expectedFragmentedFrameType;
 	private List<WebSocketFrame> bufferedFrames = new ArrayList<>();
-
 	private volatile Channel channel;
 	private volatile boolean ready;
 	private volatile CompletableFuture<WebSocketClient> connectionFuture;
 	private volatile ScheduledFuture<?> pingFuture;
 
-	private final ReentrantLock lock;
-
-	public WebSocketClientImpl(BuiltNettyClientRequest<Void> builtNettyClientRequest, Executor listenerExecutor, Executor completableFutureExecutor, boolean
-		autoPong, boolean autoCloseFrame, Duration pingEveryDuration) {
+	public WebSocketClientImpl(BuiltNettyClientRequest<Void> builtNettyClientRequest, Executor listenerExecutor, Executor completableFutureExecutor,
+							   boolean autoCloseFrame, boolean splitLargeFrames, int maxFrameSize, boolean
+								   autoPong, Duration pingEveryDuration) {
 		this.builtNettyClientRequest = builtNettyClientRequest;
 		this.callbackExecutor = listenerExecutor;
 		this.completableFutureExecutor = completableFutureExecutor;
+		this.splitLargeFrames = splitLargeFrames;
+		this.maxFrameSize = maxFrameSize;
 		this.autoPong = autoPong;
 		this.autoCloseFrame = autoCloseFrame;
 		this.pingEveryDuration = pingEveryDuration;
@@ -94,47 +99,20 @@ public class WebSocketClientImpl implements WebSocketClient {
 	}
 
 	@Override
-	public void addListener(WebSocketListener webSocketListener) {
-		listeners.add(webSocketListener);
-	}
-
-	@Override
-	public CompletableFuture<WebSocketClient> connect() {
-		lock.lock();
-		try {
-			if (connectionFuture != null) {
-				throw new IllegalStateException("Already trying to connect!");
-			}
-
-			if (!ready) {
-				connectionFuture = new CompletableFuture<>();
-				builtNettyClientRequest.execute();
-				return connectionFuture;
-			} else {
-				throw new IllegalStateException("Already connected");
-			}
-		} finally {
-			lock.unlock();
-		}
-
-	}
-
-	@Override
-	public void awaitClose() throws InterruptedException {
-		if (connectionFuture == null && channel == null) {
-			return;
-		}
-
-		awaitLatch.awaitClose();
-	}
-
-	@Override
 	public boolean isConnected() {
 		return ready;
 	}
 
 	@Override
 	public CompletableFuture<Void> sendTextFrame(String text) {
+		ByteBuf buf = Unpooled.EMPTY_BUFFER;
+		if (text != null && !text.isEmpty()) {
+			buf = Unpooled.copiedBuffer(text, CharsetUtil.UTF_8);
+		}
+		return sendFrame(buf, FrameType.TEXT);
+	}
+
+	private CompletableFuture<Void> sendFrame(ByteBuf buffer, FrameType frameType) {
 		Channel channel = this.channel;
 
 		if (!ready || channel == null || !channel.isOpen()) {
@@ -142,7 +120,102 @@ public class WebSocketClientImpl implements WebSocketClient {
 			future.completeExceptionally(new IllegalStateException("Not connected!"));
 			return future;
 		}
-		return convert(channel.writeAndFlush(new TextWebSocketFrame(text)));
+
+		int length = buffer.readableBytes();
+
+		if (length > maxFrameSize && !splitLargeFrames) {
+			CompletableFuture<Void> future = new CompletableFuture<>();
+			future.completeExceptionally(new IllegalStateException("Payload size is larger then maxFrameSize and splitLargeFrames is disabled"));
+			return future;
+		}
+
+
+		if (length > maxFrameSize) {
+			List<WebSocketFrame> webSocketFrames = new ArrayList<>();
+
+			int readIndex = buffer.readerIndex();
+			int sizeLeft = buffer.readableBytes();
+			boolean first = true;
+			while (sizeLeft != 0) {
+				int size = Math.min(sizeLeft, maxFrameSize);
+				sizeLeft -= size;
+				boolean lastFrame = sizeLeft == 0;
+				if (first) {
+					if (frameType == FrameType.TEXT) {
+						webSocketFrames.add(new TextWebSocketFrame(lastFrame, 0, buffer.slice(readIndex, size)));
+					} else if (frameType == FrameType.BINARY) {
+						webSocketFrames.add(new BinaryWebSocketFrame(lastFrame, 0, buffer.slice(readIndex, size)));
+					}
+					first = false;
+				} else {
+					webSocketFrames.add(new ContinuationWebSocketFrame(lastFrame, 0, buffer.slice(readIndex, size)));
+				}
+				buffer.retain();
+				readIndex += size;
+			}
+
+			CompletableFuture<Void>[] cf = new CompletableFuture[webSocketFrames.size()];
+			for (int i = 0; i < webSocketFrames.size(); i++) {
+				cf[i] = convert(this.channel.write(webSocketFrames.get(i)));
+			}
+
+			this.channel.flush();
+
+			return CompletableFuture.allOf(cf);
+
+		} else {
+			if (frameType == FrameType.TEXT) {
+				return convert(channel.writeAndFlush(new TextWebSocketFrame(buffer)));
+			} else {
+				return convert(channel.writeAndFlush(new BinaryWebSocketFrame(buffer)));
+			}
+		}
+	}
+
+	private CompletableFuture<Void> convert(ChannelFuture f) {
+		CompletableFuture<Void> completableFuture = new CompletableFuture<>();
+		f.addListener((ChannelFutureListener) future -> {
+			if (future.isSuccess()) {
+				completableFuture.complete(null);
+			} else {
+				completableFuture.completeExceptionally(future.cause());
+			}
+		});
+		return completableFuture;
+	}
+
+	@Override
+	public CompletableFuture<Void> sendTextFrame(String text, boolean finalFragment, int rsv) {
+
+		ByteBuf buf = Unpooled.EMPTY_BUFFER;
+		if (text != null && !text.isEmpty()) {
+			buf = Unpooled.copiedBuffer(text, CharsetUtil.UTF_8);
+		}
+		return sendFrame(buf, finalFragment, rsv, FrameType.TEXT);
+
+	}
+
+	private CompletableFuture<Void> sendFrame(ByteBuf buf, boolean finalFragment, int rsv, FrameType frameType) {
+		Channel channel = this.channel;
+
+		if (!ready || channel == null || !channel.isOpen()) {
+			CompletableFuture<Void> future = new CompletableFuture<>();
+			future.completeExceptionally(new IllegalStateException("Not connected!"));
+			return future;
+		}
+
+		int length = buf.readableBytes();
+
+		if (length > maxFrameSize) {
+			CompletableFuture<Void> future = new CompletableFuture<>();
+			future.completeExceptionally(new IllegalStateException("Payload size is larger then maxFrameSize"));
+			return future;
+		}
+		if (frameType == FrameType.TEXT) {
+			return convert(channel.writeAndFlush(new TextWebSocketFrame(finalFragment, rsv, buf)));
+		} else {
+			return convert(channel.writeAndFlush(new BinaryWebSocketFrame(finalFragment, rsv, buf)));
+		}
 	}
 
 	@Override
@@ -167,14 +240,20 @@ public class WebSocketClientImpl implements WebSocketClient {
 
 	@Override
 	public CompletableFuture<Void> sendBinaryFrame(byte[] payload) {
-		Channel channel = this.channel;
-		if (!ready || channel == null || !channel.isOpen()) {
-			CompletableFuture<Void> future = new CompletableFuture<>();
-			future.completeExceptionally(new IllegalStateException("Not connected!"));
-			return future;
+		if (payload == null) {
+			payload = new byte[0];
 		}
 
-		return convert(channel.writeAndFlush(new BinaryWebSocketFrame(Unpooled.wrappedBuffer(payload))));
+		return sendFrame(Unpooled.copiedBuffer(payload), FrameType.BINARY);
+	}
+
+	@Override
+	public CompletableFuture<Void> sendBinaryFrame(byte[] payload, boolean finalFragment, int rsv) {
+		if (payload == null) {
+			payload = new byte[0];
+		}
+
+		return sendFrame(Unpooled.copiedBuffer(payload), finalFragment, rsv, FrameType.BINARY);
 	}
 
 	@Override
@@ -223,16 +302,39 @@ public class WebSocketClientImpl implements WebSocketClient {
 		}
 	}
 
-	private CompletableFuture<Void> convert(ChannelFuture f) {
-		CompletableFuture<Void> completableFuture = new CompletableFuture<>();
-		f.addListener((ChannelFutureListener) future -> {
-			if (future.isSuccess()) {
-				completableFuture.complete(null);
-			} else {
-				completableFuture.completeExceptionally(future.cause());
+	@Override
+	public void addListener(WebSocketListener webSocketListener) {
+		listeners.add(webSocketListener);
+	}
+
+	@Override
+	public void awaitClose() throws InterruptedException {
+		if (connectionFuture == null && channel == null) {
+			return;
+		}
+
+		awaitLatch.awaitClose();
+	}
+
+	@Override
+	public CompletableFuture<WebSocketClient> connect() {
+		lock.lock();
+		try {
+			if (connectionFuture != null) {
+				throw new IllegalStateException("Already trying to connect!");
 			}
-		});
-		return completableFuture;
+
+			if (!ready) {
+				connectionFuture = new CompletableFuture<>();
+				builtNettyClientRequest.execute();
+				return connectionFuture;
+			} else {
+				throw new IllegalStateException("Already connected");
+			}
+		} finally {
+			lock.unlock();
+		}
+
 	}
 
 	private void onWebSocketFrame(WebSocketFrame frame) {
@@ -511,6 +613,11 @@ public class WebSocketClientImpl implements WebSocketClient {
 			"channel=" + channel +
 			", ready=" + ready +
 			'}';
+	}
+
+	enum FrameType {
+		TEXT,
+		BINARY
 	}
 
 	private enum FragmentedFrameType {

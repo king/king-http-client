@@ -9,6 +9,7 @@ package com.king.platform.net.http.netty.requestbuilder;
 import com.king.platform.net.http.*;
 import com.king.platform.net.http.netty.ConfMap;
 import com.king.platform.net.http.netty.HttpClientCaller;
+import com.king.platform.net.http.netty.WebSocketConf;
 import com.king.platform.net.http.netty.sse.VoidResponseConsumer;
 import com.king.platform.net.http.netty.websocket.WebSocketClientImpl;
 import io.netty.handler.codec.http.HttpHeaderNames;
@@ -25,6 +26,10 @@ public class HttpClientWebSocketRequestBuilderImpl extends HttpClientRequestHead
 	private boolean autoPong;
 	private Duration pingEveryDuration;
 	private boolean autoCloseFrame;
+	private int maxFrameSize;
+	private boolean aggregateFrames;
+	private int maxAggregateBufferSize;
+	private boolean splitLargeFrames;
 
 	public HttpClientWebSocketRequestBuilderImpl(HttpClientCaller httpClientCaller, String uri, ConfMap confMap,
 												 Executor callbackExecutor) {
@@ -32,6 +37,10 @@ public class HttpClientWebSocketRequestBuilderImpl extends HttpClientRequestHead
 		this.defaultCallbackExecutor = callbackExecutor;
 		autoPong(confMap.get(ConfKeys.WEB_SOCKET_AUTO_PONG));
 		autoCloseFrame(confMap.get(ConfKeys.WEB_SOCKET_AUTO_CLOSE_FRAME));
+		maxFrameSize(confMap.get(ConfKeys.WEB_SOCKET_MAX_FRAME_SIZE));
+		aggregateFrames(confMap.get(ConfKeys.WEB_SOCKET_AGGREGATE_FRAMES));
+		maxAggregateBufferSize(confMap.get(ConfKeys.WEB_SOCKET_MAX_AGGREGATE_BUFFER_SIZE));
+		splitLargeFrames(confMap.get(ConfKeys.WEB_SOCKET_SPLIT_FRAMES));
 	}
 
 	@Override
@@ -59,13 +68,39 @@ public class HttpClientWebSocketRequestBuilderImpl extends HttpClientRequestHead
 	}
 
 	@Override
+	public HttpClientWebSocketRequestBuilder maxFrameSize(int maxFrameSize) {
+		this.maxFrameSize = maxFrameSize;
+		return this;
+	}
+
+	@Override
+	public HttpClientWebSocketRequestBuilder aggregateFrames(boolean aggregateFrames) {
+		this.aggregateFrames = aggregateFrames;
+		return this;
+	}
+
+	@Override
+	public HttpClientWebSocketRequestBuilder maxAggregateBufferSize(int maxAggregateBufferSize) {
+		this.maxAggregateBufferSize = maxAggregateBufferSize;
+		return this;
+	}
+
+	@Override
+	public HttpClientWebSocketRequestBuilder splitLargeFrames(boolean splitLargeFrames) {
+		this.splitLargeFrames = splitLargeFrames;
+		return this;
+	}
+
+	@Override
 	public BuiltWebSocketRequest build() {
 
 		totalRequestTimeoutMillis(0); //disable total timeouts
 
+		WebSocketConf webSocketConf = new WebSocketConf(maxFrameSize, aggregateFrames, maxAggregateBufferSize, splitLargeFrames);
+
 		final BuiltNettyClientRequest<Void> builtNettyClientRequest = new BuiltNettyClientRequest<>(httpClientCaller, httpVersion, httpMethod, uri, defaultUserAgent,
 			idleTimeoutMillis, totalRequestTimeoutMillis, followRedirects, acceptCompressedResponse, keepAlive, automaticallyDecompressResponse, null, null, null, queryParameters,
-			headerParameters, callbackExecutor, VoidResponseConsumer::new);
+			headerParameters, callbackExecutor, VoidResponseConsumer::new, webSocketConf);
 
 
 		return new BuiltWebSocketRequest() {
@@ -94,7 +129,7 @@ public class HttpClientWebSocketRequestBuilderImpl extends HttpClientRequestHead
 					listenerExecutor = Runnable::run; //if no executor has been supplied (ie, still on default executor), run on calling thread
 				}
 
-				return new WebSocketClientImpl(builtNettyClientRequest, listenerExecutor, listenerExecutor, autoPong, autoCloseFrame, pingEveryDuration);
+				return new WebSocketClientImpl(builtNettyClientRequest, listenerExecutor, listenerExecutor, autoCloseFrame, splitLargeFrames, maxFrameSize, autoPong, pingEveryDuration);
 			}
 
 

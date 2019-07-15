@@ -110,9 +110,25 @@ public class ConfKeys<T> {
 	public static final ConfKeys<String> USER_AGENT = new ConfKeys<>("king-http-client");
 
 
-	public static final ConfKeys<Integer> WEB_SOCKET_MAX_FRAME_SIZE = new ConfKeys<>(64*1024);
+	/**
+	 * Maximum frame size for an websocket frame. This size should be negotiated between server and client.
+	 */
+	public static final ConfKeys<Integer> WEB_SOCKET_MAX_FRAME_SIZE = new ConfKeys<>(32*1024);
+
+	/**
+	 * Should incoming websocket continuation frames be aggregated automatically?
+	 */
 	public static final ConfKeys<Boolean> WEB_SOCKET_AGGREGATE_FRAMES = new ConfKeys<>(true);
-	public static final ConfKeys<Integer> WEB_SOCKET_MAX_BUFFER_SIZE = new ConfKeys<>(32 * 1024);
+
+	/**
+	 * Maximum aggregated size of incoming websocket frames
+	 */
+	public static final ConfKeys<Integer> WEB_SOCKET_MAX_AGGREGATE_BUFFER_SIZE = new ConfKeys<>(128 * 1024);
+
+	/**
+	 * Should outgoing websocket frames be split up into continuation frames if they are larger then {@link #WEB_SOCKET_MAX_FRAME_SIZE}
+	 */
+	public static final ConfKeys<Boolean> WEB_SOCKET_SPLIT_FRAMES = new ConfKeys<>(true);
 
 	/**
 	 * Should web-socket client automatically echo back pong on ping frames

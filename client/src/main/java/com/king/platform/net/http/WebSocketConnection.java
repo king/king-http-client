@@ -30,6 +30,15 @@ public interface WebSocketConnection {
 	CompletableFuture<Void> sendTextFrame(String text);
 
 	/**
+	 * Send an text frame to the server
+	 * @param text the text
+	 * @param finalFragment flag indicating if this frame is the final fragment
+	 * @param rsv reserved bits used for protocol extensions
+	 * @return the resulting future
+	 */
+	CompletableFuture<Void> sendTextFrame(String text, boolean finalFragment, int rsv);
+
+	/**
 	 * Send an close frame to the server. This is to inform the server about wanting to close the connection.
 	 * @return the resulting future
 	 * @param statusCode the status code
@@ -52,6 +61,16 @@ public interface WebSocketConnection {
 	 * @return the resulting future
 	 */
 	CompletableFuture<Void> sendBinaryFrame(byte[] payload);
+
+
+	/**
+	 * Send an binary frame to the server
+	 * @param payload the payload
+	 * @param finalFragment flag indicating if this frame is the final fragment
+	 * @param rsv reserved bits used for protocol extensions
+	 * @return the resulting future
+	 */
+	CompletableFuture<Void> sendBinaryFrame(byte[] payload, boolean finalFragment, int rsv);
 
 
 	/**
