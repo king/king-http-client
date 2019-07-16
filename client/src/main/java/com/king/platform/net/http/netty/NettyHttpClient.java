@@ -96,7 +96,7 @@ public class NettyHttpClient implements HttpClient {
 			throw new IllegalStateException("Http client has already been started!");
 		}
 
-		if (Epoll.isAvailable() && confMap.get(ConfKeys.USE_EPOLL)) {
+		if (confMap.get(ConfKeys.USE_EPOLL) && Epoll.isAvailable() ) {
 			group = new EpollEventLoopGroup(nioThreads, nioThreadFactory);
 		} else {
 			group = new NioEventLoopGroup(nioThreads, nioThreadFactory);
