@@ -87,7 +87,7 @@ public class HttpPostConteType {
 		httpCallback.waitForCompletion();
 
 		assertTrue(contentTypeValue.get().startsWith(contentType));
-		assertEquals(StandardCharsets.ISO_8859_1.displayName(), characterEncoding.get());
+		assertEquals(StandardCharsets.ISO_8859_1.displayName().toLowerCase(), characterEncoding.get().toLowerCase());
 
 	}
 
@@ -102,7 +102,7 @@ public class HttpPostConteType {
 
 
 		assertTrue(contentTypeValue.get().startsWith(contentType));
-		assertEquals("UTF-8", characterEncoding.get());
+		assertEquals("UTF-8".toLowerCase(), characterEncoding.get().toLowerCase());
 	}
 
 	@Test
@@ -117,7 +117,7 @@ public class HttpPostConteType {
 		httpCallback.waitForCompletion();
 
 		assertTrue(contentTypeValue.get().startsWith(contentType));
-		assertEquals("UTF-8", characterEncoding.get());
+		assertEquals("UTF-8".toLowerCase(), characterEncoding.get().toLowerCase());
 	}
 
 	@Test
@@ -144,7 +144,7 @@ public class HttpPostConteType {
 		httpCallback.waitForCompletion();
 
 		assertTrue(contentTypeValue.get().startsWith(contentType));
-		assertEquals("UTF-8", characterEncoding.get());
+		assertEquals("UTF-8".toLowerCase(), characterEncoding.get().toLowerCase());
 	}
 
 	private byte[] readPostBody(HttpServletRequest req) throws IOException {
