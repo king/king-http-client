@@ -24,11 +24,11 @@ dependencies {
 	compile 'org.slf4j:slf4j-api:1.7.7'
 	compile 'ch.qos.logback:logback-classic:1.+'
 
-	compile 'org.eclipse.jetty:jetty-server:9.2.10.v20150310'
-	compile 'org.eclipse.jetty:jetty-servlet:9.2.10.v20150310'
-	compile 'org.eclipse.jetty:jetty-servlets:9.2.10.v20150310'
-	compile 'org.eclipse.jetty.websocket:websocket-server:9.2.10.v20150310'
-
+	compile "org.eclipse.jetty:jetty-server:9.4.19.v20190610"
+	compile "org.eclipse.jetty:jetty-servlet:9.4.19.v20190610"
+	compile "org.eclipse.jetty:jetty-servlets:9.4.19.v20190610"
+	compile "org.eclipse.jetty.websocket:websocket-server:9.4.19.v20190610"
+	compile "org.eclipse.jetty.websocket:websocket-servlet:9.4.19.v20190610"
 
 
 	testCompile 'junit:junit:4.11'

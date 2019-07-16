@@ -14,7 +14,7 @@ final class Md5Util {
 		return hexStringFromBytes(rawChecksum);
 	}
 
-	private static byte[] getRawChecksum(byte[] bytesToHash) {
+	static byte[] getRawChecksum(byte[] bytesToHash) {
 		try {
 			MessageDigest md = MessageDigest.getInstance("MD5");
 			md.reset();
@@ -25,7 +25,7 @@ final class Md5Util {
 		}
 	}
 
-	private static String hexStringFromBytes(byte[] b) {
+	static String hexStringFromBytes(byte[] b) {
 		int outputLength = b.length * 2;
 		String formatToHexWithFullLength = "%0" + outputLength + "x";
 		return String.format(formatToHexWithFullLength, new BigInteger(1, b));

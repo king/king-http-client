@@ -46,13 +46,15 @@ public class WebSocketAutoBahnTests {
 
 		;
 
-	for (int i = 1; i < 250; i++) {
+	for (int i = 1; i < 310; i++) {
 
 			System.out.println("Starting "+ i );
 
 			CountDownLatch countDownLatch = new CountDownLatch(1);
 			httpClient.createWebSocket("ws://localhost:" + 9001 + "/runCase?case="+i+"&agent=king-http-client")
-				//.executingOn(Executors.newSingleThreadExecutor())
+				.splitLargeFrames(false)
+				.maxFrameSize(1024*1024*16)
+				.maxAggregateBufferSize(1024*1024*64)
 				.build()
 
 				.execute(new WebSocketListener() {

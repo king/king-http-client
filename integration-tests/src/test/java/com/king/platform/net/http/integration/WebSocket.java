@@ -14,19 +14,26 @@ import com.king.platform.net.http.netty.eventbus.DefaultEventBus;
 import com.king.platform.net.http.netty.eventbus.Event;
 import com.king.platform.net.http.netty.pool.NoChannelPool;
 import org.eclipse.jetty.websocket.api.Session;
+import org.eclipse.jetty.websocket.api.WebSocketFrameListener;
+import org.eclipse.jetty.websocket.api.WebSocketPartialListener;
+import org.eclipse.jetty.websocket.api.extensions.Frame;
 import org.eclipse.jetty.websocket.servlet.WebSocketServlet;
 import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Random;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -79,6 +86,16 @@ public class WebSocket {
 				factory.register(EchoWebSocketEndpoint.class);
 			}
 		}, "/websocket/test");
+
+
+		integrationServer.addServlet(new WebSocketServlet() {
+			@Override
+			public void configure(WebSocketServletFactory factory) {
+				factory.getPolicy().setMaxBinaryMessageBufferSize(1024 * 1024);
+				factory.getPolicy().setMaxBinaryMessageSize(1024 * 1024);
+				factory.register(FrameWebSocketEndpoint.class);
+			}
+		}, "/websocket/frame");
 
 
 	}
@@ -590,7 +607,8 @@ public class WebSocket {
 				.maxFrameSize(800)
 				.splitLargeFrames(false)
 				.build()
-				.execute(new WebSocketListenerAdapter() {})
+				.execute(new WebSocketListenerAdapter() {
+				})
 				.join();
 
 			client.sendBinaryFrame(content).join();
@@ -599,6 +617,227 @@ public class WebSocket {
 			assertTrue(ce.getCause() instanceof IllegalStateException);
 		}
 	}
+
+	@Test
+	public void sendingPartialBinaryFramesShouldJoinThemInTheServer() throws NoSuchAlgorithmException, InterruptedException {
+		CountDownLatch countDownLatch = new CountDownLatch(1);
+		AtomicReference<String> receivedMd5 = new AtomicReference<>();
+
+		WebSocketClient client = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
+			.maxFrameSize(1024)
+			.splitLargeFrames(false)
+			.build()
+			.execute(new WebSocketListenerAdapter() {
+				@Override
+				public void onTextFrame(String payload, boolean finalFragment, int rsv) {
+					receivedMd5.set(payload);
+				}
+			})
+			.join();
+
+
+		MessageDigest md = MessageDigest.getInstance("MD5");
+		md.reset();
+
+		Random random = new Random();
+		byte[][] frames = new byte[10][];
+
+		for (int i = 0; i < 10; i++) {
+			frames[i] = new byte[100];
+			random.nextBytes(frames[i]);
+			md.update(frames[i], 0, frames[i].length);
+		}
+
+		String totalMd5Sum = Md5Util.hexStringFromBytes(md.digest());
+
+		for (int i = 0; i < 9; i++) {
+			client.sendBinaryFrame(frames[i], false, 0);
+		}
+		client.sendBinaryFrame(frames[9], true, 0);
+
+		countDownLatch.await(1, TimeUnit.SECONDS);
+
+		client.close();
+
+		Assert.assertEquals(totalMd5Sum, receivedMd5.get());
+	}
+
+
+	@Test
+	public void sendingPartialTextFramesShouldJoinThemInTheServer() throws InterruptedException {
+		CountDownLatch countDownLatch = new CountDownLatch(1);
+		AtomicReference<String> receivedContent = new AtomicReference<>();
+
+		WebSocketClient client = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
+			.maxFrameSize(1024)
+			.splitLargeFrames(false)
+			.build()
+			.execute(new WebSocketListenerAdapter() {
+				@Override
+				public void onTextFrame(String payload, boolean finalFragment, int rsv) {
+					receivedContent.set(payload);
+				}
+			})
+			.join();
+
+
+
+		StringBuilder sentData = new StringBuilder();
+		String[] frames = new String[10];
+
+		for (int i = 0; i < 10; i++) {
+			frames[i] = "HELLOWORLD"+i;
+			sentData.append(frames[i]);
+		}
+
+
+		for (int i = 0; i < 9; i++) {
+			client.sendTextFrame(frames[i], false, 0);
+		}
+		client.sendTextFrame(frames[9], true, 0);
+
+		countDownLatch.await(1, TimeUnit.SECONDS);
+
+		client.close();
+
+		Assert.assertEquals(sentData.toString(), receivedContent.get());
+	}
+
+	@Test
+	public void sendingPartialTextThenFullTextShouldThrowIllegalState() {
+		WebSocketClient client = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
+			.maxFrameSize(1024)
+			.splitLargeFrames(false)
+			.build()
+			.execute(new WebSocketListenerAdapter() {
+
+			})
+			.join();
+
+
+		client.sendTextFrame("FIRST FRAGMENT", false, 0).join();
+
+		try {
+			client.sendTextFrame("FULL NEW TEXT").join();
+			fail("Should have thrown exception since its in the middle of sending fragments");
+		} catch (CompletionException ce) {
+			assertTrue(ce.getCause() instanceof IllegalStateException);
+		}
+
+		try {
+			client.sendBinaryFrame("FULL NEW TEXT".getBytes(StandardCharsets.UTF_8)).join();
+			fail("Should have thrown exception since its in the middle of sending fragments");
+		} catch (CompletionException ce) {
+			assertTrue(ce.getCause() instanceof IllegalStateException);
+		}
+
+		client.sendTextFrame("SECOND FRAGMENT", false, 0).join();
+
+
+
+		client.close();
+	}
+
+	@Test
+	public void sendingPartialBinaryThenFullTextShouldThrowIllegalState() {
+		WebSocketClient client = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
+			.maxFrameSize(1024)
+			.splitLargeFrames(false)
+			.build()
+			.execute(new WebSocketListenerAdapter() {
+
+			})
+			.join();
+
+
+		client.sendBinaryFrame("FIRST FRAGMENT".getBytes(StandardCharsets.UTF_8), false, 0).join();
+
+		try {
+			client.sendTextFrame("FULL NEW TEXT").join();
+			fail("Should have thrown exception since its in the middle of sending fragments");
+		} catch (CompletionException ce) {
+			assertTrue(ce.getCause() instanceof IllegalStateException);
+		}
+
+		try {
+			client.sendBinaryFrame("FULL NEW TEXT".getBytes(StandardCharsets.UTF_8)).join();
+			fail("Should have thrown exception since its in the middle of sending fragments");
+		} catch (CompletionException ce) {
+			assertTrue(ce.getCause() instanceof IllegalStateException);
+		}
+
+		client.sendBinaryFrame("SECOND FRAGMENT".getBytes(StandardCharsets.UTF_8), false, 0).join();
+
+		client.close();
+	}
+
+	@Test
+	public void sendingPartialOfDifferentTypesShouldThrowIllegalState() {
+		WebSocketClient client = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
+			.maxFrameSize(1024)
+			.splitLargeFrames(false)
+			.build()
+			.execute(new WebSocketListenerAdapter() {
+
+			})
+			.join();
+
+
+		client.sendBinaryFrame("FIRST FRAGMENT".getBytes(StandardCharsets.UTF_8), false, 0).join();
+
+		try {
+			client.sendTextFrame("SECOND TEXT FRAGMENT", false, 0).join();
+			fail("Should have thrown exception since its in the middle of sending binary fragments");
+		} catch (CompletionException ce) {
+			assertTrue(ce.getCause() instanceof IllegalStateException);
+		}
+
+	}
+
+	@Test
+	@Ignore("Due to bug in jetty 9.4.x it's impossible to verify partial frames, https://github.com/eclipse/jetty.project/issues/3876")
+	public void sendPartial() throws InterruptedException {
+		ArrayList<String> receivedData = new ArrayList<>();
+		CountDownLatch countDownLatch = new CountDownLatch(10);
+
+		WebSocketClient client = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/frame")
+			.maxFrameSize(800)
+			.splitLargeFrames(false).build().execute(new WebSocketListenerAdapter() {
+				@Override
+				public void onTextFrame(String payload, boolean finalFragment, int rsv) {
+					receivedData.add(payload);
+					countDownLatch.countDown();
+				}
+			}).join();
+
+		Random random = new Random();
+
+		byte[][] frames = new byte[10][];
+		String[] md5 = new String[10];
+		for (int i = 0; i < 10; i++) {
+			frames[i] = new byte[100];
+			random.nextBytes(frames[i]);
+			md5[i] = Md5Util.getChecksum(frames[i]);
+
+		}
+
+		for (int i = 0; i < 9; i++) {
+			client.sendBinaryFrame(frames[i], false, 0);
+		}
+		client.sendBinaryFrame(frames[9], true, 0);
+
+
+		countDownLatch.await(1, TimeUnit.SECONDS);
+		client.close();
+
+		Assert.assertEquals(10, receivedData.size());
+		for (int i = 0; i < 9; i++) {
+			assertEquals(md5[i] + "/false", receivedData.get(i));
+		}
+		assertEquals(md5[9] + "/true", receivedData.get(9));
+
+	}
+
 
 	@After
 	public void tearDown() throws Exception {
@@ -621,19 +860,6 @@ public class WebSocket {
 		}
 
 		@Override
-		public void onWebSocketClose(int statusCode, String reason) {
-		}
-
-		@Override
-		public void onWebSocketConnect(Session session) {
-			this.session = session;
-		}
-
-		@Override
-		public void onWebSocketError(Throwable cause) {
-		}
-
-		@Override
 		public void onWebSocketText(String message) {
 			if ("disconnect".equalsIgnoreCase(message)) {
 				try {
@@ -648,6 +874,62 @@ public class WebSocket {
 				}
 			}
 		}
+
+		@Override
+		public void onWebSocketClose(int statusCode, String reason) {
+		}
+
+		@Override
+		public void onWebSocketConnect(Session session) {
+			this.session = session;
+		}
+
+		@Override
+		public void onWebSocketError(Throwable cause) {
+		}
+	}
+
+	public static class FrameWebSocketEndpoint implements  WebSocketPartialListener {
+		private Session session;
+
+
+
+		@Override
+		public void onWebSocketClose(int statusCode, String reason) {
+
+		}
+
+		@Override
+		public void onWebSocketConnect(Session session) {
+			this.session = session;
+		}
+
+		@Override
+		public void onWebSocketError(Throwable cause) {
+
+		}
+
+
+		@Override
+		public void onWebSocketPartialBinary(ByteBuffer payload, boolean fin) {
+			System.out.println("Got partial binary from client! fin: " + fin);
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			ByteUtil.writeTo(payload, out);
+			byte[] bytes = out.toByteArray();
+			String output = Md5Util.getChecksum(bytes) + "/" + fin;
+			try {
+				session.getRemote().sendString(output);
+			} catch (IOException ignored) {
+			}
+		}
+
+		@Override
+		public void onWebSocketPartialText(String payload, boolean fin) {
+
+		}
+
+
+
 	}
 
 

@@ -54,7 +54,9 @@ public class WebSocketClientImpl implements WebSocketClient {
 	private final AwaitLatch awaitLatch = new AwaitLatch();
 	private final ReentrantLock lock;
 	private Headers headers = new NettyHeaders(EmptyHttpHeaders.INSTANCE);
-	private FragmentedFrameType expectedFragmentedFrameType;
+	private FrameType expectedIncomingFragmentedFrameType;
+	private NextContiuationFrame nextContiuationFrame;
+
 	private List<WebSocketFrame> bufferedFrames = new ArrayList<>();
 	private volatile Channel channel;
 	private volatile boolean ready;
@@ -129,6 +131,12 @@ public class WebSocketClientImpl implements WebSocketClient {
 			return future;
 		}
 
+		if (nextContiuationFrame != null && nextContiuationFrame.fragmentedFrame) {
+			CompletableFuture<Void> future = new CompletableFuture<>();
+			future.completeExceptionally(new IllegalStateException("Last frame was an continuation frame. A final frame has to be sent before an new complete is sent!"));
+			return future;
+		}
+
 
 		if (length > maxFrameSize) {
 			List<WebSocketFrame> webSocketFrames = new ArrayList<>();
@@ -160,6 +168,8 @@ public class WebSocketClientImpl implements WebSocketClient {
 			}
 
 			this.channel.flush();
+
+			nextContiuationFrame = null;
 
 			return CompletableFuture.allOf(cf);
 
@@ -204,6 +214,12 @@ public class WebSocketClientImpl implements WebSocketClient {
 			return future;
 		}
 
+		if (nextContiuationFrame != null && !nextContiuationFrame.allowedFrame(frameType)) {
+			CompletableFuture<Void> future = new CompletableFuture<>();
+			future.completeExceptionally(new IllegalStateException("Last sent continuation frame was of an different type!"));
+			return future;
+		}
+
 		int length = buf.readableBytes();
 
 		if (length > maxFrameSize) {
@@ -211,11 +227,26 @@ public class WebSocketClientImpl implements WebSocketClient {
 			future.completeExceptionally(new IllegalStateException("Payload size is larger then maxFrameSize"));
 			return future;
 		}
-		if (frameType == FrameType.TEXT) {
-			return convert(channel.writeAndFlush(new TextWebSocketFrame(finalFragment, rsv, buf)));
-		} else {
-			return convert(channel.writeAndFlush(new BinaryWebSocketFrame(finalFragment, rsv, buf)));
+
+		NextContiuationFrame nextFrame = nextContiuationFrame;
+		if (frameType == FrameType.TEXT && nextContiuationFrame == null) {
+			nextContiuationFrame = NextContiuationFrame.TEXT;
+			nextFrame =  NextContiuationFrame.CONTINUATION_TEXT;
+		} else if (frameType == FrameType.BINARY && nextContiuationFrame == null) {
+			nextContiuationFrame = NextContiuationFrame.BINARY;
+			nextFrame =  NextContiuationFrame.CONTINUATION_BINARY;
 		}
+
+		WebSocketFrame webSocketFrame = nextContiuationFrame.create(finalFragment, rsv, buf);
+
+		if (finalFragment){
+			nextContiuationFrame = null;
+		} else {
+			nextContiuationFrame = nextFrame;
+		}
+
+		return convert(channel.writeAndFlush(webSocketFrame));
+
 	}
 
 	@Override
@@ -394,13 +425,13 @@ public class WebSocketClientImpl implements WebSocketClient {
 	}
 
 	private void onContinuationFrame(ContinuationWebSocketFrame continuationWebSocketFrame) {
-		if (expectedFragmentedFrameType == null) {
+		if (expectedIncomingFragmentedFrameType == null) {
 			logger.error("Received continuation frame when the last frame was completed!");
 			return;
 		}
 
 		try {
-			switch (expectedFragmentedFrameType) {
+			switch (expectedIncomingFragmentedFrameType) {
 				case BINARY:
 					handleBinaryFrame(continuationWebSocketFrame);
 					break;
@@ -412,7 +443,7 @@ public class WebSocketClientImpl implements WebSocketClient {
 			}
 		} finally {
 			if (continuationWebSocketFrame.isFinalFragment()) {
-				expectedFragmentedFrameType = null;
+				expectedIncomingFragmentedFrameType = null;
 			}
 		}
 	}
@@ -447,15 +478,15 @@ public class WebSocketClientImpl implements WebSocketClient {
 	}
 
 	private void onBinaryFrame(BinaryWebSocketFrame binaryWebSocketFrame) {
-		if (expectedFragmentedFrameType == null && !binaryWebSocketFrame.isFinalFragment()) {
-			expectedFragmentedFrameType = FragmentedFrameType.BINARY;
+		if (expectedIncomingFragmentedFrameType == null && !binaryWebSocketFrame.isFinalFragment()) {
+			expectedIncomingFragmentedFrameType = FrameType.BINARY;
 		}
 		handleBinaryFrame(binaryWebSocketFrame);
 	}
 
 	private void onTextFrame(TextWebSocketFrame textWebSocketFrame) {
-		if (expectedFragmentedFrameType == null && !textWebSocketFrame.isFinalFragment()) {
-			expectedFragmentedFrameType = FragmentedFrameType.TEXT;
+		if (expectedIncomingFragmentedFrameType == null && !textWebSocketFrame.isFinalFragment()) {
+			expectedIncomingFragmentedFrameType = FrameType.TEXT;
 		}
 
 		handleTextFrame(textWebSocketFrame);
@@ -617,10 +648,56 @@ public class WebSocketClientImpl implements WebSocketClient {
 
 	enum FrameType {
 		TEXT,
-		BINARY
+		BINARY,
 	}
 
-	private enum FragmentedFrameType {
-		TEXT, BINARY;
+	enum NextContiuationFrame {
+		TEXT(false, FrameType.TEXT, FrameType.BINARY) {
+			@Override
+			public WebSocketFrame create(boolean finalFragment, int rsv, ByteBuf binaryData) {
+				return new TextWebSocketFrame(finalFragment, rsv, binaryData);
+			}
+		},
+		BINARY(false,FrameType.TEXT, FrameType.BINARY) {
+			@Override
+			public WebSocketFrame create(boolean finalFragment, int rsv, ByteBuf binaryData) {
+				return new BinaryWebSocketFrame(finalFragment, rsv, binaryData);
+			}
+		},
+
+		CONTINUATION_TEXT(true, FrameType.TEXT) {
+			@Override
+			public WebSocketFrame create(boolean finalFragment, int rsv, ByteBuf binaryData) {
+				return new ContinuationWebSocketFrame(finalFragment, rsv, binaryData);
+			}
+		},
+		CONTINUATION_BINARY(true, FrameType.BINARY) {
+			@Override
+			public WebSocketFrame create(boolean finalFragment, int rsv, ByteBuf binaryData) {
+				return new ContinuationWebSocketFrame(finalFragment, rsv, binaryData);
+			}
+		};
+
+		private final boolean fragmentedFrame;
+		private final FrameType[] allowedPreviousFrameTypes;
+
+		NextContiuationFrame(boolean fragmentedFrame, FrameType... allowedPreviousFrameTypes) {
+			this.fragmentedFrame = fragmentedFrame;
+			this.allowedPreviousFrameTypes = allowedPreviousFrameTypes;
+		}
+
+
+		public boolean allowedFrame(FrameType frameType) {
+			for (FrameType allowedPreviousFrameType : allowedPreviousFrameTypes) {
+				if (allowedPreviousFrameType == frameType) {
+					return true;
+				}
+			}
+			return false;
+		}
+
+		public abstract WebSocketFrame create(boolean finalFragment, int rsv, ByteBuf binaryData);
+
 	}
+
 }
