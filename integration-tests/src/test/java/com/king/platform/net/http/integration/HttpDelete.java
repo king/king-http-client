@@ -7,6 +7,8 @@ package com.king.platform.net.http.integration;
 
 
 import com.king.platform.net.http.HttpClient;
+import com.king.platform.net.http.HttpMethod;
+import com.king.platform.net.http.HttpResponse;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -16,6 +18,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 import static org.junit.Assert.assertEquals;
 
@@ -77,6 +80,29 @@ public class HttpDelete {
 
 	}
 
+	@Test
+	public void deleteWithPostBody() {
+		integrationServer.addServlet(new HttpServlet() {
+			@Override
+			protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+				byte[] body = integrationServer.readPostBody(req);
+				resp.setStatus(200);
+				resp.getOutputStream().write(body);
+				resp.getOutputStream().flush();
+			}
+		}, "/testPost");
+
+
+		HttpResponse<String> response = httpClient.create(HttpMethod.DELETE, "http://localhost:" + port + "/testPost")
+			.content("HELLO WORLD".getBytes(StandardCharsets.UTF_8))
+			.build()
+			.execute()
+			.join();
+
+		assertEquals("HELLO WORLD", response.getBody());
+		assertEquals(200, response.getStatusCode());
+
+	}
 
 	@After
 	public void tearDown() throws Exception {

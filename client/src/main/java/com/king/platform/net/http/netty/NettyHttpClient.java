@@ -139,9 +139,9 @@ public class NettyHttpClient implements HttpClient {
 	}
 
 	@Override
-	public HttpClientRequestBuilder create(final com.king.platform.net.http.HttpMethod httpMethod, final String uri) {
+	public HttpClientRequestWithBodyBuilder create(final com.king.platform.net.http.HttpMethod httpMethod, final String uri) {
 		verifyStarted();
-		return new HttpClientRequestBuilderImpl(httpClientCaller, HttpVersion.HTTP_1_1, NettyHttpMethods.toNettyMethod(httpMethod), uri, confMap,
+		return new HttpClientRequestWithBodyBuilderImpl(httpClientCaller, HttpVersion.HTTP_1_1, NettyHttpMethods.toNettyMethod(httpMethod), uri, confMap,
 			defaultHttpClientCallbackExecutor);
 	}
 

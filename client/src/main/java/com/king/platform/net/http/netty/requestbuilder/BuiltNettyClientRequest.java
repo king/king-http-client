@@ -188,6 +188,10 @@ public class BuiltNettyClientRequest<T> implements BuiltClientRequest<T>, BuiltC
 			headers.set(HttpHeaderNames.ACCEPT_ENCODING, HttpHeaderValues.GZIP + "," + HttpHeaderValues.DEFLATE);
 		}
 
+		if (httpBody != null && httpMethod == HttpMethod.TRACE) {
+			return dispatchError(httpCallback, new IllegalStateException("Trace calls are not allowed to have post bodies!"));
+		}
+
 		if (httpBody != null) {
 			if (httpBody.getContentLength() < 0) {
 				headers.set(HttpHeaderNames.TRANSFER_ENCODING, HttpHeaderValues.CHUNKED);
@@ -257,7 +261,7 @@ public class BuiltNettyClientRequest<T> implements BuiltClientRequest<T>, BuiltC
 		return externalEventTrigger;
 	}
 
-	private CompletableFuture<HttpResponse<T>> dispatchError(final HttpCallback<T> httpCallback, final URISyntaxException e) {
+	private CompletableFuture<HttpResponse<T>> dispatchError(final HttpCallback<T> httpCallback, final Exception e) {
 		if (httpCallback != null) {
             callbackExecutor.execute(() -> httpCallback.onError(e));
         }
