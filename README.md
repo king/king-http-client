@@ -1,6 +1,9 @@
 # king-http-client
-## 'com.king.king-http-client:king-http-client:3.0.12'
+## 'com.king.king-http-client:king-http-client:3.0.15'
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.king.king-http-client/king-http-client/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.king.king-http-client/king-http-client)
+
+## New in Version 3.0.15
+* Made HttpClient.create(HttpMethod httpMethod, String uri) return HttpClientRequestWithBodyBuilder
 
 ## New in Version 3.0.14
 * Fixed bug in ChannelManager which caused compression failures
