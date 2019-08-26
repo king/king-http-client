@@ -795,7 +795,6 @@ public class WebSocket {
 	}
 
 	@Test
-	@Ignore("Due to bug in jetty 9.4.x it's impossible to verify partial frames, https://github.com/eclipse/jetty.project/issues/3876")
 	public void sendPartial() throws InterruptedException {
 		ArrayList<String> receivedData = new ArrayList<>();
 		CountDownLatch countDownLatch = new CountDownLatch(10);
@@ -912,7 +911,6 @@ public class WebSocket {
 
 		@Override
 		public void onWebSocketPartialBinary(ByteBuffer payload, boolean fin) {
-			System.out.println("Got partial binary from client! fin: " + fin);
 			ByteArrayOutputStream out = new ByteArrayOutputStream();
 			ByteUtil.writeTo(payload, out);
 			byte[] bytes = out.toByteArray();
