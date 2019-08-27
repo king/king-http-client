@@ -312,6 +312,30 @@ public class WebSocketClientImpl implements WebSocketClient {
 	}
 
 	@Override
+	public CompletableFuture<Void> sendPongFrame() {
+		Channel channel = this.channel;
+		if (!ready || channel == null || !channel.isOpen()) {
+			CompletableFuture<Void> future = new CompletableFuture<>();
+			future.completeExceptionally(new IllegalStateException("Not connected!"));
+			return future;
+		}
+
+		return convert(channel.writeAndFlush(new PongWebSocketFrame()));
+	}
+
+	@Override
+	public CompletableFuture<Void> sendPongFrame(byte[] payload) {
+		Channel channel = this.channel;
+		if (!ready || channel == null || !channel.isOpen()) {
+			CompletableFuture<Void> future = new CompletableFuture<>();
+			future.completeExceptionally(new IllegalStateException("Not connected!"));
+			return future;
+		}
+
+		return convert(channel.writeAndFlush(new PongWebSocketFrame(Unpooled.copiedBuffer(payload))));
+	}
+
+	@Override
 	public CompletableFuture<Void> close() {
 		lock.lock();
 		try {

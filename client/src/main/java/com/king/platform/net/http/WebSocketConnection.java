@@ -88,6 +88,22 @@ public interface WebSocketConnection {
 	 */
 	CompletableFuture<Void> sendPingFrame(byte[] payload);
 
+
+	/**
+	 * Send a pong frame to the server
+	 *
+	 * @return the resulting future
+	 */
+	CompletableFuture<Void> sendPongFrame();
+
+	/**
+	 * Send a pong frame with a payload to the server
+	 *
+	 * @param payload the payload
+	 * @return the resulting future
+	 */
+	CompletableFuture<Void> sendPongFrame(byte[] payload);
+
 	/**
 	 * Close the connection to the server (without sending any close frame)
 	 * @return the resulting future

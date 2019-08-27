@@ -16,6 +16,7 @@ import com.king.platform.net.http.netty.pool.NoChannelPool;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.WebSocketFrameListener;
 import org.eclipse.jetty.websocket.api.WebSocketPartialListener;
+import org.eclipse.jetty.websocket.api.WebSocketPingPongListener;
 import org.eclipse.jetty.websocket.api.extensions.Frame;
 import org.eclipse.jetty.websocket.servlet.WebSocketServlet;
 import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
@@ -96,6 +97,13 @@ public class WebSocket {
 				factory.register(FrameWebSocketEndpoint.class);
 			}
 		}, "/websocket/frame");
+
+		integrationServer.addServlet(new WebSocketServlet() {
+			@Override
+			public void configure(WebSocketServletFactory factory) {
+				factory.register(PingPongWebSocketEndpoint.class);
+			}
+		}, "/websocket/pingPong");
 
 
 	}
@@ -491,6 +499,88 @@ public class WebSocket {
 		assertNull(exceptionReference.get());
 
 
+	}
+
+	@Test
+	public void clientThatSendsPingShouldReceivePong() throws InterruptedException {
+		AtomicReference<byte[]> pongRef = new AtomicReference<>();
+
+		httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
+			.followRedirects(true)
+			.build()
+			.execute(new WebSocketListenerAdapter() {
+				WebSocketConnection client;
+
+				@Override
+				public void onConnect(WebSocketConnection connection) {
+					this.client = connection;
+					connection.sendPingFrame("Hello World".getBytes(StandardCharsets.UTF_8));
+				}
+
+				@Override
+				public void onPongFrame(byte[] payload) {
+					pongRef.set(payload);
+					client.close();
+				}
+			}).join().awaitClose();
+
+		assertEquals("Hello World", new String(pongRef.get(), StandardCharsets.UTF_8));
+	}
+
+	@Test
+	public void whenServerSendsPingTheClientShouldRespondWithAutoPong() throws InterruptedException {
+		CountDownLatch countDownLatch = new CountDownLatch(1);
+		AtomicReference<byte[]> pongResponse = new AtomicReference<>();
+		WebSocketClient client = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/pingPong")
+			.autoPong(true)  //the client will automatically respond to ping frames
+			.build()
+			.execute(new WebSocketListenerAdapter() {
+				@Override
+				public void onBinaryFrame(byte[] payload, boolean finalFragment, int rsv) {
+					pongResponse.set(payload);
+					countDownLatch.countDown();
+				}
+			}).join();
+
+		client.sendTextFrame("ping");
+		countDownLatch.await();
+		client.close();
+
+		Assert.assertEquals("SeverSentPing", new String(pongResponse.get(), StandardCharsets.UTF_8));
+	}
+
+	@Test
+	public void whenServerSendsPingTheClientShouldRespondWithManualPong() throws InterruptedException {
+		CountDownLatch countDownLatch = new CountDownLatch(1);
+		AtomicReference<byte[]> pongResponse = new AtomicReference<>();
+		WebSocketClient client = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/pingPong")
+			.autoPong(false)  //the client will NOT automatically respond to ping frames
+			.build()
+			.execute(new WebSocketListenerAdapter() {
+				private WebSocketConnection connection;
+
+				@Override
+				public void onConnect(WebSocketConnection connection) {
+					this.connection = connection;
+				}
+
+				@Override
+				public void onBinaryFrame(byte[] payload, boolean finalFragment, int rsv) {
+					pongResponse.set(payload);
+					countDownLatch.countDown();
+				}
+
+				@Override
+				public void onPingFrame(byte[] payload) {
+					connection.sendPongFrame(payload);
+				}
+			}).join();
+
+		client.sendTextFrame("ping");
+		countDownLatch.await();
+		client.close();
+
+		Assert.assertEquals("SeverSentPing", new String(pongResponse.get(), StandardCharsets.UTF_8));
 	}
 
 	@Test
@@ -925,9 +1015,55 @@ public class WebSocket {
 		public void onWebSocketPartialText(String payload, boolean fin) {
 
 		}
+	}
 
+	public static class PingPongWebSocketEndpoint implements WebSocketPingPongListener,  org.eclipse.jetty.websocket.api.WebSocketListener {
+		private Session session;
 
+		@Override
+		public void onWebSocketPing(ByteBuffer payload) {
 
+		}
+
+		@Override
+		public void onWebSocketPong(ByteBuffer payload) {
+			try {
+				session.getRemote().sendBytes(payload);
+			} catch (IOException e) {
+				session.close();
+			}
+		}
+
+		@Override
+		public void onWebSocketClose(int statusCode, String reason) {
+
+		}
+
+		@Override
+		public void onWebSocketConnect(Session session) {
+			this.session = session;
+		}
+
+		@Override
+		public void onWebSocketError(Throwable cause) {
+
+		}
+
+		@Override
+		public void onWebSocketBinary(byte[] payload, int offset, int len) {
+
+		}
+
+		@Override
+		public void onWebSocketText(String message) {
+			if (message.equalsIgnoreCase("ping")) {
+				try {
+					session.getRemote().sendPing(ByteBuffer.wrap("SeverSentPing".getBytes(StandardCharsets.UTF_8)));
+				} catch (IOException e) {
+					session.close();
+				}
+			}
+		}
 	}
 
 
