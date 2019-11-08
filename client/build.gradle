@@ -31,7 +31,7 @@ archivesBaseName = 'king-http-client'
 dependencies {
 	compile 'org.slf4j:slf4j-api:1.7.7'
 
-	compile 'io.netty:netty-all:4.1.32.Final'
+	compile 'io.netty:netty-all:4.1.38.Final'
 
 
 	testCompile 'junit:junit:4.11'

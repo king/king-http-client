@@ -2,6 +2,9 @@
 ## 'com.king.king-http-client:king-http-client:3.0.15'
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.king.king-http-client/king-http-client/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.king.king-http-client/king-http-client)
 
+## New in Version 3.0.16
+* Bumped netty version to 4.1.38.Final
+
 ## New in Version 3.0.15
 * Made HttpClient.create(HttpMethod httpMethod, String uri) return HttpClientRequestWithBodyBuilder
 
