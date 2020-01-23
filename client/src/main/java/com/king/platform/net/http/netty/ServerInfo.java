@@ -5,9 +5,9 @@
 
 package com.king.platform.net.http.netty;
 
-
 import io.netty.util.AttributeKey;
 
+import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -31,6 +31,9 @@ public final class ServerInfo {
 
 	public static ServerInfo buildFromUri(String uriString) throws URISyntaxException {
 		URI uri = new URI(uriString);
+
+		makeUriUnderscoreCompatible(uri);
+
 		String host = uri.getHost();
 		String scheme = uri.getScheme();
 		int port = uri.getPort();
@@ -68,6 +71,40 @@ public final class ServerInfo {
 		return new ServerInfo(scheme, host, port, isSecure, isWebSocket);
 	}
 
+	private static void makeUriUnderscoreCompatible(final URI uri) throws URISyntaxException {
+		String uriString = uri.toString();
+
+		if (uri.getHost() == null && uriString.contains("_")) {
+			try {
+				final String hostnameAndPort = uriString.split("/")[2];
+
+				final String semicolon = ":";
+				final String hostname = hostnameAndPort.contains(semicolon) ? hostnameAndPort.split(semicolon)[0] : hostnameAndPort;
+				final String port = hostnameAndPort.contains(semicolon) ? hostnameAndPort.split(semicolon)[1] : null;
+
+				patchHostname(uri, hostname);
+				patchPort(uri, port);
+
+			} catch (NoSuchFieldException | IllegalAccessException | NumberFormatException ex) {
+				throw new URISyntaxException(uriString, "Failed to make URI compatible with underscore");
+			}
+		}
+	}
+
+	private static void patchHostname(final URI uri, final String hostname) throws NoSuchFieldException, IllegalAccessException {
+		final Field hostField = URI.class.getDeclaredField("host");
+		hostField.setAccessible(true);
+		hostField.set(uri, hostname);
+	}
+
+	private static void patchPort(final URI uri, final String port) throws NoSuchFieldException, IllegalAccessException {
+		if (port != null) {
+			final Field portField = URI.class.getDeclaredField("port");
+			portField.setAccessible(true);
+			portField.set(uri, Integer.parseInt(port));
+		}
+	}
+
 	public String getHost() {
 		return host;
 	}
@@ -79,7 +116,6 @@ public final class ServerInfo {
 	public String getScheme() {
 		return scheme;
 	}
-
 
 	@Override
 	public boolean equals(Object o) {
@@ -121,5 +157,3 @@ public final class ServerInfo {
 		return isWebSocket;
 	}
 }
-
-
