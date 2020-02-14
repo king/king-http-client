@@ -105,7 +105,7 @@ public class HttpClientResponseHandler implements ResponseHandler {
 				String contentLength = httpHeaders.get(HttpHeaderNames.CONTENT_LENGTH);
 
 				String contentType = httpHeaders.get(HttpHeaderNames.CONTENT_TYPE);
-				String charset = StringUtil.substringAfter(contentType, '=');
+				String charset = StringUtil.substringAfter(contentType, '=', true);
 				if (charset == null) {
 					charset = StandardCharsets.ISO_8859_1.name();
 				}

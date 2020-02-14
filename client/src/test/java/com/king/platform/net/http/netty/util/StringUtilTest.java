@@ -24,16 +24,29 @@ public class StringUtilTest {
 		assertEquals("", StringUtil.substringBefore(";charset=utf-8", ';'));
 
 		assertEquals("text/html", StringUtil.substringBefore("text/html", ';'));
-
-
-
 	}
 
 	@Test
-	public void substringAfter() throws Exception {
-		assertEquals("utf-8", StringUtil.substringAfter("text/html; charset=utf-8", '='));
-		assertEquals("", StringUtil.substringAfter("text/html; charset=", '='));
+	public void substringAfterRemoveQuoteMarks() throws Exception {
+		assertEquals("utf-8", StringUtil.substringAfter("text/html; charset=utf-8", '=', true));
+		assertEquals("", StringUtil.substringAfter("text/html; charset=", '=', true));
 
-		assertNull(StringUtil.substringAfter("text/html", '='));
+		//we should support quoted charsets as well
+		assertEquals("utf-8", StringUtil.substringAfter("text/html; charset=\"utf-8\"", '=', true));
+		assertEquals("utf-8", StringUtil.substringAfter("text/html; charset='utf-8'", '=', true));
+
+		assertNull(StringUtil.substringAfter("text/html", '=', true));
+	}
+
+	@Test
+	public void substringAfterIgnoreQuoteMarks() throws Exception {
+		assertEquals("utf-8", StringUtil.substringAfter("text/html; charset=utf-8", '=', false));
+		assertEquals("", StringUtil.substringAfter("text/html; charset=", '=', false));
+
+		//we should support quoted charsets as well
+		assertEquals("\"utf-8\"", StringUtil.substringAfter("text/html; charset=\"utf-8\"", '=', false));
+		assertEquals("'utf-8'", StringUtil.substringAfter("text/html; charset='utf-8'", '=', false));
+
+		assertNull(StringUtil.substringAfter("text/html", '=', false));
 	}
 }

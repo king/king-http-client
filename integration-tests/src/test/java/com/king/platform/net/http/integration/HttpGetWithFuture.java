@@ -83,6 +83,23 @@ public class HttpGetWithFuture {
 	}
 
 	@Test
+	public void get200WithQuotedContentType() throws Exception {
+		integrationServer.addServlet(new HttpServlet() {
+			@Override
+			protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+				resp.setHeader("Content-Type", "text/html; charset=\"utf-8\"");
+				resp.getWriter().write(okBody);
+				resp.getWriter().flush();
+			}
+		}, "/testOk");
+
+		HttpResponse<String> response = httpClient.createGet("http://localhost:" + port + "/testOk").build().execute().join();
+
+		assertEquals(okBody, response.getBody());
+		assertEquals(200, response.getStatusCode());
+	}
+
+	@Test
 	public void get200WithContentLength() throws Exception {
 		integrationServer.addServlet(new HttpServlet() {
 			@Override

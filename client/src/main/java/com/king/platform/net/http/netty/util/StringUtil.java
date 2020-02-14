@@ -20,15 +20,32 @@ public class StringUtil {
 		return value;
 	}
 
-	public static String substringAfter(String value, char delim) {
+	public static String substringAfter(String value, char delim, boolean stripQuoteMarks) {
 		if (value == null) {
 			return null;
 		}
 
-		int pos = value.indexOf(delim);
-		if (pos >= 0) {
-			return value.substring(pos + 1);
+		int startPos = value.indexOf(delim) + 1;
+		int endPos = value.length();
+
+		if (startPos == 0) {
+			return null;
 		}
-		return null;
+
+		if (startPos == endPos) {
+			return "";
+		}
+
+		if (stripQuoteMarks && isQuoteMark(value.charAt(startPos))) {
+			startPos++;
+			endPos--;
+		}
+
+		return value.substring(startPos, endPos);
+
+	}
+
+	private static boolean isQuoteMark(char c) {
+		return c == '\"' || c == '\'';
 	}
 }
