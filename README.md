@@ -1,6 +1,15 @@
 # king-http-client
-## 'com.king.king-http-client:king-http-client:3.0.15'
+## 'com.king.king-http-client:king-http-client:3.0.18'
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.king.king-http-client/king-http-client/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.king.king-http-client/king-http-client)
+
+## New in version 3.0.18
+* Fixed a bug related to returned content-type containing quoted charset
+
+## New in version 3.0.17
+* Fixed bug related to hostnames that contained "-" and "_".
+
+## New in Version 3.0.16
+* Adding support for sending manual pong frames in websocket connections
 
 ## New in Version 3.0.15
 * Made HttpClient.create(HttpMethod httpMethod, String uri) return HttpClientRequestWithBodyBuilder
