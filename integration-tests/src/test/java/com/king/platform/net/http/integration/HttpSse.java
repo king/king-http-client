@@ -10,6 +10,7 @@ import com.king.platform.net.http.EventCallback;
 import com.king.platform.net.http.HttpClient;
 import com.king.platform.net.http.SseClient;
 import com.king.platform.net.http.SseClientCallback;
+import com.king.platform.net.http.netty.TimeoutException;
 import com.king.platform.net.http.netty.eventbus.Event;
 import org.eclipse.jetty.servlets.EventSource;
 import org.eclipse.jetty.servlets.EventSourceServlet;
@@ -583,6 +584,53 @@ public class HttpSse {
 		assertEquals("0123456789", buffer.get());
 	}
 
+
+	@Test
+	public void idleTimeOutShouldNotTriggerTooEarly() throws InterruptedException {
+		List<EventData> events = new ArrayList<>();
+		events.add(new EventData("event1", "data1", 500));
+		events.add(new EventData("event1", "data2", 2000));
+		events.add(new EventData("event1", "data3", 1500));
+
+		integrationServer.addServlet(new EmittingEventSourceServlet(events), "/testSSE");
+
+		SseClient sseClient = httpClient.createSSE("http://localhost:" + port + "/testSSE").idleTimeoutMillis(3000).build().execute();
+
+		final List<EventData> receivedEvents = new ArrayList<>();
+		AtomicReference<Throwable> error = new AtomicReference<>();
+		sseClient.onEvent("event1", (lastSentId, event, data) -> receivedEvents.add(new EventData(event, data)));
+		sseClient.onError(error::set);
+		sseClient.awaitClose();
+
+		assertNull(error.get());
+
+		assertEquals(3, receivedEvents.size());
+
+	}
+
+	@Test
+	public void idleTimeOutShouldTrigger() throws InterruptedException {
+		List<EventData> events = new ArrayList<>();
+		events.add(new EventData("event1", "data1", 500));
+		events.add(new EventData("event1", "data2", 2000));
+		events.add(new EventData("event1", "data3", 1500));
+
+		integrationServer.addServlet(new EmittingEventSourceServlet(events), "/testSSE");
+
+		SseClient sseClient = httpClient.createSSE("http://localhost:" + port + "/testSSE").idleTimeoutMillis(700).build().execute();
+
+		final List<EventData> receivedEvents = new ArrayList<>();
+		AtomicReference<Throwable> error = new AtomicReference<>();
+		sseClient.onEvent("event1", (lastSentId, event, data) -> receivedEvents.add(new EventData(event, data)));
+		sseClient.onError(error::set);
+		sseClient.awaitClose();
+
+		assertEquals(2, receivedEvents.size());
+		assertNotNull(error.get());
+		assertTrue(error.get() instanceof TimeoutException);
+	}
+
+
 	@After
 	public void tearDown() throws Exception {
 		integrationServer.shutdown();
@@ -643,7 +691,7 @@ public class HttpSse {
 							for (EventData event : events) {
 								try {
 									emitter.event(event.name, event.data);
-									Thread.sleep(50);
+									Thread.sleep(event.sleepTime);
 								} catch (IOException e) {
 									return;
 								} catch (InterruptedException ignored) {
@@ -666,10 +714,17 @@ public class HttpSse {
 	private final static class EventData {
 		String name;
 		String data;
+		int sleepTime = 50;
 
 		public EventData(String name, String data) {
 			this.name = name;
 			this.data = data;
+		}
+
+		public EventData(String name, String data, int sleepTime) {
+			this.name = name;
+			this.data = data;
+			this.sleepTime = sleepTime;
 		}
 
 		@Override
