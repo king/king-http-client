@@ -160,6 +160,21 @@ public class ServerEventDecoderTest {
 		assertNull(event.lastSentId);
 	}
 
+	@Test
+	public void dataWithNewLineInOneEvent() throws Exception {
+		ServerEventDecoder serverEventDecoder = new ServerEventDecoder(sseCallback);
+		serverEventDecoder.onReceivedContentPart(buffer("event: some_event\r\ndata: data1\r\ndata: data2\r\n\r\n"));
+
+		assertEquals(1, sseCallback.count);
+		Event event = sseCallback.poll();
+
+		assertNotNull(event);
+		assertEquals("some_event", event.event);
+		assertEquals("data1\ndata2", event.data);
+		assertNull(event.lastSentId);
+
+	}
+
 
 	@Test
 	public void id() throws Exception {
