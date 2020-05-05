@@ -6,10 +6,10 @@
 package com.king.platform.net.http.netty.backpressure;
 
 import com.king.platform.net.http.netty.ServerInfo;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
 public class EvictingBackPressureTest {

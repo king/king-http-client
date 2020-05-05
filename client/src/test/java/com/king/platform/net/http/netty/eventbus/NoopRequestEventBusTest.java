@@ -5,20 +5,20 @@
 
 package com.king.platform.net.http.netty.eventbus;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertSame;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 
 public class NoopRequestEventBusTest {
 
 	private RequestEventBus requestEventBus;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		requestEventBus = new NoopRequestEventBus();
 	}

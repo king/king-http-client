@@ -1,15 +1,15 @@
 package com.king.platform.net.http.util;
 
-import org.junit.Before;
-import org.junit.Test;
 
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class UriQueryParserTest {
 	private UriQueryParser uriQueryParser;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		uriQueryParser = new UriQueryParser("http://localhost?param1=value1&param2=value2&param3");
 	}

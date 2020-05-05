@@ -9,23 +9,24 @@ import com.king.platform.net.http.netty.ServerInfo;
 import com.king.platform.net.http.netty.metric.MetricCallback;
 import com.king.platform.net.http.netty.util.TimeProviderForTesting;
 import io.netty.channel.Channel;
-import org.junit.Before;
-import org.junit.Test;
-import se.mockachino.CallHandler;
-import se.mockachino.MethodCall;
+import io.netty.channel.ChannelFuture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.junit.Assert.*;
-import static se.mockachino.Mockachino.*;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 
 public class ServerPoolTest {
 	private ServerPool serverPool;
 	private TimeProviderForTesting timeProvider;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		timeProvider = new TimeProviderForTesting();
 		serverPool = new ServerPool(ServerInfo.buildFromUri("http://localhost/"), 100, TimeUnit.SECONDS, timeProvider, mock(MetricCallback.class));
@@ -56,8 +57,7 @@ public class ServerPoolTest {
 
 		assertEquals(0, serverPool.getChannelSize());
 		assertEquals(1, serverPool.getPoolSize()); //the channel should still be in the pool since its not removed from the queue
-		verifyOnce().on(validChannel)
-			.close();
+		verify(validChannel).close();
 	}
 
 	@Test
@@ -77,8 +77,7 @@ public class ServerPoolTest {
 		serverPool.cleanExpiredConnections();
 		assertEquals(0, serverPool.getChannelSize());
 		assertEquals(0, serverPool.getPoolSize());
-		verifyOnce().on(validChannel)
-			.close();
+		verify(validChannel).close();
 
 	}
 
@@ -89,8 +88,7 @@ public class ServerPoolTest {
 		serverPool.cleanExpiredConnections();
 		assertEquals(1, serverPool.getChannelSize());
 		assertEquals(1, serverPool.getPoolSize());
-		verifyNever().on(channel)
-			.close();
+		verify(channel, times(0)).close();
 
 	}
 
@@ -106,7 +104,7 @@ public class ServerPoolTest {
 		assertEquals(1, serverPool.getChannelSize());
 		assertEquals(0, serverPool.getPoolSize());
 
-		verifyNever().on(channel).close();
+		verify(channel, times(0)).close();
 	}
 
 	@Test
@@ -121,7 +119,7 @@ public class ServerPoolTest {
 		serverPool.cleanExpiredConnections();
 		assertEquals(1, serverPool.getChannelSize());
 		assertEquals(0, serverPool.getPoolSize());
-		verifyNever().on(channel).close();
+		verify(channel, times(0)).close();
 	}
 
 	@Test
@@ -135,7 +133,7 @@ public class ServerPoolTest {
 		serverPool.cleanExpiredConnections();
 		assertEquals(0, serverPool.getChannelSize());
 		assertEquals(0, serverPool.getPoolSize());
-		verifyOnce().on(channel).close();
+		verify(channel).close();
 	}
 
 	@Test
@@ -161,19 +159,19 @@ public class ServerPoolTest {
 
 		Channel channel = mock(Channel.class);
 
-		CallHandler answer = new CallHandler() {
+
+		Answer<Boolean> answer = new Answer<Boolean>() {
 			@Override
-			public Object invoke(Object obj, MethodCall call) throws Throwable {
+			public Boolean answer(InvocationOnMock invocation) throws Throwable {
 				return state.get();
 			}
 		};
-
 		when(channel.isActive()).thenAnswer(answer);
 		when(channel.isOpen()).thenAnswer(answer);
 
-		when(channel.close()).thenAnswer(new CallHandler() {
+		when(channel.close()).thenAnswer(new Answer<ChannelFuture>() {
 			@Override
-			public Object invoke(Object obj, MethodCall call) throws Throwable {
+			public ChannelFuture answer(InvocationOnMock invocation) throws Throwable {
 				state.set(false);
 				return null;
 			}

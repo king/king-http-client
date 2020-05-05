@@ -3,8 +3,26 @@
 // Author: Magnus Gustafsson
 // License: Apache 2.0, https://raw.github.com/king/king-http-client/LICENSE-APACHE
 
+plugins {
+	id 'java-library'
+	id("net.ltgt.errorprone") version "1.1.1"
+}
+
+
+ext {
+	nettyVersion = "4.1.49.Final"
+	errorProneCoreVersion = "2.3.4"
+	mockitoVersion = '3.+'
+	assertjVersion = '3.13.+'
+	junitVersion = '5.6.+'
+}
+
+
 allprojects {
+
 	apply plugin: 'java'
+	apply plugin: "net.ltgt.errorprone"
+
 
 	sourceCompatibility = JavaVersion.VERSION_1_8
 	targetCompatibility = JavaVersion.VERSION_1_8
@@ -12,6 +30,25 @@ allprojects {
 
 	repositories {
 		mavenCentral()
+	}
+
+	plugins.withType(JavaPlugin) {
+
+		dependencies {
+
+			implementation 'org.slf4j:slf4j-api:1.7.7'
+
+			errorprone("com.google.errorprone:error_prone_core:$errorProneCoreVersion")
+			errorproneJavac("com.google.errorprone:javac:9+181-r4173-1")
+		}
+
+		tasks.withType(Test) {
+			useJUnitPlatform()
+		}
+
+		tasks.withType(JavaCompile) {
+			options.errorprone.errorproneArgs.add('-Xep:FutureReturnValueIgnored:OFF')
+		}
 	}
 
 }

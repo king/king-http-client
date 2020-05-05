@@ -3,40 +3,27 @@
 // Author: Magnus Gustafsson
 // License: Apache 2.0, https://raw.github.com/king/king-http-client/LICENSE-APACHE
 
-plugins {
-	id("net.ltgt.errorprone") version "1.1.1"
-}
-
-
-apply plugin: "net.ltgt.errorprone"
+apply plugin: 'java-library'
 
 
 dependencies {
-	compile project(":client")
-	compile 'org.slf4j:slf4j-api:1.7.7'
-	compile 'ch.qos.logback:logback-classic:1.+'
+	implementation project(":client")
 
-	compile "org.eclipse.jetty:jetty-server:9.4.20.v20190813"
-	compile "org.eclipse.jetty:jetty-servlet:9.4.20.v20190813"
-	compile "org.eclipse.jetty:jetty-servlets:9.4.20.v20190813"
-	compile "org.eclipse.jetty.websocket:websocket-server:9.4.20.v20190813"
-	compile "org.eclipse.jetty.websocket:websocket-servlet:9.4.20.v20190813"
+	implementation 'ch.qos.logback:logback-classic:1.+'
 
+	implementation "org.eclipse.jetty:jetty-server:9.4.20.v20190813"
+	implementation "org.eclipse.jetty:jetty-servlet:9.4.20.v20190813"
+	implementation "org.eclipse.jetty:jetty-servlets:9.4.20.v20190813"
+	implementation "org.eclipse.jetty.websocket:websocket-server:9.4.20.v20190813"
+	implementation "org.eclipse.jetty.websocket:websocket-servlet:9.4.20.v20190813"
 
-	errorprone("com.google.errorprone:error_prone_core:2.3.4")
-	errorproneJavac("com.google.errorprone:javac:9+181-r4173-1")
+	testImplementation 'junit:junit:4.11'
+	testImplementation 'se.mockachino:mockachino:0.6.1'
 
-
-	testCompile 'junit:junit:4.11'
-	testCompile 'se.mockachino:mockachino:0.6.1'
-
-	testCompile "commons-fileupload:commons-fileupload:1.3.1"
+	testImplementation "commons-fileupload:commons-fileupload:1.3.1"
 
 
 }
 
 
-tasks.withType(JavaCompile) {
-	options.errorprone.errorproneArgs.add('-Xep:FutureReturnValueIgnored:OFF')
-}
 

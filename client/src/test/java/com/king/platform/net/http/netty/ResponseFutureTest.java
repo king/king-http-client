@@ -9,16 +9,16 @@ import com.king.platform.net.http.HttpResponse;
 import com.king.platform.net.http.netty.eventbus.DefaultEventBus;
 import com.king.platform.net.http.netty.eventbus.Event;
 import com.king.platform.net.http.netty.eventbus.RequestEventBus;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.*;
-import static se.mockachino.Mockachino.mock;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
 
 
 public class ResponseFutureTest {
@@ -26,7 +26,7 @@ public class ResponseFutureTest {
 	private HttpRequestContext requestContext;
 	private ResponseFuture<HttpResponse> responseFuture;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		requestContext = mock(HttpRequestContext.class);
 		requestEventBus = new DefaultEventBus();

@@ -6,12 +6,12 @@
 package com.king.platform.net.http.netty.requestbuilder;
 
 import com.king.platform.net.http.netty.request.HttpBody;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.nio.charset.Charset;
 
-import static org.junit.Assert.assertSame;
-import static se.mockachino.Mockachino.mock;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.mockito.Mockito.mock;
 
 
 public class CustomHttpBodyBuilderTest {

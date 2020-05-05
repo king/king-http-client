@@ -8,20 +8,22 @@ package com.king.platform.net.http.netty.sse;
 import com.king.platform.net.http.SseClientCallback;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayDeque;
 import java.util.Queue;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
-
-public class ServerEventDecoderTest {
+@ExtendWith(MockitoExtension.class)
+class ServerEventDecoderTest {
 	private CapturingSseExecutionCallback sseCallback;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		sseCallback = new CapturingSseExecutionCallback();
 	}
