@@ -15,10 +15,10 @@ import com.king.platform.net.http.netty.pool.NoChannelPool;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.servlet.WebSocketServlet;
 import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.slf4j.Logger;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -28,8 +28,7 @@ import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.junit.Assert.assertFalse;
-import static org.slf4j.LoggerFactory.getLogger;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class WebSocketTimeouts {
 
@@ -39,7 +38,7 @@ public class WebSocketTimeouts {
 
 	private RecordingEventBus recordingEventBus;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		integrationServer = new JettyIntegrationServer(500);
 		integrationServer.start();
@@ -119,7 +118,8 @@ public class WebSocketTimeouts {
 		}
 	}
 
-	@Test(timeout = 10000)
+	@Test
+	@Timeout(10000)
 	public void webSocketWithTimeoutOnUpgrade() throws Exception {
 
 
@@ -153,7 +153,7 @@ public class WebSocketTimeouts {
 
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		integrationServer.shutdown();
 		httpClient.shutdown();

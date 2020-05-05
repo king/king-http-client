@@ -8,9 +8,9 @@ package com.king.platform.net.http.integration;
 
 import com.king.platform.net.http.*;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -21,8 +21,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class httpGetReuseBuiltObject {
 	IntegrationServer integrationServer;
@@ -31,7 +31,7 @@ public class httpGetReuseBuiltObject {
 
 	private String okBody = "EVERYTHING IS OKAY!";
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		integrationServer = new JettyIntegrationServer(5000);
 		integrationServer.start();
@@ -256,7 +256,7 @@ public class httpGetReuseBuiltObject {
 		assertEquals(2, callbackCount.get());
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		integrationServer.shutdown();
 		httpClient.shutdown();

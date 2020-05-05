@@ -11,9 +11,9 @@ import com.king.platform.net.http.HttpClient;
 import com.king.platform.net.http.HttpResponse;
 import com.king.platform.net.http.netty.ConnectionClosedException;
 import io.netty.util.concurrent.DefaultThreadFactory;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
@@ -27,7 +27,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class HttpGetWithCallback {
 	IntegrationServer integrationServer;
@@ -36,7 +36,7 @@ public class HttpGetWithCallback {
 
 	private String okBody = "EVERYTHING IS OKAY!";
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		integrationServer = new JettyIntegrationServer(5000);
 		integrationServer.start();
@@ -197,7 +197,7 @@ public class HttpGetWithCallback {
 		assertTrue(threadName.get().startsWith(poolName));
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		integrationServer.shutdown();
 		httpClient.shutdown();

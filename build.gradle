@@ -38,6 +38,12 @@ allprojects {
 
 			implementation 'org.slf4j:slf4j-api:1.7.7'
 
+
+			testImplementation "org.junit.jupiter:junit-jupiter:$junitVersion"
+			testImplementation "org.mockito:mockito-junit-jupiter:$mockitoVersion"
+			testImplementation "org.assertj:assertj-core:$assertjVersion"
+
+
 			errorprone("com.google.errorprone:error_prone_core:$errorProneCoreVersion")
 			errorproneJavac("com.google.errorprone:javac:9+181-r4173-1")
 		}
@@ -52,7 +58,7 @@ allprojects {
 
 		test {
 			testLogging {
-				events "passed", "skipped", "failed"
+				events "failed"
 				exceptionFormat "full"
 			}
 		}

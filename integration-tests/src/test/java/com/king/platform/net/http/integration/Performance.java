@@ -10,10 +10,8 @@ import com.king.platform.net.http.HttpCallback;
 import com.king.platform.net.http.HttpClient;
 import com.king.platform.net.http.HttpResponse;
 import com.king.platform.net.http.netty.NettyHttpClientBuilder;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.Timeout;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -24,7 +22,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class Performance {
 	int NR_OF_RUNS = 400;
@@ -35,7 +33,7 @@ public class Performance {
 
 	private String okBody = "EVERYTHING IS OKAY!";
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		integrationServer = new JettyIntegrationServer(NR_OF_RUNS * 2);
 		integrationServer.start();
@@ -46,8 +44,9 @@ public class Performance {
 
 	}
 
-	@Test(timeout = 5000L)
-	@Ignore
+	@Test
+	@Timeout(5000)
+	@Disabled
 	public void getParallel() throws Exception {
 
 		final AtomicInteger successCounter = new AtomicInteger();
@@ -112,15 +111,15 @@ public class Performance {
 		countDownLatch.await(2000, TimeUnit.MILLISECONDS);
 
 
-		assertEquals("Nr of fail is not correct", 0, failCounter.get());
-		assertEquals("Nr of success is not correct", NR_OF_RUNS, successCounter.get());
-		assertEquals("Nr of parallel server side execution is not correct", NR_OF_RUNS, maxParallelValue.intValue());
+		assertEquals(0, failCounter.get(), "Nr of fail is not correct");
+		assertEquals(NR_OF_RUNS, successCounter.get(), "Nr of success is not correct");
+		assertEquals(NR_OF_RUNS, maxParallelValue.intValue(), "Nr of parallel server side execution is not correct");
 
 
 	}
 
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		integrationServer.shutdown();
 		httpClient.shutdown();

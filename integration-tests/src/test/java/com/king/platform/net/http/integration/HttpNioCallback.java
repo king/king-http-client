@@ -12,10 +12,10 @@ import com.king.platform.net.http.HttpResponse;
 import com.king.platform.net.http.NioCallback;
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import se.mockachino.order.OrderingContext;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InOrder;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -24,10 +24,10 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 
-import static org.junit.Assert.assertEquals;
-import static se.mockachino.Mockachino.*;
-import static se.mockachino.matchers.Matchers.any;
-import static se.mockachino.matchers.Matchers.anyInt;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.*;
 
 public class HttpNioCallback {
 	IntegrationServer integrationServer;
@@ -36,7 +36,7 @@ public class HttpNioCallback {
 
 	private String okBody = "EVERYTHING IS OKAY!";
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		integrationServer = new JettyIntegrationServer();
 		integrationServer.start();
@@ -69,17 +69,18 @@ public class HttpNioCallback {
 		assertEquals(okBody, httpCallback.getBody());
 		assertEquals(200, httpCallback.getStatusCode());
 
-		OrderingContext order = newOrdering();
 
-		order.verify().on(nioCallback).onConnecting();
-		order.verify().on(nioCallback).onConnected();
-		order.verify().on(nioCallback).onWroteHeaders();
-		order.verify().on(nioCallback).onWroteContentCompleted();
-		order.verify().on(nioCallback).onReceivedStatus(any(HttpResponseStatus.class));
-		order.verify().on(nioCallback).onReceivedHeaders(any(io.netty.handler.codec.http.HttpHeaders.class));
-		order.verify().on(nioCallback).onReceivedContentPart(anyInt(), any(ByteBuf.class));
-		order.verify().on(nioCallback).onReceivedCompleted(any(HttpResponseStatus.class), any(io.netty.handler.codec.http.HttpHeaders.class));
-		verifyNever().on(nioCallback).onError(any(Throwable.class));
+		InOrder order = inOrder(nioCallback);
+
+		order.verify(nioCallback).onConnecting();
+		order.verify(nioCallback).onConnected();
+		order.verify(nioCallback).onWroteHeaders();
+		order.verify(nioCallback).onWroteContentCompleted();
+		order.verify(nioCallback).onReceivedStatus(any(HttpResponseStatus.class));
+		order.verify(nioCallback).onReceivedHeaders(any(io.netty.handler.codec.http.HttpHeaders.class));
+		order.verify(nioCallback).onReceivedContentPart(anyInt(), any(ByteBuf.class));
+		order.verify(nioCallback).onReceivedCompleted(any(HttpResponseStatus.class), any(io.netty.handler.codec.http.HttpHeaders.class));
+		verify(nioCallback, times(0)).onError(any(Throwable.class));
 
 	}
 
@@ -102,7 +103,7 @@ public class HttpNioCallback {
 
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		integrationServer.shutdown();
 		httpClient.shutdown();

@@ -9,9 +9,9 @@ package com.king.platform.net.http.integration;
 import com.king.platform.net.http.HttpClient;
 import com.king.platform.net.http.HttpMethod;
 import com.king.platform.net.http.HttpResponse;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -20,7 +20,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class HttpDelete {
 	IntegrationServer integrationServer;
@@ -29,7 +29,7 @@ public class HttpDelete {
 
 	private String okBody = "EVERYTHING IS OKAY!";
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		integrationServer = new JettyIntegrationServer();
 		integrationServer.start();
@@ -104,7 +104,7 @@ public class HttpDelete {
 
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		integrationServer.shutdown();
 		httpClient.shutdown();

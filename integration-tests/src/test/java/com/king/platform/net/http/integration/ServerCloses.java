@@ -9,9 +9,9 @@ package com.king.platform.net.http.integration;
 import com.king.platform.net.http.HttpClient;
 import com.king.platform.net.http.netty.ConnectionClosedException;
 import com.king.platform.net.http.netty.eventbus.Event;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -22,7 +22,7 @@ import java.net.Socket;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.slf4j.LoggerFactory.getLogger;
 
 public class ServerCloses {
@@ -33,7 +33,7 @@ public class ServerCloses {
 
 	private RecordingEventBus recordingEventBus;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 
 		port = JettyIntegrationServer.findFreePort();
@@ -212,7 +212,7 @@ public class ServerCloses {
 
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 
 		httpClient.shutdown();

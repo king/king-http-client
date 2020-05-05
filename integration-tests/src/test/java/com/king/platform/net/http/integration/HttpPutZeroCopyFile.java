@@ -10,11 +10,10 @@ import com.king.platform.net.http.ByteArrayResponseBodyConsumer;
 import com.king.platform.net.http.ConfKeys;
 import com.king.platform.net.http.HttpClient;
 import io.netty.util.ResourceLeakDetector;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -22,14 +21,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.file.Path;
 import java.security.NoSuchAlgorithmException;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class HttpPutZeroCopyFile {
-
-	@Rule
-	public TemporaryFolder folder = new TemporaryFolder();
 
 	IntegrationServer integrationServer;
 	private HttpClient httpClient;
@@ -40,13 +37,13 @@ public class HttpPutZeroCopyFile {
 		return String.format("%0" + b.length * 2 + "x", new BigInteger(1, b));
 	}
 
-	@Before
-	public void setUp() throws Exception {
+	@BeforeEach
+	public void setUp(@TempDir Path tempDir) throws Exception {
 
 		ResourceLeakDetector.setLevel(ResourceLeakDetector.Level.PARANOID);
 
 
-		temporaryFile = new TemporaryFile(folder);
+		temporaryFile = new TemporaryFile(tempDir);
 
 		ResourceLeakDetector.setLevel(ResourceLeakDetector.Level.ADVANCED);
 
@@ -124,7 +121,7 @@ public class HttpPutZeroCopyFile {
 
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		integrationServer.shutdown();
 		httpClient.shutdown();
