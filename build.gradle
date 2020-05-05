@@ -49,6 +49,13 @@ allprojects {
 		tasks.withType(JavaCompile) {
 			options.errorprone.errorproneArgs.add('-Xep:FutureReturnValueIgnored:OFF')
 		}
+
+		test {
+			testLogging {
+				events "passed", "skipped", "failed"
+				exceptionFormat "full"
+			}
+		}
 	}
 
 }
