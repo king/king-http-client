@@ -3,16 +3,8 @@
 // Author: Magnus Gustafsson
 // License: Apache 2.0, https://raw.github.com/king/king-http-client/LICENSE-APACHE
 
-
-buildscript {
-	repositories {
-		maven {
-			url "https://plugins.gradle.org/m2/"
-		}
-	}
-	dependencies {
-		classpath "net.ltgt.gradle:gradle-errorprone-plugin:0.0.11"
-	}
+plugins {
+	id("net.ltgt.errorprone") version "1.1.1"
 }
 
 
@@ -31,6 +23,10 @@ dependencies {
 	compile "org.eclipse.jetty.websocket:websocket-servlet:9.4.20.v20190813"
 
 
+	errorprone("com.google.errorprone:error_prone_core:2.3.4")
+	errorproneJavac("com.google.errorprone:javac:9+181-r4173-1")
+
+
 	testCompile 'junit:junit:4.11'
 	testCompile 'se.mockachino:mockachino:0.6.1'
 
@@ -41,6 +37,6 @@ dependencies {
 
 
 tasks.withType(JavaCompile) {
-	options.compilerArgs += ['-Xep:FutureReturnValueIgnored:OFF' ]
+	options.errorprone.errorproneArgs.add('-Xep:FutureReturnValueIgnored:OFF')
 }
 

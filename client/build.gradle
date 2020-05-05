@@ -3,17 +3,9 @@
 // Author: Magnus Gustafsson
 // License: Apache 2.0, https://raw.github.com/king/king-http-client/LICENSE-APACHE
 
-buildscript {
-	repositories {
-		maven {
-			url "https://plugins.gradle.org/m2/"
-		}
-	}
-	dependencies {
-		classpath "net.ltgt.gradle:gradle-errorprone-plugin:0.0.11"
-	}
+plugins {
+	id("net.ltgt.errorprone") version "1.1.1"
 }
-
 
 apply plugin: 'maven'
 apply plugin: 'signing'
@@ -33,19 +25,15 @@ dependencies {
 
 	compile 'io.netty:netty-all:4.1.32.Final'
 
+	errorprone("com.google.errorprone:error_prone_core:2.3.4")
+
+	errorproneJavac("com.google.errorprone:javac:9+181-r4173-1")
 
 	testCompile 'junit:junit:4.11'
 	testCompile 'se.mockachino:mockachino:0.6.2'
 
 }
 
-
-tasks.withType(FindBugs) {
-	reports {
-		xml.enabled = false
-		html.enabled = true
-	}
-}
 
 task generateJavadoc(type: Javadoc) {
 	source = sourceSets.main.allJava
@@ -121,5 +109,5 @@ if (properties.containsKey('ossrhUsername')) {
 }
 
 tasks.withType(JavaCompile) {
-	options.compilerArgs += ['-Xep:FutureReturnValueIgnored:OFF' ]
+	options.errorprone.errorproneArgs.add('-Xep:FutureReturnValueIgnored:OFF')
 }
