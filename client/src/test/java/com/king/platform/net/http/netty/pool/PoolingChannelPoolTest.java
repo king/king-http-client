@@ -12,8 +12,8 @@ import io.netty.channel.Channel;
 import io.netty.util.Timeout;
 import io.netty.util.Timer;
 import io.netty.util.TimerTask;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -21,9 +21,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.*;
-import static se.mockachino.Mockachino.mock;
-import static se.mockachino.Mockachino.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class PoolingChannelPoolTest {
 
@@ -35,7 +35,7 @@ public class PoolingChannelPoolTest {
 	private Channel inactiveChannel;
 	private Channel closedChannel;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		activeChannel = getActiveChannelMock();
 

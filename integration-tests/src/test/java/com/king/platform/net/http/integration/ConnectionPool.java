@@ -17,9 +17,9 @@ import com.king.platform.net.http.netty.pool.NoChannelPool;
 import com.king.platform.net.http.netty.pool.PoolingChannelPool;
 import com.king.platform.net.http.netty.util.SystemTimeProvider;
 import io.netty.util.HashedWheelTimer;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -29,9 +29,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
-import static se.mockachino.Mockachino.mock;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.Mockito.mock;
 
 public class ConnectionPool {
 	IntegrationServer integrationServer;
@@ -41,7 +41,7 @@ public class ConnectionPool {
 	private String okBody = "EVERYTHING IS OKAY!";
 	private RecordingEventBus rootEventBus;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		integrationServer = new JettyIntegrationServer();
 		integrationServer.start();
@@ -208,7 +208,7 @@ public class ConnectionPool {
 	}
 
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		integrationServer.shutdown();
 		httpClient.shutdown();

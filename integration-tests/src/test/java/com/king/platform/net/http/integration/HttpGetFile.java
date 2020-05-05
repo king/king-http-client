@@ -11,9 +11,13 @@ import com.king.platform.net.http.FileResponseConsumer;
 import com.king.platform.net.http.HttpClient;
 import com.king.platform.net.http.HttpResponse;
 import io.netty.util.ResourceLeakDetector;
+import jdk.nashorn.internal.ir.annotations.Ignore;
 import org.eclipse.jetty.server.HttpOutput;
-import org.junit.*;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import javax.servlet.AsyncContext;
 import javax.servlet.ServletException;
@@ -25,17 +29,17 @@ import java.io.*;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@Ignore
+@Disabled
 public class HttpGetFile {
 
-	@Rule
-	public TemporaryFolder folder = new TemporaryFolder();
+
 
 	IntegrationServer integrationServer;
 	private HttpClient httpClient;
@@ -43,9 +47,9 @@ public class HttpGetFile {
 	private TemporaryFile temporaryFile;
 
 
-	@Before
-	public void setUp() throws Exception {
-		temporaryFile = new TemporaryFile(folder);
+	@BeforeEach
+	public void setUp(@TempDir Path tempDir) throws Exception {
+		temporaryFile = new TemporaryFile(tempDir);
 
 		ResourceLeakDetector.setLevel(ResourceLeakDetector.Level.PARANOID);
 
@@ -183,7 +187,7 @@ public class HttpGetFile {
 	}
 
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		integrationServer.shutdown();
 		httpClient.shutdown();

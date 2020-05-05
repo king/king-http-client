@@ -3,13 +3,9 @@
 // Author: Magnus Gustafsson
 // License: Apache 2.0, https://raw.github.com/king/king-http-client/LICENSE-APACHE
 
-plugins {
-	id("net.ltgt.errorprone") version "1.1.1"
-}
-
+apply plugin: 'java-library'
 apply plugin: 'maven'
 apply plugin: 'signing'
-apply plugin: "net.ltgt.errorprone"
 
 
 group 'com.king.king-http-client'
@@ -21,18 +17,12 @@ archivesBaseName = 'king-http-client'
 
 
 dependencies {
-	compile 'org.slf4j:slf4j-api:1.7.7'
+	api "io.netty:netty-all:$nettyVersion"
 
-	compile 'io.netty:netty-all:4.1.32.Final'
-
-	errorprone("com.google.errorprone:error_prone_core:2.3.4")
-
-	errorproneJavac("com.google.errorprone:javac:9+181-r4173-1")
-
-	testCompile 'junit:junit:4.11'
-	testCompile 'se.mockachino:mockachino:0.6.2'
+	testImplementation 'ch.qos.logback:logback-classic:1.+'
 
 }
+
 
 
 task generateJavadoc(type: Javadoc) {
@@ -106,8 +96,4 @@ if (properties.containsKey('ossrhUsername')) {
 		}
 	}
 
-}
-
-tasks.withType(JavaCompile) {
-	options.errorprone.errorproneArgs.add('-Xep:FutureReturnValueIgnored:OFF')
 }

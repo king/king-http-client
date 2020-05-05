@@ -5,7 +5,8 @@
 
 package com.king.platform.net.http;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
@@ -14,8 +15,8 @@ import java.nio.channels.WritableByteChannel;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 
 public class ResponseBodyStreamTest {

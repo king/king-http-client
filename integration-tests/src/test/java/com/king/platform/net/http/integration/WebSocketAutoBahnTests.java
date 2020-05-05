@@ -13,18 +13,19 @@ import com.king.platform.net.http.WebSocketListener;
 import com.king.platform.net.http.netty.NettyHttpClientBuilder;
 import com.king.platform.net.http.netty.backpressure.EvictingBackPressure;
 import com.king.platform.net.http.netty.pool.NoChannelPool;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import jdk.nashorn.internal.ir.annotations.Ignore;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.CountDownLatch;
 
-@Ignore
+@Disabled
 public class WebSocketAutoBahnTests {
 	private HttpClient httpClient;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 
 		httpClient = new NettyHttpClientBuilder()
@@ -140,7 +141,7 @@ public class WebSocketAutoBahnTests {
 		countDownLatch.await();
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		httpClient.shutdown();
 	}

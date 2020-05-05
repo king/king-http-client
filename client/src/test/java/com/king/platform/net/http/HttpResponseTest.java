@@ -8,17 +8,14 @@ package com.king.platform.net.http;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import java.util.AbstractMap;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
 
 @SuppressWarnings("unchecked")
 public class HttpResponseTest {
@@ -77,13 +74,13 @@ public class HttpResponseTest {
 	@Test
 	public void getStatus() {
 		final HttpResponse httpResponse = new HttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, null, new DefaultHttpHeaders());
-		assertThat(httpResponse.getStatusCode(), is(HttpResponseStatus.OK.code()));
-		assertThat(httpResponse.getStatusReason(), is(HttpResponseStatus.OK.reasonPhrase()));
+		assertEquals(httpResponse.getStatusCode(), HttpResponseStatus.OK.code());
+		assertEquals(httpResponse.getStatusReason(), HttpResponseStatus.OK.reasonPhrase());
 	}
 
 	@Test
 	public void getHttpVersion() {
 		final HttpResponse httpResponse = new HttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK, null, new DefaultHttpHeaders());
-		assertThat(httpResponse.getHttpVersion(), is(HttpVersion.HTTP_1_1.toString()));
+		assertEquals(httpResponse.getHttpVersion(), HttpVersion.HTTP_1_1.toString());
 	}
 }

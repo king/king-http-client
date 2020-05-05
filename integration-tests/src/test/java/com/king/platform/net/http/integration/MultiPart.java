@@ -13,9 +13,9 @@ import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -26,8 +26,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class MultiPart {
 	IntegrationServer integrationServer;
@@ -37,7 +37,7 @@ public class MultiPart {
 	private String okBody = "EVERYTHING IS OKAY!";
 	private String content = "BODY CONTENT";
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		integrationServer = new JettyIntegrationServer();
 		integrationServer.start();
@@ -98,7 +98,7 @@ public class MultiPart {
 
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		integrationServer.shutdown();
 		httpClient.shutdown();

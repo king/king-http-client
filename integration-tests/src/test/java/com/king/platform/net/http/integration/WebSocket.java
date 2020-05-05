@@ -14,13 +14,14 @@ import com.king.platform.net.http.netty.eventbus.DefaultEventBus;
 import com.king.platform.net.http.netty.eventbus.Event;
 import com.king.platform.net.http.netty.pool.NoChannelPool;
 import org.eclipse.jetty.websocket.api.Session;
-import org.eclipse.jetty.websocket.api.WebSocketFrameListener;
 import org.eclipse.jetty.websocket.api.WebSocketPartialListener;
 import org.eclipse.jetty.websocket.api.WebSocketPingPongListener;
-import org.eclipse.jetty.websocket.api.extensions.Frame;
 import org.eclipse.jetty.websocket.servlet.WebSocketServlet;
 import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
-import org.junit.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -41,8 +42,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static junit.framework.TestCase.assertEquals;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class WebSocket {
 	IntegrationServer integrationServer;
@@ -51,7 +55,7 @@ public class WebSocket {
 
 	private RecordingEventBus recordingEventBus;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		integrationServer = new JettyIntegrationServer(500);
 		integrationServer.start();
@@ -108,7 +112,7 @@ public class WebSocket {
 
 	}
 
-	@Test(timeout = 5000)
+	@Test
 	public void webSocket() throws Exception {
 
 
@@ -160,7 +164,8 @@ public class WebSocket {
 
 	}
 
-	@Test(timeout = 5000)
+	@Test
+	@org.junit.jupiter.api.Timeout(5000)
 	public void webSocketRequestEvents() throws Exception {
 
 		CountDownLatch countDownLatch = new CountDownLatch(1);
@@ -211,7 +216,8 @@ public class WebSocket {
 		recordingEventBus.printDeepInteractionStack();
 	}
 
-	@Test(timeout = 5000)
+	@Test
+    @Timeout(5000)
 	public void buildAnWebSocketAndLaterConnectIt() throws Exception {
 
 
@@ -338,7 +344,8 @@ public class WebSocket {
 
 	}
 
-	@Test(timeout = 5000L)
+	@Test
+	@org.junit.jupiter.api.Timeout(5000)
 	public void reconnectShouldWork() throws Exception {
 		WebSocketClient client = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
 			.build()
@@ -392,7 +399,8 @@ public class WebSocket {
 
 	}
 
-	@Test(timeout = 5000L)
+	@Test
+	@org.junit.jupiter.api.Timeout(5000)
 	public void idleTimeout() throws Exception {
 		WebSocketClient client = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
 			.idleTimeoutMillis(500)
@@ -444,7 +452,8 @@ public class WebSocket {
 
 	}
 
-	@Test(timeout = 5000L)
+	@Test
+	@org.junit.jupiter.api.Timeout(5000)
 	public void idleTimeoutShouldNotHappenWhenAutoPingIsEnabled() throws Exception {
 		WebSocketClient client = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
 			.idleTimeoutMillis(500)
@@ -546,7 +555,7 @@ public class WebSocket {
 		countDownLatch.await();
 		client.close();
 
-		Assert.assertEquals("SeverSentPing", new String(pongResponse.get(), StandardCharsets.UTF_8));
+		assertEquals("SeverSentPing", new String(pongResponse.get(), StandardCharsets.UTF_8));
 	}
 
 	@Test
@@ -580,7 +589,7 @@ public class WebSocket {
 		countDownLatch.await();
 		client.close();
 
-		Assert.assertEquals("SeverSentPing", new String(pongResponse.get(), StandardCharsets.UTF_8));
+		assertEquals("SeverSentPing", new String(pongResponse.get(), StandardCharsets.UTF_8));
 	}
 
 	@Test
@@ -633,7 +642,8 @@ public class WebSocket {
 		assertEquals("HELLO WORLD", receivedText.get());
 	}
 
-	@Test(timeout = 5000)
+	@Test
+	@org.junit.jupiter.api.Timeout(5000)
 	public void webSocketShouldCallOnConnectBeforeItReturns() throws Exception {
 
 		AtomicBoolean onConnect = new AtomicBoolean();
@@ -749,7 +759,7 @@ public class WebSocket {
 
 		client.close();
 
-		Assert.assertEquals(totalMd5Sum, receivedMd5.get());
+		assertEquals(totalMd5Sum, receivedMd5.get());
 	}
 
 
@@ -790,7 +800,7 @@ public class WebSocket {
 
 		client.close();
 
-		Assert.assertEquals(sentData.toString(), receivedContent.get());
+		assertEquals(sentData.toString(), receivedContent.get());
 	}
 
 	@Test
@@ -919,7 +929,7 @@ public class WebSocket {
 		countDownLatch.await(1, TimeUnit.SECONDS);
 		client.close();
 
-		Assert.assertEquals(10, receivedData.size());
+		assertEquals(10, receivedData.size());
 		for (int i = 0; i < 9; i++) {
 			assertEquals(md5[i] + "/false", receivedData.get(i));
 		}
@@ -928,7 +938,7 @@ public class WebSocket {
 	}
 
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		integrationServer.shutdown();
 		httpClient.shutdown();

@@ -9,10 +9,10 @@ import com.king.platform.net.http.netty.HttpRequestContext;
 import com.king.platform.net.http.netty.ServerInfo;
 import com.king.platform.net.http.netty.eventbus.DefaultEventBus;
 import com.king.platform.net.http.netty.eventbus.Event;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static se.mockachino.Mockachino.*;
+import static org.mockito.Mockito.*;
 
 
 public class MetricCollectorTest {
@@ -23,7 +23,7 @@ public class MetricCollectorTest {
 	private TimeStampRecorder recordedTimeStamps;
 	private String host;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		MetricCollector metricCollector = new MetricCollector();
 		rootEventBus = new DefaultEventBus();
@@ -41,31 +41,31 @@ public class MetricCollectorTest {
 	@Test
 	public void createdConnection() throws Exception {
 		rootEventBus.triggerEvent(Event.CREATED_CONNECTION, serverInfo);
-		verifyOnce().on(metricCallback).onCreatedConnectionTo(host);
+		verify(metricCallback).onCreatedConnectionTo(host);
 	}
 
 	@Test
 	public void reusedConnection() throws Exception {
 		rootEventBus.triggerEvent(Event.REUSED_CONNECTION, serverInfo);
-		verifyOnce().on(metricCallback).onReusedConnectionTo(host);
+		verify(metricCallback).onReusedConnectionTo(host);
 	}
 
 	@Test
 	public void closedConnection() throws Exception {
 		rootEventBus.triggerEvent(Event.CLOSED_CONNECTION, serverInfo);
-		verifyOnce().on(metricCallback).onClosedConnectionTo(host);
+		verify(metricCallback).onClosedConnectionTo(host);
 	}
 
 	@Test
 	public void error() throws Exception {
 		rootEventBus.triggerEvent(Event.ERROR, httpRequestContext, new Throwable());
-		verifyOnce().on(metricCallback).onError(host, recordedTimeStamps);
+		verify(metricCallback).onError(host, recordedTimeStamps);
 	}
 
 	@Test
 	public void completed() throws Exception {
 		rootEventBus.triggerEvent(Event.COMPLETED, httpRequestContext);
-		verifyOnce().on(metricCallback).onCompletedRequest(host, recordedTimeStamps);
+		verify(metricCallback).onCompletedRequest(host, recordedTimeStamps);
 
 	}
 }

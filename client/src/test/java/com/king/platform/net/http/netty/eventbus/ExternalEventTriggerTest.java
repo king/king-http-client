@@ -5,10 +5,10 @@
 
 package com.king.platform.net.http.netty.eventbus;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static se.mockachino.Mockachino.*;
+import static org.mockito.Mockito.*;
 
 
 public class ExternalEventTriggerTest {
@@ -16,7 +16,7 @@ public class ExternalEventTriggerTest {
 	private ExternalEventTrigger externalEventTrigger;
 	private EventListener eventListener;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		externalEventTrigger = new ExternalEventTrigger();
 		eventListener = mock(EventListener.class);
@@ -26,7 +26,7 @@ public class ExternalEventTriggerTest {
 	public void shouldTriggerEventListenerForEvent1() throws Exception {
 		externalEventTrigger.registerEventListener(eventListener);
 		externalEventTrigger.trigger(Event.CLOSE, null);
-		verifyOnce().on(eventListener).onEvent(Event.CLOSE, null);
+		verify(eventListener).onEvent(Event.CLOSE, null);
 	}
 
 
@@ -34,18 +34,18 @@ public class ExternalEventTriggerTest {
 	public void shouldTriggerEventListenerForEvent2() throws Exception {
 		externalEventTrigger.registerEventListener(eventListener);
 		externalEventTrigger.trigger(Event.ERROR, null, null);
-		verifyOnce().on(eventListener).onEvent(Event.ERROR, null, null);
+		verify(eventListener).onEvent(Event.ERROR, null, null);
 	}
 
 	@Test
 	public void shouldNotTriggerEventListenerForEvent2IfEventListenerIsNull() throws Exception {
 		externalEventTrigger.trigger(Event.ERROR, null, null);
-		verifyNever().on(eventListener).onEvent(Event.ERROR, null, null);
+		verify(eventListener, times(0)).onEvent(Event.ERROR, null, null);
 	}
 
 	@Test
 	public void shouldNotTriggerEventListenerForEvent1IfEventListenerIsNull() throws Exception {
 		externalEventTrigger.trigger(Event.CLOSE, null);
-		verifyNever().on(eventListener).onEvent(Event.CLOSE, null);
+		verify(eventListener, times(0)).onEvent(Event.CLOSE, null);
 	}
 }

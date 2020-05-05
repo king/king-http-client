@@ -6,17 +6,17 @@
 package com.king.platform.net.http.netty.metric;
 
 import com.king.platform.net.http.netty.util.TimeProviderForTesting;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 
 public class TimeStampRecorderTest {
 	private TimeStampRecorder timeStampRecorder;
 	private TimeProviderForTesting timeProvider;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		timeProvider = new TimeProviderForTesting();
 		timeStampRecorder = new TimeStampRecorder(timeProvider);

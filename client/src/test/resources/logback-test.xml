@@ -12,8 +12,6 @@
 		</encoder>
 	</appender>
 
-	<logger name="com.king.platform.net.http.netty.pool.PoolingChannelPool" level="trace"/>
-
 
 	<root level="ERROR">
 		<appender-ref ref="STDOUT"/>

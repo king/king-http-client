@@ -12,9 +12,9 @@ import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.AbstractHandler;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
@@ -22,7 +22,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class HttpGetChunked {
 
@@ -34,7 +34,7 @@ public class HttpGetChunked {
 	private HttpClient httpClient;
 	private Server server;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		port = JettyIntegrationServer.findFreePort();
 
@@ -58,7 +58,7 @@ public class HttpGetChunked {
 	}
 
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		httpClient.shutdown();
 		server.stop();

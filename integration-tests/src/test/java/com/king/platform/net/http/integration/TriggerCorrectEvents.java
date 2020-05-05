@@ -8,9 +8,9 @@ package com.king.platform.net.http.integration;
 
 import com.king.platform.net.http.HttpClient;
 import com.king.platform.net.http.netty.eventbus.Event;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -21,8 +21,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertSame;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 public class TriggerCorrectEvents {
 	IntegrationServer integrationServer;
@@ -32,7 +32,7 @@ public class TriggerCorrectEvents {
 	private String okBody = "EVERYTHING IS OKAY!";
 	private RecordingEventBus recordingEventBus;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		integrationServer = new JettyIntegrationServer();
 		integrationServer.start();
@@ -97,7 +97,7 @@ public class TriggerCorrectEvents {
 
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		integrationServer.shutdown();
 		httpClient.shutdown();

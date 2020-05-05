@@ -12,9 +12,9 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelProgressivePromise;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -28,7 +28,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class HttpPostWithInputStreamBody {
 	IntegrationServer integrationServer;
@@ -38,7 +38,7 @@ public class HttpPostWithInputStreamBody {
 	private String okBody = "EVERYTHING IS OKAY!";
 	private byte[] content;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		content = new byte[1024 * 16];
 		new Random().nextBytes(content);
@@ -215,7 +215,7 @@ public class HttpPostWithInputStreamBody {
 
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		integrationServer.shutdown();
 		httpClient.shutdown();

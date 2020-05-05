@@ -9,14 +9,13 @@ import com.king.platform.net.http.netty.eventbus.DefaultEventBus;
 import com.king.platform.net.http.netty.eventbus.Event;
 import com.king.platform.net.http.netty.eventbus.RequestEventBus;
 import com.king.platform.net.http.netty.util.TimeProviderForTesting;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.TimeUnit;
 
-import static se.mockachino.Mockachino.*;
-import static se.mockachino.matchers.Matchers.any;
-import static se.mockachino.matchers.Matchers.anyInt;
+import static org.mockito.Mockito.*;
+
 
 public class IdleTimeoutTimerTaskTest {
 
@@ -26,7 +25,7 @@ public class IdleTimeoutTimerTaskTest {
 	private HttpRequestContext httpRequestContext;
 	private RequestEventBus requestEventBus;
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		timeoutTimerHandler = mock(TimeoutTimerHandler.class);
 		httpRequestContext = mock(HttpRequestContext.class);
@@ -46,7 +45,7 @@ public class IdleTimeoutTimerTaskTest {
 
 		idleTimeoutTimerTask.run(null);
 
-		verifyOnce().on(requestEventBus).triggerEvent(Event.ERROR, httpRequestContext, any(TimeoutException.class));
+		verify(requestEventBus).triggerEvent(eq(Event.ERROR), eq(httpRequestContext), any(TimeoutException.class));
 	}
 
 	@Test
@@ -58,9 +57,10 @@ public class IdleTimeoutTimerTaskTest {
 
 		idleTimeoutTimerTask.run(null);
 
-		verifyNever().on(requestEventBus).triggerEvent(Event.ERROR, httpRequestContext, any(TimeoutException.class));
 
-		verifyNever().on(timeoutTimerHandler).scheduleTimeout(anyInt(), TimeUnit.MILLISECONDS);
+		verify(requestEventBus, times(0)).triggerEvent(eq(Event.ERROR), eq(httpRequestContext), any(TimeoutException.class));
+
+		verify(timeoutTimerHandler, times(0)).scheduleTimeout(anyInt(), eq(TimeUnit.MILLISECONDS));
 
 	}
 
@@ -71,9 +71,9 @@ public class IdleTimeoutTimerTaskTest {
 
 		idleTimeoutTimerTask.run(null);
 
-		verifyNever().on(requestEventBus).triggerEvent(Event.ERROR, httpRequestContext, any(TimeoutException.class));
+		verify(requestEventBus, times(0)).triggerEvent(eq(Event.ERROR), eq(httpRequestContext), any(TimeoutException.class));
 
-		verifyOnce().on(timeoutTimerHandler).scheduleTimeout(25, TimeUnit.MILLISECONDS);
+		verify(timeoutTimerHandler).scheduleTimeout(25, TimeUnit.MILLISECONDS);
 
 	}
 
@@ -89,9 +89,9 @@ public class IdleTimeoutTimerTaskTest {
 
 		idleTimeoutTimerTask.run(null);
 
-		verifyNever().on(requestEventBus).triggerEvent(Event.ERROR, httpRequestContext, any(TimeoutException.class));
+		verify(requestEventBus, times(0)).triggerEvent(eq(Event.ERROR), eq(httpRequestContext), any(TimeoutException.class));
 
-		verifyOnce().on(timeoutTimerHandler).scheduleTimeout( 25, TimeUnit.MILLISECONDS);
+		verify(timeoutTimerHandler).scheduleTimeout( 25, TimeUnit.MILLISECONDS);
 
 	}
 
@@ -103,7 +103,7 @@ public class IdleTimeoutTimerTaskTest {
 
 		idleTimeoutTimerTask.run(null);
 
-		verifyNever().on(requestEventBus).triggerEvent(Event.ERROR, httpRequestContext, any(TimeoutException.class));
+		verify(requestEventBus, times(0)).triggerEvent(eq(Event.ERROR), eq(httpRequestContext), any(TimeoutException.class));
 	}
 
 	@Test
@@ -114,6 +114,6 @@ public class IdleTimeoutTimerTaskTest {
 
 		idleTimeoutTimerTask.run(null);
 
-		verifyNever().on(requestEventBus).triggerEvent(Event.ERROR, httpRequestContext, any(TimeoutException.class));
+		verify(requestEventBus, times(0)).triggerEvent(eq(Event.ERROR), eq(httpRequestContext), any(TimeoutException.class));
 	}
 }
