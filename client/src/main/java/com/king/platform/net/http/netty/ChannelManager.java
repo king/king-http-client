@@ -107,7 +107,7 @@ public class ChannelManager {
 		}
 
 		rootEventBus.subscribePermanently(Event.ERROR, new ErrorCallback());
-		rootEventBus.subscribePermanently(Event.COMPLETED, new CompletedCallback());
+		rootEventBus.subscribePermanently(Event.onInternalCompletion, new CompletedCallback());
 		rootEventBus.subscribePermanently(Event.EXECUTE_REQUEST, new ExecuteRequestCallback());
 		rootEventBus.subscribePermanently(Event.WS_UPGRADE_PIPELINE, this::upgradePipelineToWebSocket);
 		rootEventBus.subscribePermanently(Event.POPULATE_CONNECTION_SPECIFIC_HEADERS, this::populateServerSpecificHeaders);

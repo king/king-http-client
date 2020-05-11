@@ -30,10 +30,7 @@ public class BlockingHttpCallback implements HttpCallback<String> {
 	@Override
 	public void onCompleted(HttpResponse<String> httpResponse) {
 		this.httpResponse = httpResponse;
-		try {
-			Thread.sleep(50);
-		} catch (InterruptedException ignored) {
-		}
+
 
 		countDownLatch.countDown();
 	}
@@ -43,10 +40,7 @@ public class BlockingHttpCallback implements HttpCallback<String> {
 
 		this.exception = exception;
 
-		try {
-			Thread.sleep(50);
-		} catch (InterruptedException ignored) {
-		}
+
 
 		countDownLatch.countDown();
 	}

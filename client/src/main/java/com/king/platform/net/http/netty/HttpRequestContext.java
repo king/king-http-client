@@ -5,6 +5,7 @@
 
 package com.king.platform.net.http.netty;
 
+import com.king.platform.net.http.HttpResponse;
 import com.king.platform.net.http.ResponseBodyConsumer;
 import com.king.platform.net.http.netty.eventbus.RequestEventBus;
 import com.king.platform.net.http.netty.metric.TimeStampRecorder;
@@ -40,6 +41,7 @@ public class HttpRequestContext<T> {
 	private boolean automaticallyDecompressResponse;
 
 	private WebSocketConf webSocketConf;
+	private HttpResponse httpResponse;
 
 	public HttpRequestContext(HttpMethod httpMethod, NettyHttpClientRequest<T> nettyHttpClientRequest, RequestEventBus requestEventBus, ResponseBodyConsumer<T> responseBodyConsumer, int idleTimeoutMillis, int totalRequestTimeoutMillis, boolean followRedirects, boolean keepAlive, TimeStampRecorder timeStampRecorder, boolean automaticallyDecompressResponse, WebSocketConf webSocketConf) {
 		this.httpMethod = httpMethod;
@@ -63,6 +65,7 @@ public class HttpRequestContext<T> {
 		httpRequestContext.redirectionCount = this.redirectionCount + 1;
 
 		nettyHttpClientRequest.setKeepAlive(keepAlive);
+		httpRequestContext.setHttpResponse(httpResponse);
 		return httpRequestContext;
 	}
 
@@ -168,5 +171,13 @@ public class HttpRequestContext<T> {
 
 	public WebSocketConf webSocketConf() {
 		return webSocketConf;
+	}
+
+	public void setHttpResponse(HttpResponse httpResponse) {
+		this.httpResponse = httpResponse;
+	}
+
+	public HttpResponse getHttpResponse() {
+		return httpResponse;
 	}
 }

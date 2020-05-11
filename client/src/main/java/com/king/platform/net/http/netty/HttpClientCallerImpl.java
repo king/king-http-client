@@ -107,7 +107,7 @@ public class HttpClientCallerImpl implements HttpClientCaller {
 			return;
 		}
 		HttpCallbackInvoker<T> httpCallbackInvoker = new HttpCallbackInvoker<>(callbackExecutor, httpCallback);
-		requestRequestEventBus.subscribePermanently(Event.onHttpResponseDone, httpCallbackInvoker::onHttpResponseDone);
+		requestRequestEventBus.subscribePermanently(Event.COMPLETED, httpCallbackInvoker::onCompleted);
 		requestRequestEventBus.subscribePermanently(Event.ERROR, httpCallbackInvoker::onError);
 
 	}

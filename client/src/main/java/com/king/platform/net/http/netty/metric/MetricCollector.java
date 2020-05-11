@@ -26,7 +26,7 @@ public class MetricCollector {
 		rootEventBus.subscribePermanently(Event.ERROR, (payload1, payload2) -> metricCallback.onError(payload1.getServerInfo().getHost(), payload1.getTimeRecorder()));
 
 
-		rootEventBus.subscribePermanently(Event.COMPLETED, (payload) -> metricCallback.onCompletedRequest(payload.getServerInfo().getHost(), payload.getTimeRecorder()));
+		rootEventBus.subscribePermanently(Event.onInternalCompletion, (payload) -> metricCallback.onCompletedRequest(payload.getServerInfo().getHost(), payload.getTimeRecorder()));
 	}
 
 }

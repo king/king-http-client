@@ -46,6 +46,7 @@ public interface Event {
 
 	Event1<HttpResponse> onHttpResponseDone = new Event1<>("onHttpResponseDone");
 
+	Event1<HttpRequestContext> onInternalCompletion = new Event1<>("onInternalCompletion");
 
 	Event2<ChannelPipeline, WebSocketConf> WS_UPGRADE_PIPELINE = new Event2<>("WS_UPGRADE_PIPELINE");
 	Event2<Channel, HttpHeaders> onWsOpen = new Event2<>("onWsOpen");
