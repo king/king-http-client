@@ -163,12 +163,9 @@ public class HttpGetFile {
 
 		integrationServer.addServlet(new FileServingHttpServlet(1024, temporaryFile), "/getFile");
 
-		BlockingBinaryHttpCallback httpCallback = new BlockingBinaryHttpCallback();
-		httpClient.createGet("http://localhost:" + port + "/getFile").build(MD5CalculatingResponseBodyConsumer::new).withHttpCallback(httpCallback).execute();
-		httpCallback.waitForCompletion();
+		HttpResponse<byte[]> response = httpClient.createGet("http://localhost:" + port + "/getFile").build(MD5CalculatingResponseBodyConsumer::new).execute().get(1, TimeUnit.SECONDS);
 
-		byte[] clientMd5 = httpCallback.getBody();
-
+		byte[] clientMd5 = response.getBody();
 
 		assertEquals(hexStringFromBytes(temporaryFile.getFileMd5()), hexStringFromBytes(clientMd5));
 

@@ -17,8 +17,8 @@ import static org.slf4j.LoggerFactory.getLogger;
 
 public class BlockingHttpCallback implements HttpCallback<String> {
 	private final Logger logger = getLogger(getClass());
-	private HttpResponse<String> httpResponse;
-	private Throwable exception;
+	private volatile HttpResponse<String> httpResponse;
+	private volatile Throwable exception;
 
 	private CountDownLatch countDownLatch = new CountDownLatch(1);
 
@@ -30,17 +30,12 @@ public class BlockingHttpCallback implements HttpCallback<String> {
 	@Override
 	public void onCompleted(HttpResponse<String> httpResponse) {
 		this.httpResponse = httpResponse;
-
-
 		countDownLatch.countDown();
 	}
 
 	@Override
 	public void onError(Throwable exception) {
-
 		this.exception = exception;
-
-
 
 		countDownLatch.countDown();
 	}
@@ -53,6 +48,7 @@ public class BlockingHttpCallback implements HttpCallback<String> {
 		if (exception != null) {
 			throw new RuntimeException(exception);
 		}
+
 		if (httpResponse == null) {
 			return null;
 		}

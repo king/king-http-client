@@ -13,8 +13,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 public class BlockingBinaryHttpCallback implements HttpCallback<byte[]> {
-	private HttpResponse<byte[]> httpResponse;
-	private Throwable exception;
+	private volatile HttpResponse<byte[]> httpResponse;
+	private volatile Throwable exception;
 
 	private CountDownLatch countDownLatch = new CountDownLatch(1);
 
