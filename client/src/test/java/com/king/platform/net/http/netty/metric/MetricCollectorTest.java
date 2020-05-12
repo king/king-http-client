@@ -64,7 +64,7 @@ public class MetricCollectorTest {
 
 	@Test
 	public void completed() throws Exception {
-		rootEventBus.triggerEvent(Event.COMPLETED, httpRequestContext);
+		rootEventBus.triggerEvent(Event.onInternalCompletion, httpRequestContext);
 		verify(metricCallback).onCompletedRequest(host, recordedTimeStamps);
 
 	}

@@ -8,6 +8,7 @@ package com.king.platform.net.http.integration;
 
 import com.king.platform.net.http.ConfKeys;
 import com.king.platform.net.http.HttpClient;
+import com.king.platform.net.http.HttpResponse;
 import com.king.platform.net.http.netty.NettyHttpClientBuilder;
 import com.king.platform.net.http.netty.eventbus.DefaultEventBus;
 import com.king.platform.net.http.netty.eventbus.Event;
@@ -28,6 +29,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -94,12 +96,10 @@ public class ConnectionPool {
 		createHttpClient(false);
 
 
-		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createGet("http://localhost:" + port + "/testOk").build().withHttpCallback(httpCallback).execute();
-		httpCallback.waitForCompletion();
+		HttpResponse<String> response = httpClient.createGet("http://localhost:" + port + "/testOk").build().execute().get(1, TimeUnit.SECONDS);
 
-		assertEquals(okBody, httpCallback.getBody());
-		assertEquals(200, httpCallback.getStatusCode());
+		assertEquals(okBody, response.getBody());
+		assertEquals(200, response.getStatusCode());
 
 		List<Event> expectedEvents = new ArrayList<>();
 		expectedEvents.add(Event.CREATED_CONNECTION);
@@ -116,12 +116,10 @@ public class ConnectionPool {
 		createHttpClient(true);
 
 
-		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createGet("http://localhost:" + port + "/testOk").build().withHttpCallback(httpCallback).execute();
-		httpCallback.waitForCompletion();
+		HttpResponse<String> httpResponse = httpClient.createGet("http://localhost:" + port + "/testOk").build().execute().get(1, TimeUnit.SECONDS);
 
-		assertEquals(okBody, httpCallback.getBody());
-		assertEquals(200, httpCallback.getStatusCode());
+		assertEquals(okBody, httpResponse.getBody());
+		assertEquals(200, httpResponse.getStatusCode());
 
 
 		List<Event> expectedEvents = new ArrayList<>();
@@ -137,19 +135,15 @@ public class ConnectionPool {
 	public void secondGetWithConnectionPool() throws Exception {
 		createHttpClient(true);
 
+		HttpResponse<String> response = httpClient.createGet("http://localhost:" + port + "/testOk").build().execute().get(1, TimeUnit.SECONDS);
 
-		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createGet("http://localhost:" + port + "/testOk").build().withHttpCallback(httpCallback).execute();
-		httpCallback.waitForCompletion();
+		assertEquals(okBody, response.getBody());
+		assertEquals(200, response.getStatusCode());
 
-		//eventBusFactory.resetInteractions();
+		response = httpClient.createGet("http://localhost:" + port + "/testOk").build().execute().get(1, TimeUnit.SECONDS);
 
-		httpCallback = new BlockingHttpCallback();
-		httpClient.createGet("http://localhost:" + port + "/testOk").build().withHttpCallback(httpCallback).execute();
-		httpCallback.waitForCompletion();
-
-		assertEquals(okBody, httpCallback.getBody());
-		assertEquals(200, httpCallback.getStatusCode());
+		assertEquals(okBody, response.getBody());
+		assertEquals(200, response.getStatusCode());
 
 
 		List<Event> expectedEvents = new ArrayList<>();
@@ -166,18 +160,13 @@ public class ConnectionPool {
 		createHttpClient(false);
 
 
-		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createGet("http://localhost:" + port + "/testOk").build().withHttpCallback(httpCallback).execute();
-		httpCallback.waitForCompletion();
+		httpClient.createGet("http://localhost:" + port + "/testOk").build().execute().get(1, TimeUnit.SECONDS);
 
-		//eventBusFactory.resetInteractions();
 
-		httpCallback = new BlockingHttpCallback();
-		httpClient.createGet("http://localhost:" + port + "/testOk").build().withHttpCallback(httpCallback).execute();
-		httpCallback.waitForCompletion();
+		HttpResponse<String> response = httpClient.createGet("http://localhost:" + port + "/testOk").build().execute().get(1, TimeUnit.SECONDS);
 
-		assertEquals(okBody, httpCallback.getBody());
-		assertEquals(200, httpCallback.getStatusCode());
+		assertEquals(okBody, response.getBody());
+		assertEquals(200, response.getStatusCode());
 
 
 		List<Event> expectedEvents = new ArrayList<>();

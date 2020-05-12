@@ -35,17 +35,19 @@ public class ResponseFuture<T> extends CompletableFuture<HttpResponse<T>> {
 			}
 		});
 
-		requestEventBus.subscribe(Event.onHttpResponseDone, new RunOnceCallback1<HttpResponse>() {
+		requestEventBus.subscribe(Event.COMPLETED, new RunOnceCallback1<HttpRequestContext>() {
 			@Override
-			public void onFirstEvent(HttpResponse payload) {
+			public void onFirstEvent(HttpRequestContext payload) {
 				callbackExecutor.execute(new Runnable() {
 					@Override
 					public void run() {
-						ResponseFuture.this.complete(payload);
+						ResponseFuture.this.complete(payload.getHttpResponse());
 					}
 				});
 			}
 		});
+
+
 	}
 
 	@Override

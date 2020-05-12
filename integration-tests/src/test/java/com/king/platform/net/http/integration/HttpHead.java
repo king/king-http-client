@@ -173,8 +173,6 @@ public class HttpHead {
 		assertEquals(headResponse.getStatusCode(), 200);
 		assertEquals("", headResponse.getBody());
 
-		Thread.sleep(100);
-
 		assertEquals(1, recordingEventBus.getTriggeredCount(Event.COMPLETED));
 		assertEquals(0, recordingEventBus.getTriggeredCount(Event.ERROR));
 

@@ -8,6 +8,7 @@ package com.king.platform.net.http.integration;
 
 import com.king.platform.net.http.ConfKeys;
 import com.king.platform.net.http.HttpClient;
+import com.king.platform.net.http.KingHttpException;
 import com.king.platform.net.http.netty.NettyHttpClientBuilder;
 import com.king.platform.net.http.netty.backpressure.EvictingBackPressure;
 import com.king.platform.net.http.netty.pool.NoChannelPool;
@@ -21,8 +22,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 
 public class BackPressure {
@@ -83,14 +86,12 @@ public class BackPressure {
 
 		goLatch.countDown();
 
-		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createGet("http://localhost:" + port + "/testOk").build().withHttpCallback(httpCallback).execute();
-
-		httpCallback.waitForCompletion();
-
-
-		assertNotNull(httpCallback.getException());
-
+		try {
+			httpClient.createGet("http://localhost:" + port + "/testOk").build().execute().get(1, TimeUnit.SECONDS);
+			fail("should have thrown exception because no more connections is allowed");
+		} catch (ExecutionException ee) {
+			assertTrue(ee.getCause() instanceof KingHttpException);
+		}
 
 	}
 

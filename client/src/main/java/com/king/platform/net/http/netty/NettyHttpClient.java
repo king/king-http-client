@@ -75,7 +75,7 @@ public class NettyHttpClient implements HttpClient {
 		this.channelPool = channelPool;
 
 
-		rootEventBus.subscribePermanently(Event.COMPLETED, new EventBusCallback1<HttpRequestContext>() {
+		rootEventBus.subscribePermanently(Event.onInternalCompletion, new EventBusCallback1<HttpRequestContext>() {
 			@Override
 			public void onEvent(HttpRequestContext httpRequestContext) {
 				executionBackPressure.releaseSlot(httpRequestContext.getServerInfo());

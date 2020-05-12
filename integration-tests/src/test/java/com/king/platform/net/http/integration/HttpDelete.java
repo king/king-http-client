@@ -19,6 +19,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -51,12 +52,12 @@ public class HttpDelete {
 			}
 		}, "/testOk");
 
-		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createDelete("http://localhost:" + port + "/testOk").build().withHttpCallback(httpCallback).execute();
-		httpCallback.waitForCompletion();
 
-		assertEquals(okBody, httpCallback.getBody());
-		assertEquals(200, httpCallback.getStatusCode());
+		HttpResponse<String> response = httpClient.createDelete("http://localhost:" + port + "/testOk").build().execute().get(1, TimeUnit.SECONDS);
+
+
+		assertEquals(okBody, response.getBody());
+		assertEquals(200, response.getStatusCode());
 
 
 	}
@@ -71,12 +72,10 @@ public class HttpDelete {
 			}
 		}, "/test404");
 
-		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createDelete("http://localhost:" + port + "/test404").build().withHttpCallback(httpCallback).execute();
-		httpCallback.waitForCompletion();
-		assertEquals("", httpCallback.getBody());
-		assertEquals(404, httpCallback.getStatusCode());
+		HttpResponse<String> response = httpClient.createDelete("http://localhost:" + port + "/test404").build().execute().get(1, TimeUnit.SECONDS);
 
+		assertEquals("", response.getBody());
+		assertEquals(404, response.getStatusCode());
 
 	}
 

@@ -192,8 +192,10 @@ public class HttpClientResponseHandler implements ResponseHandler {
 		@SuppressWarnings("unchecked") com.king.platform.net.http.HttpResponse httpResponse =
 			new com.king.platform.net.http.HttpResponse(httpVersion(httpRequestContext), httpResponseStatus, responseBodyConsumer, httpHeaders);
 
-		requestEventBus.triggerEvent(Event.onHttpResponseDone, httpResponse);
+		httpRequestContext.setHttpResponse(httpResponse);
 
+		requestEventBus.triggerEvent(Event.onHttpResponseDone, httpResponse);
+		requestEventBus.triggerEvent(Event.onInternalCompletion, httpRequestContext);
 		requestEventBus.triggerEvent(Event.COMPLETED, httpRequestContext);
 	}
 

@@ -28,7 +28,7 @@ public class TimeoutTimerHandler {
 		timeout = nettyTimer.newTimeout(task, delayTime, timeUnit);
 
 		requestEventBus.subscribe(Event.ERROR, this::cancel);
-		requestEventBus.subscribe(Event.COMPLETED, this::complete);
+		requestEventBus.subscribe(Event.onInternalCompletion, this::complete);
 
 	}
 

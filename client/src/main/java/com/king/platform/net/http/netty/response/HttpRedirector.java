@@ -54,7 +54,7 @@ public class HttpRedirector {
 
 			HttpRequestContext redirectHttpRequestContext = originalRequestContext.createRedirectRequest(redirectServerInfo, redirectLocation);
 
-			requestEventBus.triggerEvent(Event.COMPLETED, originalRequestContext);
+			requestEventBus.triggerEvent(Event.onInternalCompletion, originalRequestContext);
 
 			logger.trace("Redirecting request {}", redirectHttpRequestContext);
 

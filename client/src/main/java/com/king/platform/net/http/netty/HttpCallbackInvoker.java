@@ -26,6 +26,12 @@ public class HttpCallbackInvoker<T> {
 		}
 	}
 
+	public void onCompleted(HttpRequestContext httpRequestContext) {
+		if (firstExecute.compareAndSet(false, true)) {
+			callbackExecutor.execute(() -> httpCallback.onCompleted(httpRequestContext.getHttpResponse()));
+		}
+	}
+
 	public void onError(HttpRequestContext httpRequestContext, Throwable throwable) {
 		if (firstExecute.compareAndSet(false, true)) {
 			callbackExecutor.execute(() -> httpCallback.onError(throwable));

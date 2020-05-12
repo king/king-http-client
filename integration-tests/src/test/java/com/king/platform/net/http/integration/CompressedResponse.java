@@ -85,7 +85,7 @@ public class CompressedResponse {
 
 		verifyDeflated(httpResponse);
 
-		Thread.sleep(10);
+
 
 		httpResponse = getDeflatedResponse();
 
@@ -111,23 +111,18 @@ public class CompressedResponse {
 
 		verifyDeflated(httpResponse);
 
-		Thread.sleep(10);
-
 
 		httpResponse = getCompressedResponse();
 
 
 		verifyCompressed(httpResponse);
 
-		Thread.sleep(10);
 
 		httpResponse = getDeflatedResponse();
 
 
 		verifyDeflated(httpResponse);
 
-
-		Thread.sleep(10);
 
 		httpResponse = getDeflatedResponse();
 

@@ -19,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 
 public class ResponseFutureTest {
@@ -36,7 +37,9 @@ public class ResponseFutureTest {
 	@Test
 	public void doneShouldCompleteTheFuture() throws Exception {
 		HttpResponse httpResponse = mock(HttpResponse.class);
-		requestEventBus.triggerEvent(Event.onHttpResponseDone, httpResponse);
+		HttpRequestContext context = mock(HttpRequestContext.class);
+		when(context.getHttpResponse()).thenReturn(httpResponse);
+		requestEventBus.triggerEvent(Event.COMPLETED, context);
 		assertTrue(responseFuture.isDone());
 		HttpResponse<HttpResponse> futureResult = responseFuture.get(1, TimeUnit.MILLISECONDS);
 		assertSame(httpResponse, futureResult);

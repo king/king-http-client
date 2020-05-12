@@ -7,6 +7,7 @@ package com.king.platform.net.http.integration;
 
 
 import com.king.platform.net.http.HttpClient;
+import com.king.platform.net.http.HttpResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,6 +18,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -55,17 +57,17 @@ public class Headers {
 			}
 		}, "/testOk");
 
-		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
 
-		httpClient
+		HttpResponse<String> response = httpClient
 			.createGet("http://localhost:" + port + "/testOk")
 			.addHeader(headerName, headerValue)
-			.build().withHttpCallback(httpCallback).execute();
+			.build()
+			.execute()
+			.get(1, TimeUnit.SECONDS);
 
-		httpCallback.waitForCompletion();
 
-		assertEquals(okBody, httpCallback.getBody());
-		assertEquals(200, httpCallback.getStatusCode());
+		assertEquals(okBody, response.getBody());
+		assertEquals(200, response.getStatusCode());
 		assertEquals(headerValue, headerValueReference.get());
 
 	}
@@ -83,15 +85,16 @@ public class Headers {
 			}
 		}, "/testOk");
 
-		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
 
-		httpClient.createGet("http://localhost:" + port + "/testOk").build().withHttpCallback(httpCallback).execute();
+		HttpResponse<String> response = httpClient.createGet("http://localhost:" + port + "/testOk")
+			.build()
+			.execute()
+			.get(1, TimeUnit.SECONDS);
 
-		httpCallback.waitForCompletion();
 
-		assertEquals(okBody, httpCallback.getBody());
-		assertEquals(headerValue, httpCallback.getHeader(headerName));
-		assertEquals(200, httpCallback.getStatusCode());
+		assertEquals(okBody, response.getBody());
+		assertEquals(headerValue, response.getHeader(headerName));
+		assertEquals(200, response.getStatusCode());
 
 
 	}
@@ -110,20 +113,20 @@ public class Headers {
 			}
 		}, "/testOk");
 
-		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
 
 		HashMap<CharSequence, CharSequence> headers = new HashMap<>();
 		headers.put(headerName, headerValue);
 
-		httpClient
+		HttpResponse<String> response = httpClient
 			.createGet("http://localhost:" + port + "/testOk")
 			.addHeaders(headers)
-			.build().withHttpCallback(httpCallback).execute();
+			.build()
+			.execute()
+			.get(1, TimeUnit.SECONDS);
 
-		httpCallback.waitForCompletion();
 
-		assertEquals(okBody, httpCallback.getBody());
-		assertEquals(200, httpCallback.getStatusCode());
+		assertEquals(okBody, response.getBody());
+		assertEquals(200, response.getStatusCode());
 		assertEquals(headerValue, headerValueReference.get());
 
 	}

@@ -74,11 +74,9 @@ public class HttpGetFile {
 
 		integrationServer.addServlet(new FileServingHttpServlet(1024 * 8, temporaryFile), "/getFile");
 
-		BlockingMD5CalculatingHttpCallback httpCallback = new BlockingMD5CalculatingHttpCallback();
-		httpClient.createGet("http://localhost:" + port + "/getFile").build(MD5CalculatingResponseBodyConsumer::new).withHttpCallback(httpCallback).execute();
-		httpCallback.waitForCompletion();
+		HttpResponse<byte[]> httpResponse = httpClient.createGet("http://localhost:" + port + "/getFile").build(MD5CalculatingResponseBodyConsumer::new).execute().get(20, TimeUnit.SECONDS);
 
-		byte[] clientMd5 = httpCallback.getBody();
+		byte[] clientMd5 = httpResponse.getBody();
 
 
 		assertEquals(hexStringFromBytes(temporaryFile.getFileMd5()), hexStringFromBytes(clientMd5));
@@ -92,12 +90,9 @@ public class HttpGetFile {
 
 		integrationServer.addServlet(new AsyncFileServingHttpServlet(1024 * 1024, temporaryFile), "/getFile");
 
-		BlockingMD5CalculatingHttpCallback httpCallback = new BlockingMD5CalculatingHttpCallback();
-		httpClient.createGet("http://localhost:" + port + "/getFile").build(MD5CalculatingResponseBodyConsumer::new).withHttpCallback(httpCallback).execute();
+		HttpResponse<byte[]> response = httpClient.createGet("http://localhost:" + port + "/getFile").build(MD5CalculatingResponseBodyConsumer::new).execute().get(20, TimeUnit.SECONDS);
 
-		httpCallback.waitForCompletion();
-		byte[] clientMd5 = httpCallback.getBody();
-
+		byte[] clientMd5 = response.getBody();
 
 		assertEquals(hexStringFromBytes(temporaryFile.getFileMd5()), hexStringFromBytes(clientMd5));
 
@@ -133,11 +128,11 @@ public class HttpGetFile {
 
 		integrationServer.addServlet(new FileServingHttpServlet(1024 * 8, temporaryFile), "/getFile");
 
-		BlockingMD5CalculatingHttpCallback httpCallback = new BlockingMD5CalculatingHttpCallback();
-		httpClient.createGet("http://localhost:" + port + "/getFile").build(MD5CalculatingResponseBodyConsumer::new).withHttpCallback(httpCallback).execute();
-		httpCallback.waitForCompletion();
 
-		byte[] clientMd5 = httpCallback.getBody();
+		HttpResponse<byte[]> response = httpClient.createGet("http://localhost:" + port + "/getFile").build(MD5CalculatingResponseBodyConsumer::new).execute().get(1, TimeUnit.SECONDS);
+
+
+		byte[] clientMd5 = response.getBody();
 
 
 		assertEquals(hexStringFromBytes(temporaryFile.getFileMd5()), hexStringFromBytes(clientMd5));
@@ -150,14 +145,12 @@ public class HttpGetFile {
 
 		integrationServer.addServlet(new FileServingHttpServlet(1024 * 8, temporaryFile), "/getFile");
 
-		BlockingMD5CalculatingHttpCallback httpCallback = new BlockingMD5CalculatingHttpCallback();
-		httpClient.createGet("http://localhost:" + port + "/getFile").build(MD5CalculatingResponseBodyConsumer::new).withHttpCallback(httpCallback).execute();
-		httpCallback.waitForCompletion();
 
-		httpCallback = new BlockingMD5CalculatingHttpCallback();
-		httpClient.createGet("http://localhost:" + port + "/getFile").build(MD5CalculatingResponseBodyConsumer::new).withHttpCallback(httpCallback).execute();
-		httpCallback.waitForCompletion();
-		byte[] clientMd5 = httpCallback.getBody();
+		httpClient.createGet("http://localhost:" + port + "/getFile").build(MD5CalculatingResponseBodyConsumer::new).execute().get(1, TimeUnit.SECONDS);
+
+		HttpResponse<byte[]> response = httpClient.createGet("http://localhost:" + port + "/getFile").build(MD5CalculatingResponseBodyConsumer::new).execute().get(1, TimeUnit.SECONDS);
+
+		byte[] clientMd5 = response.getBody();
 
 
 		assertEquals(hexStringFromBytes(temporaryFile.getFileMd5()), hexStringFromBytes(clientMd5));
@@ -165,12 +158,12 @@ public class HttpGetFile {
 	}
 
 	@Test
-	public void get16KbFile() throws Exception {
+	public void get16KbFileWithCallback() throws Exception {
 		temporaryFile.generateContent(16);
 
 		integrationServer.addServlet(new FileServingHttpServlet(1024, temporaryFile), "/getFile");
 
-		BlockingMD5CalculatingHttpCallback httpCallback = new BlockingMD5CalculatingHttpCallback();
+		BlockingBinaryHttpCallback httpCallback = new BlockingBinaryHttpCallback();
 		httpClient.createGet("http://localhost:" + port + "/getFile").build(MD5CalculatingResponseBodyConsumer::new).withHttpCallback(httpCallback).execute();
 		httpCallback.waitForCompletion();
 

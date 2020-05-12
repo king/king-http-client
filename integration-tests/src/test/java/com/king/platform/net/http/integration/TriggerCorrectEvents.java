@@ -78,8 +78,9 @@ public class TriggerCorrectEvents {
 		expectedEvents.add(Event.onReceivedContentPart);
 		expectedEvents.add(Event.onReceivedCompleted);
 		expectedEvents.add(Event.onHttpResponseDone);
-		expectedEvents.add(Event.COMPLETED);
+		expectedEvents.add(Event.onInternalCompletion);
 		expectedEvents.add(Event.CLOSED_CONNECTION);
+		expectedEvents.add(Event.COMPLETED);
 
 		List<RecordingEventBus.Interaction> filteredInteractions = recordingEventBus.getFilteredInteractions(RecordingEventBus.InteractionType.TRIGGER, Event
 			.TOUCH);
