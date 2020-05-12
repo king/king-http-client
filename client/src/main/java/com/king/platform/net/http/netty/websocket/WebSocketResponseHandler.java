@@ -65,22 +65,12 @@ public class WebSocketResponseHandler implements ResponseHandler {
 		} else if (msg instanceof WebSocketFrame) {
 
 			WebSocketFrame frame = (WebSocketFrame) msg;
-			handleFrame(frame, requestEventBus, httpRequestContext, ctx);
+			requestEventBus.triggerEvent(Event.onWsFrame, frame);
 		} else {
 			logger.error("Invalid message {}", msg);
 		}
 	}
 
-	private void handleFrame(WebSocketFrame frame, RequestEventBus requestEventBus, HttpRequestContext httpRequestContext, ChannelHandlerContext ctx) {
-		requestEventBus.triggerEvent(Event.onWsFrame, frame);
-
-		//if (frame instanceof CloseWebSocketFrame) {
-		//	CloseWebSocketFrame closeWebSocketFrame = (CloseWebSocketFrame) frame;
-		//	ctx.channel().writeAndFlush(new CloseWebSocketFrame(closeWebSocketFrame.statusCode(), closeWebSocketFrame.reasonText()));
-		//	requestEventBus.triggerEvent(Event.COMPLETED, httpRequestContext);
-		//}
-
-	}
 
 	private void abort(RequestEventBus requestEventBus, HttpRequestContext httpRequestContext) {
 		requestEventBus.triggerEvent(Event.ERROR, httpRequestContext, new WebSocketException("Invalid upgrade - aborting!"));

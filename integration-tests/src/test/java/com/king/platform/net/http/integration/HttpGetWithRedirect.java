@@ -12,7 +12,6 @@ import com.king.platform.net.http.HttpResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -25,10 +24,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.slf4j.LoggerFactory.getLogger;
 
 public class HttpGetWithRedirect {
-	private final Logger logger = getLogger(getClass());
 
 	private IntegrationServer integrationServer;
 	private IntegrationServer httpsIntegrationServer;
@@ -39,7 +36,6 @@ public class HttpGetWithRedirect {
 
 
 	private String okBody = "EVERYTHING IS OKAY!";
-	private RecordingEventBus recordingEventBus;
 
 	@BeforeEach
 	public void setUp() throws Exception {
@@ -54,7 +50,7 @@ public class HttpGetWithRedirect {
 
 
 		TestingHttpClientFactory testingHttpClientFactory = new TestingHttpClientFactory();
-		recordingEventBus = testingHttpClientFactory.getRecordingEventBus();
+
 		httpClient = testingHttpClientFactory
 			.setOption(ConfKeys.SSL_ALLOW_ALL_CERTIFICATES, true)
 			.setOption(ConfKeys.IDLE_TIMEOUT_MILLIS, 2000)

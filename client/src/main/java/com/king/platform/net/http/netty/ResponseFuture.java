@@ -15,12 +15,10 @@ import java.util.concurrent.Executor;
 public class ResponseFuture<T> extends CompletableFuture<HttpResponse<T>> {
 	private final RequestEventBus requestEventBus;
 	private final HttpRequestContext requestContext;
-	private final Executor callbackExecutor;
 
 	public ResponseFuture(RequestEventBus requestEventBus, HttpRequestContext requestContext, Executor callbackExecutor) {
 		this.requestEventBus = requestEventBus;
 		this.requestContext = requestContext;
-		this.callbackExecutor = callbackExecutor;
 
 		requestEventBus.subscribe(Event.ERROR, new RunOnceCallback2<HttpRequestContext, Throwable>() {
 			@Override

@@ -34,7 +34,7 @@ public class IdleTimeoutTimerTaskTest {
 		timeProvider = new TimeProviderForTesting();
 
 		requestEventBus = spy(new DefaultEventBus());
-		idleTimeoutTimerTask = new IdleTimeoutTimerTask(httpRequestContext, 100, 2000, timeProvider, requestEventBus);
+		idleTimeoutTimerTask = new IdleTimeoutTimerTask(httpRequestContext, 100, timeProvider, requestEventBus);
 		idleTimeoutTimerTask.setTimeoutTimerHandler(timeoutTimerHandler);
 	}
 

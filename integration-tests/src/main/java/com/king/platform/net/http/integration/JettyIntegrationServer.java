@@ -56,7 +56,9 @@ public class JettyIntegrationServer implements IntegrationServer {
 		if (useHttps) {
 			URL keyStoreUrl = getClass().getResource("/keystore.jks");
 			String keyStoreFile = new File(keyStoreUrl.toURI()).getAbsolutePath();
-			SslContextFactory sslContextFactory = new SslContextFactory(keyStoreFile);
+			SslContextFactory sslContextFactory = new SslContextFactory.Client();
+			sslContextFactory.setKeyStorePath(keyStoreFile);
+			//SslContextFactory sslContextFactory = new SslContextFactory(keyStoreFile);
 			sslContextFactory.setKeyStorePassword("changeme");
 
 

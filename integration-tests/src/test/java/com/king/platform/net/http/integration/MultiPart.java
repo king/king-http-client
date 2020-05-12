@@ -34,9 +34,6 @@ public class MultiPart {
 	private HttpClient httpClient;
 	private int port;
 
-	private String okBody = "EVERYTHING IS OKAY!";
-	private String content = "BODY CONTENT";
-
 	@BeforeEach
 	public void setUp() throws Exception {
 		integrationServer = new JettyIntegrationServer();

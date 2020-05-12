@@ -8,15 +8,11 @@ package com.king.platform.net.http.integration;
 
 import com.king.platform.net.http.HttpCallback;
 import com.king.platform.net.http.HttpResponse;
-import org.slf4j.Logger;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 public class BlockingHttpCallback implements HttpCallback<String> {
-	private final Logger logger = getLogger(getClass());
 	private volatile HttpResponse<String> httpResponse;
 	private volatile Throwable exception;
 

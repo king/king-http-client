@@ -5,17 +5,11 @@
 
 package com.king.platform.net.http.netty.eventbus;
 
-import org.slf4j.Logger;
-
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static org.slf4j.LoggerFactory.getLogger;
-
 public class DefaultEventBus implements RequestEventBus, RootEventBus {
-	private final Logger logger = getLogger(getClass());
-
 	private final ConcurrentHashMap<Event, ArrayList<EventBusCallback>> event1Callbacks;
 	private final ConcurrentHashMap<Event, ArrayList<EventBusCallback>> event2Callbacks;
 

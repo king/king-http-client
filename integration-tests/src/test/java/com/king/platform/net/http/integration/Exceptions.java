@@ -33,8 +33,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class Exceptions {
-	private final String headerName = "X-Test-Header";
-	private final String headerValue = "clientSuppliedHeader";
 	IntegrationServer integrationServer;
 	private HttpClient httpClient;
 	private int port;

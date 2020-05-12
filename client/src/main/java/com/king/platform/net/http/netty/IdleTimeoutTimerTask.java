@@ -24,20 +24,17 @@ public class IdleTimeoutTimerTask implements TimeoutTimerTask {
 	private final long maxIdleTime;
 	private final TimeProvider timeProvider;
 	private final RequestEventBus requestEventBus;
-	private final long requestTimeoutInstant;
 	private volatile long lastTouched;
 
 	private TimeoutTimerHandler timeoutTimerHandler;
 
-	public IdleTimeoutTimerTask(HttpRequestContext httpRequestContext, long maxIdleTime, int
-		totalRequestTimeoutMillis, TimeProvider timeProvider, RequestEventBus requestEventBus) {
+	public IdleTimeoutTimerTask(HttpRequestContext httpRequestContext, long maxIdleTime, TimeProvider timeProvider, RequestEventBus requestEventBus) {
 		this.httpRequestContext = httpRequestContext;
 		this.maxIdleTime = maxIdleTime;
 		this.timeProvider = timeProvider;
 		this.requestEventBus = requestEventBus;
 		touch(null);
 
-		requestTimeoutInstant = totalRequestTimeoutMillis >= 0 ? timeProvider.currentTimeInMillis() + totalRequestTimeoutMillis : Long.MAX_VALUE;
 
 		requestEventBus.subscribe(Event.TOUCH, this::touch);
 	}

@@ -54,6 +54,9 @@ allprojects {
 
 		tasks.withType(JavaCompile) {
 			options.errorprone.errorproneArgs.add('-Xep:FutureReturnValueIgnored:OFF')
+			options.errorprone.errorproneArgs.add('-Xep:StringSplitter:OFF')
+			options.errorprone.errorproneArgs.add('-Xep:ImmutableEnumChecker:OFF')
+
 		}
 
 		test {

@@ -33,7 +33,7 @@ final class NettyHttpMethods {
 		for (final HttpMethod httpMethod : HttpMethod.values()) {
 			if (!mappings.containsKey(httpMethod)) {
 				throw new IllegalStateException(
-					"Missing mapping to Netty HttpMethod for " + httpMethod.getClass().getName() + "." + httpMethod);
+					"Missing mapping to Netty HttpMethod for " + httpMethod.getDeclaringClass().getName() + "." + httpMethod);
 			}
 		}
 	}

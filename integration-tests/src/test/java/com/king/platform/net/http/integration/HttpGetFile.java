@@ -11,7 +11,6 @@ import com.king.platform.net.http.FileResponseConsumer;
 import com.king.platform.net.http.HttpClient;
 import com.king.platform.net.http.HttpResponse;
 import io.netty.util.ResourceLeakDetector;
-import jdk.nashorn.internal.ir.annotations.Ignore;
 import org.eclipse.jetty.server.HttpOutput;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,7 +30,6 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -88,7 +86,7 @@ public class HttpGetFile {
 
 		temporaryFile.generateContent(64 * 1024);
 
-		integrationServer.addServlet(new AsyncFileServingHttpServlet(1024 * 1024, temporaryFile), "/getFile");
+		integrationServer.addServlet(new AsyncFileServingHttpServlet(temporaryFile), "/getFile");
 
 		HttpResponse<byte[]> response = httpClient.createGet("http://localhost:" + port + "/getFile").build(MD5CalculatingResponseBodyConsumer::new).execute().get(20, TimeUnit.SECONDS);
 
@@ -105,7 +103,7 @@ public class HttpGetFile {
 
 		temporaryFile.generateContent(64 * 1024);
 
-		integrationServer.addServlet(new AsyncFileServingHttpServlet(1024 * 1024, temporaryFile), "/getFile");
+		integrationServer.addServlet(new AsyncFileServingHttpServlet(temporaryFile), "/getFile");
 
 		File tempFile = temporaryFile.getTempFile();
 
@@ -220,12 +218,9 @@ public class HttpGetFile {
 
 
 	private static class AsyncFileServingHttpServlet extends HttpServlet {
-		private final int bufferSize;
 		private final File serverBinaryBlob;
-		private final ConcurrentHashMap fileCache = new ConcurrentHashMap();
 
-		public AsyncFileServingHttpServlet(int bufferSize, TemporaryFile serverBinaryBlob) {
-			this.bufferSize = bufferSize;
+		public AsyncFileServingHttpServlet(TemporaryFile serverBinaryBlob) {
 			this.serverBinaryBlob = serverBinaryBlob.getFile();
 		}
 

@@ -188,7 +188,7 @@ public class BuiltNettyClientRequest<T> implements BuiltClientRequest<T>, BuiltC
 			headers.set(HttpHeaderNames.ACCEPT_ENCODING, HttpHeaderValues.GZIP + "," + HttpHeaderValues.DEFLATE);
 		}
 
-		if (httpBody != null && httpMethod == HttpMethod.TRACE) {
+		if (httpBody != null && httpMethod.equals(HttpMethod.TRACE)) {
 			return dispatchError(httpCallback, new IllegalStateException("Trace calls are not allowed to have post bodies!"));
 		}
 

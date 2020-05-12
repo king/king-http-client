@@ -238,7 +238,7 @@ public class ChannelManager {
 
 		if (idleTimeoutMillis != 0 && (idleTimeoutMillis < totalRequestTimeoutMillis || totalRequestTimeoutMillis == 0)) {
 			IdleTimeoutTimerTask idleTimeoutTimerTask = new IdleTimeoutTimerTask(httpRequestContext, idleTimeoutMillis,
-				totalRequestTimeoutMillis, timeProvider, requestEventBus);
+				timeProvider, requestEventBus);
 
 			TimeoutTimerHandler timeoutTimerHandler = new TimeoutTimerHandler(nettyTimer, requestEventBus, idleTimeoutTimerTask);
 			timeoutTimerHandler.scheduleTimeout(idleTimeoutMillis, TimeUnit.MILLISECONDS);

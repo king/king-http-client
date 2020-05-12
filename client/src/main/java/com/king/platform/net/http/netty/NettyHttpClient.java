@@ -30,7 +30,6 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.util.Timer;
-import org.slf4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +38,6 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.slf4j.LoggerFactory.getLogger;
 
 public class NettyHttpClient implements HttpClient {
 	private final AtomicBoolean started = new AtomicBoolean();
@@ -48,8 +46,6 @@ public class NettyHttpClient implements HttpClient {
 	private final Executor defaultHttpClientCallbackExecutor;
 	private final Timer cleanupTimer;
 	private final TimeProvider timeProvider;
-
-	private final Logger logger = getLogger(getClass());
 
 	private final int nioThreads;
 	private final ThreadFactory nioThreadFactory;

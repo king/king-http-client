@@ -5,14 +5,12 @@
 
 package com.king.platform.net.http.netty.request;
 
-import io.netty.channel.*;
-import io.netty.handler.stream.ChunkedStream;
-import net.bytebuddy.asm.Advice;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandlerContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentMatchers;
-import org.mockito.Matchers;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import java.io.InputStream;
@@ -27,7 +25,7 @@ public class InputStreamHttpBodyTest {
 	private InputStream inputStream;
 
 	@BeforeEach
-	public void setUp() throws Exception {
+	public void setUp() {
 		inputStream = mock(InputStream.class);
 		inputStreamHttpBody = new InputStreamHttpBody(inputStream, "test/content", StandardCharsets.ISO_8859_1);
 
@@ -42,14 +40,11 @@ public class InputStreamHttpBodyTest {
 		ChannelFuture channelFuture = mock(ChannelFuture.class);
 
 		when(channel.write(any(), any())).thenReturn(channelFuture);
-		when(channelFuture.addListener(any(ChannelFutureListener.class))).thenAnswer(new Answer<ChannelFuture>() {
-			@Override
-			public ChannelFuture answer(InvocationOnMock invocation) throws Throwable {
-				ChannelFutureListener channelFutureListener = (ChannelFutureListener) invocation.getArgument(0);
-				ChannelFuture future = mock(ChannelFuture.class);
-				channelFutureListener.operationComplete(future);
-				return future;
-			}
+		when(channelFuture.addListener(any(ChannelFutureListener.class))).thenAnswer((Answer<ChannelFuture>) invocation -> {
+			ChannelFutureListener channelFutureListener = invocation.getArgument(0);
+			ChannelFuture future = mock(ChannelFuture.class);
+			channelFutureListener.operationComplete(future);
+			return future;
 		});
 
 		inputStreamHttpBody.writeContent(ctx, false);

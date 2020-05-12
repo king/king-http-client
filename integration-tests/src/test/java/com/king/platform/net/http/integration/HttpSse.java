@@ -139,7 +139,7 @@ public class HttpSse {
 		final CountDownLatch countDownLatch = new CountDownLatch(4);
 		final Set<String> threadNames = new HashSet<>();
 
-		SseClient sseClient = httpClient.createSSE("http://localhost:" + port + "/sse")
+		httpClient.createSSE("http://localhost:" + port + "/sse")
 			.executingOn(Executors.newFixedThreadPool(1)).build().execute(new SseClientCallback() {
 
 			@Override
