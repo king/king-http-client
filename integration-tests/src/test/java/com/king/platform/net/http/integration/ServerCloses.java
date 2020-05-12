@@ -7,6 +7,7 @@ package com.king.platform.net.http.integration;
 
 
 import com.king.platform.net.http.HttpClient;
+import com.king.platform.net.http.HttpResponse;
 import com.king.platform.net.http.netty.ConnectionClosedException;
 import com.king.platform.net.http.netty.eventbus.Event;
 import org.junit.jupiter.api.AfterEach;
@@ -21,6 +22,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -77,12 +79,9 @@ public class ServerCloses {
 		}).start();
 
 
-		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
-		httpClient.createGet("http://localhost:" + port + "/").build().withHttpCallback(httpCallback).execute();
-		httpCallback.waitForCompletion();
-		recordingEventBus.printDeepInteractionStack();
-		assertEquals("OK", httpCallback.getHeader("X-Status"));
-		assertEquals(200, httpCallback.getStatusCode());
+		HttpResponse<String> response = httpClient.createGet("http://localhost:" + port + "/").build().execute().get(1, TimeUnit.SECONDS);
+		assertEquals("OK", response.getHeader("X-Status"));
+		assertEquals(200, response.getStatusCode());
 
 		assertFalse(recordingEventBus.hasTriggered(Event.ERROR));
 		assertTrue(recordingEventBus.hasTriggered(Event.COMPLETED));
@@ -127,7 +126,7 @@ public class ServerCloses {
 		httpClient.createGet("http://localhost:" + port + "/").idleTimeoutMillis(50000).build().withHttpCallback(httpCallback).execute();
 
 		httpCallback.waitForCompletion();
-		recordingEventBus.printDeepInteractionStack();
+		Thread.sleep(5);
 
 		assertNotNull(httpCallback.getException());
 		assertTrue(httpCallback.getException().getMessage().contains("reset by peer"));
@@ -170,6 +169,7 @@ public class ServerCloses {
 		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
 		httpClient.createGet("http://localhost:" + port + "/").build().withHttpCallback(httpCallback).execute();
 		httpCallback.waitForCompletion();
+		Thread.sleep(5);
 
 		assertNotNull(httpCallback.getException());
 		assertTrue(httpCallback.getException() instanceof ConnectionClosedException);
@@ -206,6 +206,7 @@ public class ServerCloses {
 			.withHttpCallback(httpCallback).execute();
 
 		httpCallback.waitForCompletion();
+		Thread.sleep(5);
 
 		assertNotNull(httpCallback.getException());
 		assertTrue(httpCallback.getException() instanceof IOException);
