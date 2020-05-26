@@ -258,6 +258,23 @@ class ServerEventDecoderTest {
 
 	}
 
+	@Test
+	public void verifyBrokenUpCRLF() throws Exception {
+		ServerEventDecoder serverEventDecoder = new ServerEventDecoder(sseCallback);
+
+		serverEventDecoder.onReceivedContentPart(buffer("event: ClientCommand\r\ndata: test1\r\n\n"));
+		serverEventDecoder.onReceivedContentPart(buffer("event: ClientCommand\r"));
+		serverEventDecoder.onReceivedContentPart(buffer("\ndata: test2\r\n\n"));
+
+		assertEquals(2, sseCallback.count);
+
+		Event event1 = sseCallback.poll();
+		Event event2 = sseCallback.poll();
+
+		assertEquals("ClientCommand", event1.event);
+		assertEquals("ClientCommand", event2.event);
+	}
+
 	private ByteBuf buffer(String s) throws UnsupportedEncodingException {
 		return Unpooled.wrappedBuffer(s.getBytes("UTF-8"));
 

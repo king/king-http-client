@@ -21,6 +21,7 @@ public class ServerEventDecoder {
 	private String lastEventId;
 	private String eventName;
 
+	private char lastProcessedChar = 0;
 
 	public ServerEventDecoder(SseClientCallback sseClientCallback) {
 		this.sseClientCallback = sseClientCallback;
@@ -45,14 +46,16 @@ public class ServerEventDecoder {
 					continue;
 				}
 
-				if (isNewLine(c)) {
+				if (c == '\n' && lastProcessedChar == '\r') {
+					// If CRLF was broken up into two content parts (\r in one and \n in another) then ignore this second NewLine
+				} else if (isNewLine(c)) {
 					String line = buffer.toString();
 					buffer.setLength(0);
 					parseLine(line);
 				} else {
 					buffer.append(c);
 				}
-
+				lastProcessedChar = c;
 			}
 		} catch (Exception e) {
 			throw new KingHttpException("Failed to parse incoming content in SSE stream", e);
