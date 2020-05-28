@@ -41,7 +41,8 @@ public class ServerEventDecoder {
 			for (int i = 0; i < chars.length; i++) {
 				char c = chars[i];
 
-				if (isCRLF(i, chars)) {
+				if (chars[i] == '\r') {
+					// Ignore CR
 					continue;
 				}
 
@@ -57,18 +58,6 @@ public class ServerEventDecoder {
 		} catch (Exception e) {
 			throw new KingHttpException("Failed to parse incoming content in SSE stream", e);
 		}
-	}
-
-	private boolean isCRLF(int index, char[] buffer) {
-		if (buffer[index] != '\r') {
-			return false;
-		}
-
-		if (index + 1 >= buffer.length) {
-			return false;
-		}
-
-		return buffer[index + 1] == '\n';
 	}
 
 	private boolean isNewLine(char c) {
