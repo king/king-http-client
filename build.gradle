@@ -73,11 +73,8 @@ allprojects {
 
 task codeCoverageReport(type: JacocoReport) {
 
-	// Gather execution data from all subprojects
-	// (change this if you e.g. want to calculate unit test/integration test coverage separately)
 	executionData fileTree(project.rootDir.absolutePath).include("**/build/jacoco/*.exec")
 
-	// Add all relevant sourcesets from the subprojects
 	subprojects.each {
 		sourceSets it.sourceSets.main
 	}
@@ -91,7 +88,6 @@ task codeCoverageReport(type: JacocoReport) {
 	}
 }
 
-// always run the tests before generating the report
 codeCoverageReport.dependsOn {
 	subprojects*.test
 }
