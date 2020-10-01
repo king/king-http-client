@@ -123,14 +123,8 @@ public class ChannelManager {
 
 
 	private void upgradePipelineToWebSocket(ChannelPipeline pipeline, WebSocketConf webSocketConf) {
-
 		pipeline.addAfter("http-codec", "ws-encoder", new WebSocket13FrameEncoder(true));
-		pipeline.addBefore("webSocketHandler", "ws-decoder", new WebSocket13FrameDecoder(false, false, webSocketConf.getMaxFrameSize()));
-
-		if (webSocketConf.isAggregateFrames()) {
-			pipeline.addAfter("ws-decoder", "ws-frameaggregator", new WebSocketFrameAggregator(webSocketConf.getMaxAggregateBufferSize()));
-		}
-
+		pipeline.addBefore("webSocketHandler", "ws-decoder", new WebSocket13FrameDecoder(false, false, Math.max(webSocketConf.getMaxFrameSize(), webSocketConf.getMaxIncomingFrameSize())));
 		pipeline.remove("http-codec");
 	}
 

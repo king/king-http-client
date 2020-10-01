@@ -23,11 +23,21 @@ public interface WebSocketConnection {
 	boolean isConnected();
 
 	/**
-	 * Send an text frame to the server
+	 * Send an text frame or message to the server
 	 * @param text the text
 	 * @return the resulting future
+	 * @deprecated Use either {@link #sendTextMessage(String)} to send a complete message that might get fragmented into multiple frames, or use
+	 * {@link #sendTextFrame(String, boolean, int)} to send an frame.
 	 */
+	@Deprecated
 	CompletableFuture<Void> sendTextFrame(String text);
+
+	/**
+	 * Send a complete text message to the server. The message might get split up into multiple frames if it is longer then {@link HttpClientWebSocketRequestBuilder#maxOutgoingFrameSize(int)}
+	 * @param text the text message
+	 * @return the resulting future
+	 */
+	CompletableFuture<Void> sendTextMessage(String text);
 
 	/**
 	 * Send an text frame to the server
@@ -56,11 +66,21 @@ public interface WebSocketConnection {
 	CompletableFuture<Void> sendCloseFrame();
 
 	/**
-	 * Send an binary frame to the server
+	 * Send an binary frame or message to the server
 	 * @param payload the bytes
 	 * @return the resulting future
+	 * @deprecated Use either {@link #sendBinaryMessage(byte[])} to send a complete message that might get fragmented into multiple frames, or use
+	 * {@link #sendBinaryFrame(byte[], boolean, int)} to send an frame.
 	 */
+	@Deprecated
 	CompletableFuture<Void> sendBinaryFrame(byte[] payload);
+
+	/**
+	 * Send a complete binary message to the server. The message might get split up into multiple frames if it is longer then {@link HttpClientWebSocketRequestBuilder#maxOutgoingFrameSize(int)}
+	 * @param payload the binary payload
+	 * @return the resulting future
+	 */
+	CompletableFuture<Void> sendBinaryMessage(byte[] payload);
 
 
 	/**

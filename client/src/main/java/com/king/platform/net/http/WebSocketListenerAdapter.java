@@ -1,6 +1,7 @@
 package com.king.platform.net.http;
 
 
+@Deprecated
 public interface WebSocketListenerAdapter extends WebSocketListener {
 	@Override
 	default void onConnect(WebSocketConnection connection) {

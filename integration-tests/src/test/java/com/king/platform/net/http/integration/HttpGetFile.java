@@ -34,7 +34,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@Disabled
+
 public class HttpGetFile {
 
 

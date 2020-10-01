@@ -1,5 +1,7 @@
 package com.king.platform.net.http;
 
+import io.netty.handler.codec.http.websocketx.WebSocketFrame;
+
 import java.util.concurrent.CompletableFuture;
 
 public interface BuiltWebSocketRequest {
@@ -9,6 +11,20 @@ public interface BuiltWebSocketRequest {
 	 * @return the future with the connected webSocketConnection
 	 */
 	CompletableFuture<WebSocketClient> execute(WebSocketListener webSocketListener);
+
+	/**
+	 * Builds and executes (connects) the web-socket connection.
+	 * @param webSocketFrameListener the listener
+	 * @return the future with the connected webSocketConnection
+	 */
+	CompletableFuture<WebSocketClient> execute(WebSocketFrameListener webSocketFrameListener);
+
+	/**
+	 * Builds and executes (connects) the web-socket connection.
+	 * @param webSocketMessageListener the listener
+	 * @return the future with the connected webSocketConnection
+	 */
+	CompletableFuture<WebSocketClient> execute(WebSocketMessageListener webSocketMessageListener);
 
 
 	/**

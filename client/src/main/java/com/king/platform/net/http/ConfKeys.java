@@ -113,7 +113,12 @@ public class ConfKeys<T> {
 	/**
 	 * Maximum frame size for an websocket frame. This size should be negotiated between server and client.
 	 */
+	@Deprecated
 	public static final ConfKeys<Integer> WEB_SOCKET_MAX_FRAME_SIZE = new ConfKeys<>(32*1024);
+
+	public static final ConfKeys<Integer> WEB_SOCKET_MAX_INCOMING_FRAME_SIZE = new ConfKeys<>(32*1024);
+
+	public static final ConfKeys<Integer> WEB_SOCKET_MAX_OUTGOING_FRAME_SIZE = new ConfKeys<>(32*1024);
 
 	/**
 	 * Should incoming websocket continuation frames be aggregated automatically?
@@ -127,7 +132,9 @@ public class ConfKeys<T> {
 
 	/**
 	 * Should outgoing websocket frames be split up into continuation frames if they are larger then {@link #WEB_SOCKET_MAX_FRAME_SIZE}
+	 * @deprecated
 	 */
+	@Deprecated
 	public static final ConfKeys<Boolean> WEB_SOCKET_SPLIT_FRAMES = new ConfKeys<>(true);
 
 	/**
