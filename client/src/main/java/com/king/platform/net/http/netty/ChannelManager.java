@@ -29,6 +29,7 @@ import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import io.netty.handler.stream.ChunkedWriteHandler;
+import io.netty.resolver.AddressResolverGroup;
 import io.netty.util.Timer;
 import io.netty.util.concurrent.FutureListener;
 import org.slf4j.Logger;
@@ -67,7 +68,9 @@ public class ChannelManager {
 			socketChannelClass = NioSocketChannel.class;
 		}
 
-		httpBootstrap = new Bootstrap().channel(socketChannelClass).group(eventLoopGroup);
+		final AddressResolverGroup<?> addressResolverGroup = confMap.get(ConfKeys.DNS_RESOLVER);
+
+		httpBootstrap = new Bootstrap().channel(socketChannelClass).group(eventLoopGroup).resolver(addressResolverGroup);
 		httpBootstrap.handler(new ChannelInitializer() {
 			@Override
 			protected void initChannel(Channel ch) throws Exception {
@@ -82,7 +85,7 @@ public class ChannelManager {
 		});
 
 
-		wsBootstrap = new Bootstrap().channel(socketChannelClass).group(eventLoopGroup);
+		wsBootstrap = new Bootstrap().channel(socketChannelClass).group(eventLoopGroup).resolver(addressResolverGroup);
 		wsBootstrap.handler(new ChannelInitializer() {
 			@Override
 			protected void initChannel(Channel ch) throws Exception {
