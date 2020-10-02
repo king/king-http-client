@@ -7,6 +7,8 @@ package com.king.platform.net.http;
 
 
 import com.king.platform.net.http.netty.NettyChannelOptions;
+import io.netty.resolver.AddressResolverGroup;
+import io.netty.resolver.DefaultAddressResolverGroup;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -77,6 +79,11 @@ public class ConfKeys<T> {
 	 */
 	public static final ConfKeys<Boolean> USE_EPOLL = new ConfKeys<>(false);
 
+
+	/**
+	 * Use custom dns resolver instead of standard {@link io.netty.resolver.DefaultAddressResolverGroup}
+	 */
+	public static final ConfKeys<AddressResolverGroup<?>> DNS_RESOLVER = new ConfKeys<>(DefaultAddressResolverGroup.INSTANCE);
 
 	/**
 	 * Add any custom {@link io.netty.channel.ChannelOption} that will be used to populate the connection to the servers.
