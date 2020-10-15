@@ -105,6 +105,13 @@ public class WebSocketTest {
 			}
 		}, "/websocket/pingPong");
 
+		integrationServer.addServlet(new WebSocketServlet() {
+			@Override
+			public void configure(WebSocketServletFactory factory) {
+				factory.register(MultipleFrameWebsocketEndpoint.class);
+			}
+		}, "/websocket/multiFrames");
+
 
 	}
 
@@ -1059,6 +1066,115 @@ public class WebSocketTest {
 
 	}
 
+	@Test
+	void receiveTextFragmentedMessagesAsFrames() throws InterruptedException {
+		ArrayList<ReceivedFrame> receivedFrames = new ArrayList<>();
+		CountDownLatch semaphore = new CountDownLatch(3);
+		WebSocketClient client = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/multiFrames")
+			.maxOutgoingFrameSize(800)
+			.build().execute(new WebSocketFrameListenerAdapter() {
+				@Override
+				public void onTextFrame(String payload, boolean finalFragment, int rsv) {
+					receivedFrames.add(new ReceivedFrame(payload, finalFragment));
+					semaphore.countDown();
+				}
+			}).join();
+
+		client.sendTextMessage("text");
+
+		semaphore.await(5, TimeUnit.SECONDS);
+
+		assertEquals(3, receivedFrames.size());
+		assertEquals("part1", receivedFrames.get(0).textPayload);
+		assertFalse(receivedFrames.get(0).finalFragment);
+		assertEquals("part2", receivedFrames.get(1).textPayload);
+		assertFalse(receivedFrames.get(1).finalFragment);
+		assertEquals("part3", receivedFrames.get(2).textPayload);
+		assertTrue(receivedFrames.get(2).finalFragment);
+	}
+
+	@Test
+	void receiveBinaryFragmentedMessagesAsFrames() throws InterruptedException {
+		ArrayList<ReceivedFrame> receivedFrames = new ArrayList<>();
+		CountDownLatch semaphore = new CountDownLatch(3);
+		WebSocketClient client = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/multiFrames")
+			.maxOutgoingFrameSize(800)
+			.build().execute(new WebSocketFrameListenerAdapter() {
+				@Override
+				public void onBinaryFrame(byte[] payload, boolean finalFragment, int rsv) {
+					receivedFrames.add(new ReceivedFrame(payload, finalFragment));
+					semaphore.countDown();
+				}
+			}).join();
+
+		client.sendTextMessage("binary");
+
+		semaphore.await(5, TimeUnit.SECONDS);
+
+		assertEquals(3, receivedFrames.size());
+		assertArrayEquals(new byte[]{0x01, 0x02, 0x03}, receivedFrames.get(0).binaryPayload);
+		assertFalse(receivedFrames.get(0).finalFragment);
+		assertArrayEquals(new byte[]{0x04, 0x05, 0x06}, receivedFrames.get(1).binaryPayload);
+		assertFalse(receivedFrames.get(1).finalFragment);
+		assertArrayEquals(new byte[]{0x07, 0x08, 0x09}, receivedFrames.get(2).binaryPayload);
+		assertTrue(receivedFrames.get(2).finalFragment);
+	}
+
+	@Test
+	void receiveTextFragmentedMessagesAsMessage() throws InterruptedException {
+		AtomicReference<String> textPayload = new AtomicReference<>();
+		CountDownLatch semaphore = new CountDownLatch(1);
+		WebSocketClient client = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/multiFrames")
+			.maxOutgoingFrameSize(800)
+			.build().execute(new WebSocketMessageListenerAdapter() {
+				@Override
+				public void onTextMessage(String message) {
+					textPayload.set(message);
+					semaphore.countDown();
+				}
+			}).join();
+
+		client.sendTextMessage("text");
+
+		semaphore.await(5, TimeUnit.SECONDS);
+		assertEquals("part1part2part3", textPayload.get());
+	}
+
+	@Test
+	void receiveBinaryFragmentedMessagesAsMessage() throws InterruptedException {
+		AtomicReference<byte[]> binaryPayload = new AtomicReference<>();
+		CountDownLatch semaphore = new CountDownLatch(1);
+		WebSocketClient client = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/multiFrames")
+			.maxOutgoingFrameSize(800)
+			.build().execute(new WebSocketMessageListenerAdapter() {
+				@Override
+				public void onBinaryMessage(byte[] message) {
+					binaryPayload.set(message);
+					semaphore.countDown();
+				}
+			}).join();
+
+		client.sendTextMessage("binary");
+
+		semaphore.await(5, TimeUnit.SECONDS);
+		assertArrayEquals(new byte[]{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09}, binaryPayload.get());
+	}
+
+	static class ReceivedFrame {
+		String textPayload;
+		byte[] binaryPayload;
+		boolean finalFragment;
+
+		public ReceivedFrame(String textPayload, boolean finalFragment) {
+			this.textPayload = textPayload;
+			this.finalFragment = finalFragment;
+		}
+
+		public ReceivedFrame(byte[] binaryPayload, boolean finalFragment) {
+			this.binaryPayload = binaryPayload;
+			this.finalFragment = finalFragment;
+		}
+	}
 
 	@AfterEach
 	public void tearDown() throws Exception {
@@ -1144,6 +1260,60 @@ public class WebSocketTest {
 
 		@Override
 		public void onWebSocketPartialText(String payload, boolean fin) {
+
+		}
+	}
+
+	public static class MultipleFrameWebsocketEndpoint implements WebSocketPartialListener {
+
+		private Session session;
+
+		@Override
+		public void onWebSocketPartialBinary(ByteBuffer payload, boolean fin) {
+
+		}
+
+		@Override
+		public void onWebSocketPartialText(String payload, boolean fin) {
+			if (fin) {
+				if ("text".equalsIgnoreCase(payload)) {
+					try {
+						session.getRemote().sendPartialString("part1", false);
+						session.getRemote().sendPartialString("part2", false);
+						session.getRemote().sendPartialString("part3", true);
+					} catch (IOException ioe) {
+						try {
+							session.disconnect();
+						} catch (IOException ignored) {
+						}
+					}
+				} else if ("binary".equalsIgnoreCase(payload)) {
+					try {
+						session.getRemote().sendPartialBytes(ByteBuffer.wrap(new byte[]{0x01, 0x02, 0x03}), false);
+						session.getRemote().sendPartialBytes(ByteBuffer.wrap(new byte[]{0x04, 0x05, 0x06}), false);
+						session.getRemote().sendPartialBytes(ByteBuffer.wrap(new byte[]{0x07, 0x08, 0x09}), true);
+					} catch (IOException ioe) {
+						try {
+							session.disconnect();
+						} catch (IOException ignored) {
+						}
+					}
+				}
+			}
+		}
+
+		@Override
+		public void onWebSocketClose(int statusCode, String reason) {
+
+		}
+
+		@Override
+		public void onWebSocketConnect(Session session) {
+			this.session = session;
+		}
+
+		@Override
+		public void onWebSocketError(Throwable cause) {
 
 		}
 	}
