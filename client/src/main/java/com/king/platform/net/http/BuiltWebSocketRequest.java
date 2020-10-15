@@ -1,15 +1,16 @@
 package com.king.platform.net.http;
 
-import io.netty.handler.codec.http.websocketx.WebSocketFrame;
-
 import java.util.concurrent.CompletableFuture;
 
 public interface BuiltWebSocketRequest {
 	/**
 	 * Builds and executes (connects) the web-socket connection.
+	 *
 	 * @param webSocketListener the listener
 	 * @return the future with the connected webSocketConnection
+	 * @deprecated Use {@link #execute(WebSocketFrameListener)} or {@link #execute(WebSocketMessageListener)} instead.
 	 */
+	@Deprecated
 	CompletableFuture<WebSocketClient> execute(WebSocketListener webSocketListener);
 
 	/**

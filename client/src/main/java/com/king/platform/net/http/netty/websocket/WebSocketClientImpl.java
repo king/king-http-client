@@ -288,7 +288,7 @@ public class WebSocketClientImpl implements WebSocketClient {
 				connectionFuture.complete(this);
 			}
 
-			ready = false;
+			//ready = false;
 
 			if (channel != null) {
 				Channel activeChannel = channel;

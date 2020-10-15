@@ -21,7 +21,6 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.codec.http.websocketx.WebSocket13FrameDecoder;
 import io.netty.handler.codec.http.websocketx.WebSocket13FrameEncoder;
-import io.netty.handler.codec.http.websocketx.WebSocketFrameAggregator;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.ssl.SslContext;
@@ -42,25 +41,23 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class ChannelManager {
 	private final Logger logger = getLogger(getClass());
 
-	private final EventLoopGroup eventLoopGroup;
 	private final TimeProvider timeProvider;
 	private final ConfMap confMap;
 	private final ChannelPool channelPool;
 	private final Bootstrap httpBootstrap;
 	private final SslContext sslContext;
 	private final Bootstrap wsBootstrap;
-	private Timer nettyTimer;
+	private final Timer nettyTimer;
 
 
 	public ChannelManager(EventLoopGroup nioEventLoop, final HttpClientHandler httpClientHandler, WebSocketHandler webSocketHandler, Timer nettyTimer, TimeProvider timeProvider, ChannelPool
-		channelPool, final ConfMap confMap, RootEventBus rootEventBus) {
-		this.eventLoopGroup = nioEventLoop;
+		channelPool, final ConfMap confMap) {
 		this.nettyTimer = nettyTimer;
 		this.timeProvider = timeProvider;
 		this.channelPool = channelPool;
 		this.confMap = confMap;
 
-		final Class <? extends SocketChannel> socketChannelClass;
+		final Class<? extends SocketChannel> socketChannelClass;
 
 		if (Epoll.isAvailable() && confMap.get(ConfKeys.USE_EPOLL)) {
 			socketChannelClass = EpollSocketChannel.class;
@@ -70,7 +67,7 @@ public class ChannelManager {
 
 		final AddressResolverGroup<?> addressResolverGroup = confMap.get(ConfKeys.DNS_RESOLVER);
 
-		httpBootstrap = new Bootstrap().channel(socketChannelClass).group(eventLoopGroup).resolver(addressResolverGroup);
+		httpBootstrap = new Bootstrap().channel(socketChannelClass).group(nioEventLoop).resolver(addressResolverGroup);
 		httpBootstrap.handler(new ChannelInitializer() {
 			@Override
 			protected void initChannel(Channel ch) throws Exception {
@@ -85,7 +82,7 @@ public class ChannelManager {
 		});
 
 
-		wsBootstrap = new Bootstrap().channel(socketChannelClass).group(eventLoopGroup).resolver(addressResolverGroup);
+		wsBootstrap = new Bootstrap().channel(socketChannelClass).group(nioEventLoop).resolver(addressResolverGroup);
 		wsBootstrap.handler(new ChannelInitializer() {
 			@Override
 			protected void initChannel(Channel ch) throws Exception {
@@ -109,12 +106,17 @@ public class ChannelManager {
 			wsBootstrap.option(channelOption, nettyChannelOptions.get(channelOption));
 		}
 
+
+	}
+
+	public void subscribeToRootBus(RootEventBus rootEventBus) {
 		rootEventBus.subscribePermanently(Event.ERROR, new ErrorCallback());
 		rootEventBus.subscribePermanently(Event.onInternalCompletion, new CompletedCallback());
 		rootEventBus.subscribePermanently(Event.EXECUTE_REQUEST, new ExecuteRequestCallback());
 		rootEventBus.subscribePermanently(Event.WS_UPGRADE_PIPELINE, this::upgradePipelineToWebSocket);
 		rootEventBus.subscribePermanently(Event.POPULATE_CONNECTION_SPECIFIC_HEADERS, this::populateServerSpecificHeaders);
 	}
+
 
 	private void populateServerSpecificHeaders(ServerInfo serverInfo, HttpHeaders headers) {
 		if (serverInfo.getPort() == 80 || serverInfo.getPort() == 443) {    //Don't write the ports for default ports: Host = "Host" ":" host [ ":" port ] ;
@@ -364,8 +366,11 @@ public class ChannelManager {
 	private class ExecuteRequestCallback implements EventBusCallback1<HttpRequestContext> {
 		@Override
 		public void onEvent(HttpRequestContext httpRequestContext) {
-			sendOnChannel(httpRequestContext, httpRequestContext.getRequestEventBus());
-
+			try {
+				sendOnChannel(httpRequestContext, httpRequestContext.getRequestEventBus());
+			} catch (Throwable throwable) {
+				httpRequestContext.getRequestEventBus().triggerEvent(Event.ERROR, httpRequestContext, throwable);
+			}
 		}
 	}
 }

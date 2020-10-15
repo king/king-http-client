@@ -7,6 +7,7 @@ package com.king.platform.net.http.integration;
 
 
 import com.king.platform.net.http.*;
+import com.king.platform.net.http.netty.HttpRequestContext;
 import com.king.platform.net.http.netty.NettyHttpClientBuilder;
 import com.king.platform.net.http.netty.TimeoutException;
 import com.king.platform.net.http.netty.backpressure.EvictingBackPressure;
@@ -23,7 +24,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -44,7 +44,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class WebSocketFrameHandlerTest {
+public class WebSocketTest {
 	IntegrationServer integrationServer;
 	private HttpClient httpClient;
 	private int port;
@@ -74,7 +74,7 @@ public class WebSocketFrameHandlerTest {
 
 		integrationServer.addServlet(new HttpServlet() {
 			@Override
-			protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+			protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 				resp.sendRedirect("ws://localhost:" + port + "/websocket/test");
 			}
 		}, "/redirect");
@@ -109,236 +109,237 @@ public class WebSocketFrameHandlerTest {
 	}
 
 	@Test
-	public void webSocket() throws Exception {
+	public void onConnect() throws Exception {
 
 
-		CountDownLatch countDownLatch = new CountDownLatch(1);
-		AtomicReference<String> receivedText = new AtomicReference<>();
+		CountDownLatch countDownLatch = new CountDownLatch(2);
+		AtomicBoolean receivedConnectionInMessageListener = new AtomicBoolean();
+		AtomicBoolean receivedConnectionInFrameListener = new AtomicBoolean();
 
-		httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
-			.build()
-			.execute(new WebSocketListener() {
-				WebSocketConnection client;
+		final WebSocketClient webSocketClient = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test").build().build();
 
-				@Override
-				public void onConnect(WebSocketConnection connection) {
-					this.client = connection;
-					connection.sendTextFrame("hello world");
-				}
-
-				@Override
-				public void onError(Throwable throwable) {
-					System.out.println("Client error " + throwable);
-				}
-
-				@Override
-				public void onDisconnect() {
-					countDownLatch.countDown();
-				}
-
-				@Override
-				public void onCloseFrame(int code, String reason) {
-
-				}
-
-				@Override
-				public void onBinaryFrame(byte[] payload, boolean finalFragment, int rsv) {
-
-				}
-
-				@Override
-				public void onTextFrame(String payload, boolean finalFragment, int rsv) {
-					receivedText.set(payload);
-					client.sendCloseFrame();
-				}
-			});
-
-
-		countDownLatch.await();
-
-		assertEquals("HELLO WORLD", receivedText.get());
-
-	}
-
-	@Test
-	@Timeout(5000)
-	public void webSocketRequestEvents() throws Exception {
-
-		CountDownLatch countDownLatch = new CountDownLatch(1);
-		AtomicReference<String> receivedText = new AtomicReference<>();
-
-		httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
-			.build()
-			.execute(new WebSocketListener() {
-				WebSocketConnection client;
-
-				@Override
-				public void onConnect(WebSocketConnection connection) {
-					this.client = connection;
-					connection.sendTextFrame("hello world");
-				}
-
-				@Override
-				public void onError(Throwable throwable) {
-					System.out.println("Client error " + throwable);
-				}
-
-				@Override
-				public void onDisconnect() {
-					countDownLatch.countDown();
-
-				}
-
-				@Override
-				public void onCloseFrame(int code, String reason) {
-				}
-
-				@Override
-				public void onBinaryFrame(byte[] payload, boolean finalFragment, int rsv) {
-
-				}
-
-				@Override
-				public void onTextFrame(String payload, boolean finalFragment, int rsv) {
-					receivedText.set(payload);
-					client.sendCloseFrame();
-				}
-			});
-
-
-		countDownLatch.await();
-		recordingEventBus.hasTriggered(Event.WS_UPGRADE_PIPELINE);
-		recordingEventBus.hasTriggered(Event.COMPLETED);
-		recordingEventBus.printDeepInteractionStack();
-	}
-
-	@Test
-    @Timeout(5000)
-	public void buildAnWebSocketAndLaterConnectIt() throws Exception {
-
-
-		CountDownLatch countDownLatch = new CountDownLatch(1);
-		AtomicReference<String> receivedText = new AtomicReference<>();
-
-		WebSocketClient webSocketClient = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
-			.build()
-			.build();
-
-		webSocketClient.addListener(new WebSocketListener() {
+		webSocketClient.addListener(new WebSocketMessageListenerAdapter() {
 			@Override
 			public void onConnect(WebSocketConnection connection) {
-				connection.sendTextFrame("hello world");
-			}
-
-			@Override
-			public void onError(Throwable throwable) {
+				if (connection != null) {
+					receivedConnectionInMessageListener.set(true);
+				}
 				countDownLatch.countDown();
-			}
-
-			@Override
-			public void onDisconnect() {
-				countDownLatch.countDown();
-			}
-
-			@Override
-			public void onCloseFrame(int code, String reason) {
-			}
-
-			@Override
-			public void onBinaryFrame(byte[] payload, boolean finalFragment, int rsv) {
-
-			}
-
-			@Override
-			public void onTextFrame(String payload, boolean finalFragment, int rsv) {
-				receivedText.set(payload);
-				webSocketClient.sendCloseFrame();
 			}
 		});
+
+		webSocketClient.addListener(new WebSocketFrameListenerAdapter() {
+			@Override
+			public void onConnect(WebSocketConnection connection) {
+				if (connection != null) {
+					receivedConnectionInFrameListener.set(true);
+				}
+				countDownLatch.countDown();
+			}
+		});
+
 		webSocketClient.connect();
 
-		countDownLatch.await();
 
-		assertEquals("HELLO WORLD", receivedText.get());
+		countDownLatch.await(5, TimeUnit.SECONDS);
 
-	}
+		webSocketClient.close();
 
-	@Test
-	public void twoConnectDirectlyAfterEachOtherShouldFail() throws Exception {
-
-		WebSocketClient client = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
-			.build()
-			.build();
-
-		client.connect();
-		try {
-			client.connect();
-			fail("Should have failed!");
-		} catch (Exception ignored) {
-		}
-	}
-
-	@Test
-	public void connectWhenConnectedShouldFail() throws Exception {
-		WebSocketClient client = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
-			.build()
-			.build();
-
-		CompletableFuture<WebSocketClient> future = client.connect();
-
-		future.join();
-
-		try {
-			client.connect();
-			fail("Should have failed!");
-		} catch (Exception ignored) {
-		}
+		assertTrue(receivedConnectionInMessageListener.get(), "Failed to get onConnection object in message listener");
+		assertTrue(receivedConnectionInFrameListener.get(), "Failed to get onConnection object in frame listener");
 
 	}
 
 	@Test
-	public void awaitCloseShouldWaitUntilClosed() throws Exception {
-		WebSocketClient client = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
-			.build()
-			.build();
+	public void onError() throws Exception {
 
-		client.addListener(new WebSocketListener() {
-			@Override
-			public void onConnect(WebSocketConnection connection) {
-				connection.sendCloseFrame();
-			}
 
+		CountDownLatch countDownLatch = new CountDownLatch(2);
+		AtomicReference<Throwable> receivedConnectionInMessageListener = new AtomicReference<>();
+		AtomicReference<Throwable> receivedConnectionInFrameListener = new AtomicReference<>();
+		AtomicReference<HttpRequestContext> context = new AtomicReference<>();
+
+		recordingEventBus.subscribePermanently(Event.EXECUTE_REQUEST, context::set);
+
+		final WebSocketClient webSocketClient = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test").build().build();
+
+		webSocketClient.addListener(new WebSocketMessageListenerAdapter() {
 			@Override
 			public void onError(Throwable throwable) {
-
-			}
-
-			@Override
-			public void onDisconnect() {
-
-			}
-
-			@Override
-			public void onCloseFrame(int code, String reason) {
-
-			}
-
-			@Override
-			public void onBinaryFrame(byte[] payload, boolean finalFragment, int rsv) {
-
-			}
-
-			@Override
-			public void onTextFrame(String payload, boolean finalFragment, int rsv) {
-
+				receivedConnectionInMessageListener.set(throwable);
+				countDownLatch.countDown();
 			}
 		});
 
-		client.connect().join();
+		webSocketClient.addListener(new WebSocketFrameListenerAdapter() {
+			@Override
+			public void onError(Throwable throwable) {
+				receivedConnectionInFrameListener.set(throwable);
+				countDownLatch.countDown();
+			}
+		});
 
-		client.awaitClose();
+		webSocketClient.connect().join();
+
+
+		final KingHttpException testException = new KingHttpException("Test Exception");
+
+		recordingEventBus.getChildEventBus().triggerEvent(Event.ERROR, context.get(), testException);
+
+		countDownLatch.await(5, TimeUnit.SECONDS);
+
+		webSocketClient.close();
+
+		assertSame(testException, receivedConnectionInMessageListener.get(), "Failed to get onError object in message listener");
+		assertSame(testException, receivedConnectionInFrameListener.get(), "Failed to get onError object in frame listener");
+
 
 	}
+
+	@Test
+	void clientClosingShouldTriggerOnDisconnect() throws InterruptedException {
+		CountDownLatch countDownLatch = new CountDownLatch(2);
+		AtomicBoolean receivedDisconnectInMessageListener = new AtomicBoolean();
+		AtomicBoolean receivedDisconnectInFrameListener = new AtomicBoolean();
+
+		final WebSocketClient webSocketClient = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test").build().build();
+
+		webSocketClient.addListener(new WebSocketMessageListenerAdapter() {
+			@Override
+			public void onDisconnect() {
+				receivedDisconnectInMessageListener.set(true);
+				countDownLatch.countDown();
+			}
+		});
+
+		webSocketClient.addListener(new WebSocketFrameListenerAdapter() {
+			@Override
+			public void onDisconnect() {
+				receivedDisconnectInFrameListener.set(true);
+				countDownLatch.countDown();
+			}
+		});
+
+		webSocketClient.connect().join();
+		webSocketClient.close();
+
+		countDownLatch.await(5, TimeUnit.SECONDS);
+
+		assertTrue(receivedDisconnectInMessageListener.get(), "Failed to get onDisconnect in message listener");
+		assertTrue(receivedDisconnectInFrameListener.get(), "Failed to get onDisconnect in frame listener");
+
+	}
+
+	@Test
+	void serverClosingShouldTriggerOnDisconnect() throws InterruptedException {
+		CountDownLatch countDownLatch = new CountDownLatch(2);
+		AtomicBoolean receivedDisconnectInMessageListener = new AtomicBoolean();
+		AtomicBoolean receivedDisconnectInFrameListener = new AtomicBoolean();
+
+		final WebSocketClient webSocketClient = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test").build().build();
+
+		webSocketClient.addListener(new WebSocketMessageListenerAdapter() {
+			@Override
+			public void onDisconnect() {
+				receivedDisconnectInMessageListener.set(true);
+				countDownLatch.countDown();
+			}
+		});
+
+		webSocketClient.addListener(new WebSocketFrameListenerAdapter() {
+			@Override
+			public void onDisconnect() {
+				receivedDisconnectInFrameListener.set(true);
+				countDownLatch.countDown();
+			}
+		});
+
+		webSocketClient.connect().join();
+		webSocketClient.close();
+
+		countDownLatch.await(5, TimeUnit.SECONDS);
+
+		assertTrue(receivedDisconnectInMessageListener.get(), "Failed to get onDisconnect in message listener");
+		assertTrue(receivedDisconnectInFrameListener.get(), "Failed to get onDisconnect in frame listener");
+
+	}
+
+	@Test
+	public void onPingFrame() throws Exception {
+
+
+		CountDownLatch countDownLatch = new CountDownLatch(2);
+		AtomicReference<byte[]> receivedPingFrameInMessageListener = new AtomicReference<>();
+		AtomicReference<byte[]> receivedPingFrameInFrameListener = new AtomicReference<>();
+
+		final WebSocketClient webSocketClient = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/pingPong").build().build();
+
+		webSocketClient.addListener(new WebSocketMessageListenerAdapter() {
+			@Override
+			public void onPingFrame(byte[] payload) {
+				receivedPingFrameInMessageListener.set(payload);
+				countDownLatch.countDown();
+			}
+		});
+
+		webSocketClient.addListener(new WebSocketFrameListenerAdapter() {
+			@Override
+			public void onPingFrame(byte[] payload) {
+				receivedPingFrameInFrameListener.set(payload);
+				countDownLatch.countDown();
+			}
+		});
+		webSocketClient.connect().join();
+		byte[] payload = "SeverSentPing".getBytes(StandardCharsets.UTF_8);
+		webSocketClient.sendTextMessage("ping");
+
+		countDownLatch.await(5, TimeUnit.SECONDS);
+
+		webSocketClient.close();
+
+		assertArrayEquals(payload, receivedPingFrameInMessageListener.get(), "Failed to get onPingFrame object in message listener");
+		assertArrayEquals(payload, receivedPingFrameInFrameListener.get(), "Failed to get onPingFrame object in frame listener");
+
+
+	}
+
+	@Test
+	public void onPongFrame() throws Exception {
+
+
+		CountDownLatch countDownLatch = new CountDownLatch(2);
+		AtomicReference<byte[]> receivedPongFrameInMessageListener = new AtomicReference<>();
+		AtomicReference<byte[]> receivedPongFrameInFrameListener = new AtomicReference<>();
+
+		final WebSocketClient webSocketClient = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/pingPong").build().build();
+
+		webSocketClient.addListener(new WebSocketMessageListenerAdapter() {
+			@Override
+			public void onPongFrame(byte[] payload) {
+				receivedPongFrameInMessageListener.set(payload);
+				countDownLatch.countDown();
+			}
+		});
+
+		webSocketClient.addListener(new WebSocketFrameListenerAdapter() {
+			@Override
+			public void onPongFrame(byte[] payload) {
+				receivedPongFrameInFrameListener.set(payload);
+				countDownLatch.countDown();
+			}
+		});
+		webSocketClient.connect().join();
+		byte[] payload = new byte[]{0x01, 0x02, 0x03};
+		webSocketClient.sendPingFrame(payload);
+
+		countDownLatch.await(5, TimeUnit.SECONDS);
+
+		webSocketClient.close();
+
+		assertArrayEquals(payload, receivedPongFrameInMessageListener.get(), "Failed to get onPongFrame object in message listener");
+		assertArrayEquals(payload, receivedPongFrameInFrameListener.get(), "Failed to get onPongFrame object in frame listener");
+	}
+
 
 	@Test
 	@Timeout(5000)
@@ -350,30 +351,11 @@ public class WebSocketFrameHandlerTest {
 		AtomicInteger connectionCounter = new AtomicInteger();
 		AtomicInteger onTextFrameCounter = new AtomicInteger();
 
-		client.addListener(new WebSocketListener() {
+		client.addListener(new WebSocketFrameListenerAdapter() {
 			@Override
 			public void onConnect(WebSocketConnection connection) {
-				client.sendTextFrame("hello world");
+				client.sendTextFrame("hello world", true, 0);
 				connectionCounter.incrementAndGet();
-			}
-
-			@Override
-			public void onError(Throwable throwable) {
-
-			}
-
-			@Override
-			public void onDisconnect() {
-
-			}
-
-			@Override
-			public void onCloseFrame(int code, String reason) {
-			}
-
-			@Override
-			public void onBinaryFrame(byte[] payload, boolean finalFragment, int rsv) {
-
 			}
 
 			@Override
@@ -405,37 +387,13 @@ public class WebSocketFrameHandlerTest {
 
 		AtomicReference<Throwable> exceptionReference = new AtomicReference<>();
 
-		client.addListener(new WebSocketListener() {
-			@Override
-			public void onConnect(WebSocketConnection connection) {
-
-			}
+		client.addListener(new WebSocketFrameListenerAdapter() {
 
 			@Override
 			public void onError(Throwable throwable) {
-				System.out.println("Got error");
 				exceptionReference.set(throwable);
 			}
 
-			@Override
-			public void onDisconnect() {
-
-			}
-
-			@Override
-			public void onCloseFrame(int code, String reason) {
-
-			}
-
-			@Override
-			public void onBinaryFrame(byte[] payload, boolean finalFragment, int rsv) {
-
-			}
-
-			@Override
-			public void onTextFrame(String payload, boolean finalFragment, int rsv) {
-
-			}
 		});
 
 		client.connect().join();
@@ -460,35 +418,11 @@ public class WebSocketFrameHandlerTest {
 		CountDownLatch countDownLatch = new CountDownLatch(10);
 		AtomicReference<Throwable> exceptionReference = new AtomicReference<>();
 
-		client.addListener(new WebSocketListener() {
-			@Override
-			public void onConnect(WebSocketConnection connection) {
-
-			}
+		client.addListener(new WebSocketFrameListenerAdapter() {
 
 			@Override
 			public void onError(Throwable throwable) {
 				exceptionReference.set(throwable);
-			}
-
-			@Override
-			public void onDisconnect() {
-
-			}
-
-			@Override
-			public void onCloseFrame(int code, String reason) {
-
-			}
-
-			@Override
-			public void onBinaryFrame(byte[] payload, boolean finalFragment, int rsv) {
-
-			}
-
-			@Override
-			public void onTextFrame(String payload, boolean finalFragment, int rsv) {
-
 			}
 
 			@Override
@@ -513,7 +447,7 @@ public class WebSocketFrameHandlerTest {
 		httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
 			.followRedirects(true)
 			.build()
-			.execute(new WebSocketListenerAdapter() {
+			.execute(new WebSocketFrameListenerAdapter() {
 				WebSocketConnection client;
 
 				@Override
@@ -539,7 +473,7 @@ public class WebSocketFrameHandlerTest {
 		WebSocketClient client = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/pingPong")
 			.autoPong(true)  //the client will automatically respond to ping frames
 			.build()
-			.execute(new WebSocketListenerAdapter() {
+			.execute(new WebSocketFrameListenerAdapter() {
 				@Override
 				public void onBinaryFrame(byte[] payload, boolean finalFragment, int rsv) {
 					pongResponse.set(payload);
@@ -547,7 +481,7 @@ public class WebSocketFrameHandlerTest {
 				}
 			}).join();
 
-		client.sendTextFrame("ping");
+		client.sendTextFrame("ping", true, 0);
 		countDownLatch.await();
 		client.close();
 
@@ -561,7 +495,7 @@ public class WebSocketFrameHandlerTest {
 		WebSocketClient client = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/pingPong")
 			.autoPong(false)  //the client will NOT automatically respond to ping frames
 			.build()
-			.execute(new WebSocketListenerAdapter() {
+			.execute(new WebSocketFrameListenerAdapter() {
 				private WebSocketConnection connection;
 
 				@Override
@@ -581,7 +515,7 @@ public class WebSocketFrameHandlerTest {
 				}
 			}).join();
 
-		client.sendTextFrame("ping");
+		client.sendTextFrame("ping", true, 0);
 		countDownLatch.await();
 		client.close();
 
@@ -596,13 +530,13 @@ public class WebSocketFrameHandlerTest {
 		httpClient.createWebSocket("ws://localhost:" + port + "/redirect")
 			.followRedirects(true)
 			.build()
-			.execute(new WebSocketListener() {
+			.execute(new WebSocketFrameListenerAdapter() {
 				WebSocketConnection client;
 
 				@Override
 				public void onConnect(WebSocketConnection connection) {
 					this.client = connection;
-					connection.sendTextFrame("hello world");
+					connection.sendTextMessage("hello world");
 				}
 
 				@Override
@@ -615,15 +549,6 @@ public class WebSocketFrameHandlerTest {
 					countDownLatch.countDown();
 				}
 
-				@Override
-				public void onCloseFrame(int code, String reason) {
-
-				}
-
-				@Override
-				public void onBinaryFrame(byte[] payload, boolean finalFragment, int rsv) {
-
-				}
 
 				@Override
 				public void onTextFrame(String payload, boolean finalFragment, int rsv) {
@@ -635,7 +560,7 @@ public class WebSocketFrameHandlerTest {
 
 		countDownLatch.await();
 
-		assertEquals("HELLO WORLD", receivedText.get());
+		assertEquals("hello world", receivedText.get());
 	}
 
 	@Test
@@ -646,7 +571,7 @@ public class WebSocketFrameHandlerTest {
 
 		WebSocketClient webSocketClient = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
 			.build()
-			.execute(new WebSocketListenerAdapter() {
+			.execute(new WebSocketFrameListenerAdapter() {
 				@Override
 				public void onConnect(WebSocketConnection connection) {
 					onConnect.set(true);
@@ -655,7 +580,7 @@ public class WebSocketFrameHandlerTest {
 
 		assertTrue(onConnect.get());
 
-		webSocketClient.sendTextFrame("hello");
+		webSocketClient.sendTextFrame("hello", true, 0);
 		webSocketClient.sendCloseFrame();
 		webSocketClient.awaitClose();
 
@@ -667,7 +592,7 @@ public class WebSocketFrameHandlerTest {
 		CountDownLatch countDownLatch = new CountDownLatch(1);
 		WebSocketClient webSocketClient = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
 			.build()
-			.execute(new WebSocketListenerAdapter() {
+			.execute(new WebSocketFrameListenerAdapter() {
 				@Override
 				public void onConnect(WebSocketConnection connection) {
 
@@ -687,7 +612,7 @@ public class WebSocketFrameHandlerTest {
 		byte[] content = new byte[67933];
 		new Random().nextBytes(content);
 
-		CompletableFuture<Void> voidCompletableFuture = webSocketClient.sendBinaryFrame(content);
+		CompletableFuture<Void> voidCompletableFuture = webSocketClient.sendBinaryMessage(content);
 		voidCompletableFuture.join();
 
 		countDownLatch.await(1, TimeUnit.SECONDS);
@@ -696,19 +621,38 @@ public class WebSocketFrameHandlerTest {
 	}
 
 	@Test
+	public void sendingLargetTextContetShouldSplitIntoFrames() throws ExecutionException, InterruptedException {
+		AtomicReference<String> receivedContent = new AtomicReference<>();
+		CountDownLatch countDownLatch = new CountDownLatch(1);
+		WebSocketClient webSocketClient = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
+			.build()
+			.execute(new WebSocketMessageListenerAdapter() {
+				@Override
+				public void onTextMessage(String message) {
+					receivedContent.set(message);
+					countDownLatch.countDown();
+				}
+			}).get();
+
+		webSocketClient.sendTextMessage(getUtf8Text()).join();
+
+		countDownLatch.await(1, TimeUnit.SECONDS);
+
+		assertEquals(getUtf8Text(), receivedContent.get());
+	}
+
+	@Test
 	public void tooLargeBinaryFrameShouldTriggerIllegalStateException() {
 		byte[] content = new byte[1000];
 		try {
 			WebSocketClient client = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
-				.maxFrameSize(800)
 				.maxOutgoingFrameSize(800)
-				.splitLargeFrames(false)
 				.build()
-				.execute(new WebSocketListenerAdapter() {
+				.execute(new WebSocketFrameListenerAdapter() {
 				})
 				.join();
 
-			client.sendBinaryFrame(content).join();
+			client.sendBinaryFrame(content, true, 0).join();
 			fail("Should have thrown exception!");
 		} catch (CompletionException ce) {
 			assertTrue(ce.getCause() instanceof IllegalStateException);
@@ -721,19 +665,125 @@ public class WebSocketFrameHandlerTest {
 
 		try {
 			WebSocketClient client = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
-				.maxFrameSize(40)
 				.maxOutgoingFrameSize(40)
-				.splitLargeFrames(false)
 				.build()
-				.execute(new WebSocketListenerAdapter() {
+				.execute(new WebSocketFrameListenerAdapter() {
 				})
 				.join();
 
-			client.sendTextFrame(content).join();
+			client.sendTextFrame(content, true, 0).join();
 			fail("Should have thrown exception!");
 		} catch (CompletionException ce) {
 			assertTrue(ce.getCause() instanceof IllegalStateException);
 		}
+	}
+
+	@Test
+	@Timeout(5000)
+	public void webSocketRequestEvents() throws Exception {
+
+		CountDownLatch countDownLatch = new CountDownLatch(1);
+		AtomicReference<String> receivedText = new AtomicReference<>();
+
+		httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
+			.build()
+			.execute(new WebSocketMessageListenerAdapter() {
+				WebSocketConnection client;
+
+				@Override
+				public void onConnect(WebSocketConnection connection) {
+					this.client = connection;
+					connection.sendTextMessage("hello world");
+				}
+
+				@Override
+				public void onError(Throwable throwable) {
+					System.out.println("Client error " + throwable);
+				}
+
+				@Override
+				public void onDisconnect() {
+					countDownLatch.countDown();
+
+				}
+
+
+				@Override
+				public void onTextMessage(String message) {
+					receivedText.set(message);
+					client.sendCloseFrame();
+				}
+
+			});
+
+
+		countDownLatch.await();
+		recordingEventBus.hasTriggered(Event.WS_UPGRADE_PIPELINE);
+		recordingEventBus.hasTriggered(Event.COMPLETED);
+		recordingEventBus.printDeepInteractionStack();
+	}
+
+	@Test
+	@Timeout(5000)
+	public void buildAnWebSocketAndLaterConnectIt() throws Exception {
+		CountDownLatch countDownLatch = new CountDownLatch(1);
+		AtomicReference<String> receivedText = new AtomicReference<>();
+
+		WebSocketClient webSocketClient = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
+			.build()
+			.build();
+
+		webSocketClient.addListener(new WebSocketMessageListenerAdapter() {
+			@Override
+			public void onConnect(WebSocketConnection connection) {
+				connection.sendTextMessage("hello world");
+			}
+
+			@Override
+			public void onError(Throwable throwable) {
+				countDownLatch.countDown();
+			}
+
+			@Override
+			public void onDisconnect() {
+				countDownLatch.countDown();
+			}
+
+			@Override
+			public void onTextMessage(String message) {
+				receivedText.set(message);
+				webSocketClient.sendCloseFrame();
+			}
+
+
+		});
+		webSocketClient.connect();
+
+		countDownLatch.await();
+
+		assertEquals("hello world", receivedText.get());
+
+	}
+
+	@Test
+	public void awaitCloseShouldWaitUntilClosed() throws Exception {
+		WebSocketClient client = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
+			.build()
+			.build();
+
+		client.addListener(new WebSocketMessageListenerAdapter() {
+			@Override
+			public void onConnect(WebSocketConnection connection) {
+				connection.sendCloseFrame();
+			}
+
+
+		});
+
+		client.connect().join();
+
+		client.awaitClose();
+
 	}
 
 	@Test
@@ -742,10 +792,9 @@ public class WebSocketFrameHandlerTest {
 		AtomicReference<String> receivedMd5 = new AtomicReference<>();
 
 		WebSocketClient client = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
-			.maxFrameSize(1024)
-			.splitLargeFrames(false)
+			.maxOutgoingFrameSize(1024)
 			.build()
-			.execute(new WebSocketListenerAdapter() {
+			.execute(new WebSocketFrameListenerAdapter() {
 				@Override
 				public void onTextFrame(String payload, boolean finalFragment, int rsv) {
 					receivedMd5.set(payload);
@@ -787,10 +836,9 @@ public class WebSocketFrameHandlerTest {
 		AtomicReference<String> receivedContent = new AtomicReference<>();
 
 		WebSocketClient client = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
-			.maxFrameSize(1024)
-			.splitLargeFrames(false)
+			.maxOutgoingFrameSize(1024)
 			.build()
-			.execute(new WebSocketListenerAdapter() {
+			.execute(new WebSocketFrameListenerAdapter() {
 				@Override
 				public void onTextFrame(String payload, boolean finalFragment, int rsv) {
 					receivedContent.set(payload);
@@ -799,12 +847,11 @@ public class WebSocketFrameHandlerTest {
 			.join();
 
 
-
 		StringBuilder sentData = new StringBuilder();
 		String[] frames = new String[10];
 
 		for (int i = 0; i < 10; i++) {
-			frames[i] = "HELLOWORLD"+i;
+			frames[i] = "HELLOWORLD" + i;
 			sentData.append(frames[i]);
 		}
 
@@ -821,13 +868,71 @@ public class WebSocketFrameHandlerTest {
 		assertEquals(sentData.toString(), receivedContent.get());
 	}
 
+
+	@Test
+	void clientSendingCloseShouldCloseConnectionAfterReceivingCloseResponseFromServer() throws InterruptedException {
+		AtomicReference<String> reasonRef = new AtomicReference<>();
+		AtomicInteger codeRef = new AtomicInteger();
+		WebSocketClient webSocketClient = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
+			.autoCloseFrame(false)
+			.build().execute(new WebSocketFrameListenerAdapter() {
+				@Override
+				public void onCloseFrame(int code, String reason) {
+					codeRef.set(code);
+					reasonRef.set(reason);
+				}
+			}).join();
+
+
+		webSocketClient.sendCloseFrame(1002, "client-closing");
+
+		webSocketClient.awaitClose();
+
+		assertEquals("client-closing", reasonRef.get());
+		assertEquals(1002, codeRef.get());
+
+	}
+
+
+	@Test
+	public void twoConnectDirectlyAfterEachOtherShouldFail() {
+
+		WebSocketClient client = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
+			.build()
+			.build();
+
+		client.connect();
+		try {
+			client.connect();
+			fail("Should have failed!");
+		} catch (Exception ignored) {
+		}
+	}
+
+	@Test
+	public void connectWhenConnectedShouldFail() throws Exception {
+		WebSocketClient client = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
+			.build()
+			.build();
+
+		CompletableFuture<WebSocketClient> future = client.connect();
+
+		future.join();
+
+		try {
+			client.connect();
+			fail("Should have failed!");
+		} catch (Exception ignored) {
+		}
+
+	}
+
 	@Test
 	public void sendingPartialTextThenFullTextShouldThrowIllegalState() {
 		WebSocketClient client = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
-			.maxFrameSize(1024)
-			.splitLargeFrames(true)
+			.maxOutgoingFrameSize(1024)
 			.build()
-			.execute(new WebSocketListenerAdapter() {
+			.execute(new WebSocketFrameListenerAdapter() {
 
 			})
 			.join();
@@ -836,14 +941,14 @@ public class WebSocketFrameHandlerTest {
 		client.sendTextFrame("FIRST FRAGMENT", false, 0).join();
 
 		try {
-			client.sendTextFrame("FULL NEW TEXT").join();
+			client.sendTextMessage("FULL NEW TEXT").join();
 			fail("Should have thrown exception since its in the middle of sending fragments");
 		} catch (CompletionException ce) {
 			assertTrue(ce.getCause() instanceof IllegalStateException);
 		}
 
 		try {
-			client.sendBinaryFrame("FULL NEW TEXT".getBytes(StandardCharsets.UTF_8)).join();
+			client.sendBinaryMessage("FULL NEW TEXT".getBytes(StandardCharsets.UTF_8)).join();
 			fail("Should have thrown exception since its in the middle of sending fragments");
 		} catch (CompletionException ce) {
 			assertTrue(ce.getCause() instanceof IllegalStateException);
@@ -852,17 +957,16 @@ public class WebSocketFrameHandlerTest {
 		client.sendTextFrame("SECOND FRAGMENT", false, 0).join();
 
 
-
 		client.close();
 	}
+
 
 	@Test
 	public void sendingPartialBinaryThenFullTextShouldThrowIllegalState() {
 		WebSocketClient client = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
-			.maxFrameSize(1024)
-			.splitLargeFrames(true)
+			.maxOutgoingFrameSize(1024)
 			.build()
-			.execute(new WebSocketListenerAdapter() {
+			.execute(new WebSocketFrameListenerAdapter() {
 
 			})
 			.join();
@@ -871,14 +975,14 @@ public class WebSocketFrameHandlerTest {
 		client.sendBinaryFrame("FIRST FRAGMENT".getBytes(StandardCharsets.UTF_8), false, 0).join();
 
 		try {
-			client.sendTextFrame("FULL NEW TEXT").join();
+			client.sendTextMessage("FULL NEW TEXT").join();
 			fail("Should have thrown exception since its in the middle of sending fragments");
 		} catch (CompletionException ce) {
 			assertTrue(ce.getCause() instanceof IllegalStateException);
 		}
 
 		try {
-			client.sendBinaryFrame("FULL NEW TEXT".getBytes(StandardCharsets.UTF_8)).join();
+			client.sendBinaryMessage("FULL NEW TEXT".getBytes(StandardCharsets.UTF_8)).join();
 			fail("Should have thrown exception since its in the middle of sending fragments");
 		} catch (CompletionException ce) {
 			assertTrue(ce.getCause() instanceof IllegalStateException);
@@ -892,10 +996,9 @@ public class WebSocketFrameHandlerTest {
 	@Test
 	public void sendingPartialOfDifferentTypesShouldThrowIllegalState() {
 		WebSocketClient client = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
-			.maxFrameSize(1024)
-			.splitLargeFrames(false)
+			.maxOutgoingFrameSize(1024)
 			.build()
-			.execute(new WebSocketListenerAdapter() {
+			.execute(new WebSocketFrameListenerAdapter() {
 
 			})
 			.join();
@@ -912,14 +1015,15 @@ public class WebSocketFrameHandlerTest {
 
 	}
 
+
 	@Test
 	public void sendPartial() throws InterruptedException {
 		ArrayList<String> receivedData = new ArrayList<>();
 		CountDownLatch countDownLatch = new CountDownLatch(10);
 
 		WebSocketClient client = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/frame")
-			.maxFrameSize(800)
-			.splitLargeFrames(false).build().execute(new WebSocketListenerAdapter() {
+			.maxOutgoingFrameSize(800)
+			.build().execute(new WebSocketFrameListenerAdapter() {
 				@Override
 				public void onTextFrame(String payload, boolean finalFragment, int rsv) {
 					receivedData.add(payload);
@@ -955,29 +1059,6 @@ public class WebSocketFrameHandlerTest {
 
 	}
 
-	@Test
-	void clientSendingCloseShouldCloseConnectionAfterReceivingCloseResponseFromServer() throws InterruptedException {
-		AtomicReference<String> reasonRef = new AtomicReference<>();
-		AtomicInteger codeRef = new AtomicInteger();
-		WebSocketClient webSocketClient = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
-			.autoCloseFrame(false)
-			.build().execute(new WebSocketListenerAdapter() {
-				@Override
-				public void onCloseFrame(int code, String reason) {
-					codeRef.set(code);
-					reasonRef.set(reason);
-				}
-			}).join();
-
-
-		webSocketClient.sendCloseFrame(1002, "client-closing");
-
-		webSocketClient.awaitClose();
-
-		assertEquals("client-closing", reasonRef.get());
-		assertEquals(1002, codeRef.get());
-
-	}
 
 	@AfterEach
 	public void tearDown() throws Exception {
@@ -1003,13 +1084,13 @@ public class WebSocketFrameHandlerTest {
 		public void onWebSocketText(String message) {
 			if ("disconnect".equalsIgnoreCase(message)) {
 				try {
-					System.out.println("Forcing disconnect of client!");
 					session.disconnect();
 				} catch (IOException e) {
+					e.printStackTrace();
 				}
 			} else {
 				try {
-					session.getRemote().sendString(message.toUpperCase());
+					session.getRemote().sendString(message);
 				} catch (IOException ignored) {
 				}
 			}
@@ -1029,9 +1110,8 @@ public class WebSocketFrameHandlerTest {
 		}
 	}
 
-	public static class FrameWebSocketEndpoint implements  WebSocketPartialListener {
+	public static class FrameWebSocketEndpoint implements WebSocketPartialListener {
 		private Session session;
-
 
 
 		@Override
@@ -1068,7 +1148,7 @@ public class WebSocketFrameHandlerTest {
 		}
 	}
 
-	public static class PingPongWebSocketEndpoint implements WebSocketPingPongListener,  org.eclipse.jetty.websocket.api.WebSocketListener {
+	public static class PingPongWebSocketEndpoint implements WebSocketPingPongListener, org.eclipse.jetty.websocket.api.WebSocketListener {
 		private Session session;
 
 		@Override
@@ -1115,6 +1195,36 @@ public class WebSocketFrameHandlerTest {
 				}
 			}
 		}
+	}
+
+	private static String getUtf8Text() {
+		return "Icelandic (is)\n" +
+			"--------------\n" +
+			"\n" +
+			"  Kæmi ný öxi hér ykist þjófum nú bæði víl og ádrepa\n" +
+			"\n" +
+			"  Sævör grét áðan því úlpan var ónýt\n" +
+			"  (some ASCII letters missing)\n" +
+			"\n" +
+			"Japanese (jp)\n" +
+			"-------------\n" +
+			"\n" +
+			"  Hiragana: (Iroha)\n" +
+			"\n" +
+			"  いろはにほへとちりぬるを\n" +
+			"  わかよたれそつねならむ\n" +
+			"  うゐのおくやまけふこえて\n" +
+			"  あさきゆめみしゑひもせす\n" +
+			"\n" +
+			"  Katakana:\n" +
+			"\n" +
+			"  イロハニホヘト チリヌルヲ ワカヨタレソ ツネナラム\n" +
+			"  ウヰノオクヤマ ケフコエテ アサキユメミシ ヱヒモセスン\n" +
+			"\n" +
+			"Hebrew (iw)\n" +
+			"-----------\n" +
+			"\n" +
+			"  ? דג סקרן שט בים מאוכזב ולפתע מצא לו חברה איך הקליטה";
 	}
 
 

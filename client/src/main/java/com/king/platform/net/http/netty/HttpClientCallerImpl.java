@@ -22,14 +22,12 @@ public class HttpClientCallerImpl implements HttpClientCaller {
 	private final Logger logger = getLogger(getClass());
 	private final RootEventBus rootEventBus;
 	private final boolean executeOnCallingThread;
-	private final ChannelManager channelManager;
 	private final BackPressure executionBackPressure;
 	private final TimeProvider timeProvider;
 
-	HttpClientCallerImpl(RootEventBus rootEventBus, boolean executeOnCallingThread, ChannelManager channelManager, BackPressure executionBackPressure, TimeProvider timeProvider) {
+	HttpClientCallerImpl(RootEventBus rootEventBus, boolean executeOnCallingThread, BackPressure executionBackPressure, TimeProvider timeProvider) {
 		this.rootEventBus = rootEventBus;
 		this.executeOnCallingThread = executeOnCallingThread;
-		this.channelManager = channelManager;
 		this.executionBackPressure = executionBackPressure;
 		this.timeProvider = timeProvider;
 	}
@@ -142,11 +140,8 @@ public class HttpClientCallerImpl implements HttpClientCaller {
 	}
 
 	private <T> void sendRequest(RequestEventBus requestRequestEventBus, HttpRequestContext<T> httpRequestContext) {
-		try {
-			channelManager.sendOnChannel(httpRequestContext, requestRequestEventBus);
-		} catch (Throwable throwable) {
-			requestRequestEventBus.triggerEvent(Event.ERROR, httpRequestContext, throwable);
-		}
+		requestRequestEventBus.triggerEvent(Event.EXECUTE_REQUEST, httpRequestContext);
+
 	}
 
 
