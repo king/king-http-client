@@ -19,7 +19,7 @@ public interface WebSocketFrameListener extends WebSocketConnectionListener{
 	 * @param finalFragment Flag to indicate if this frame is the final fragment in a message. The first fragment (frame) may also be the final fragment.
 	 * @param rsv           Bits used for extensions to the standard.
 	 */
-	void onTextFrame(String payload, boolean finalFragment, int rsv);
+	void onTextFrame(byte[] payload, boolean finalFragment, int rsv);
 
 
 }

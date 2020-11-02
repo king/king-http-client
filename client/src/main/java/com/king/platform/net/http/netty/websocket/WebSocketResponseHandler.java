@@ -123,6 +123,7 @@ public class WebSocketResponseHandler implements ResponseHandler {
 
 		RequestEventBus requestEventBus = nettyHttpClientResponse.getRequestEventBus();
 
+		requestEventBus.triggerEvent(Event.onInternalCompletion, httpRequestContext);
 		requestEventBus.triggerEvent(Event.COMPLETED, httpRequestContext);
 	}
 }

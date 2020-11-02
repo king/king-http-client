@@ -366,7 +366,7 @@ public class WebSocketTest {
 			}
 
 			@Override
-			public void onTextFrame(String payload, boolean finalFragment, int rsv) {
+			public void onTextFrame(byte[] payload, boolean finalFragment, int rsv) {
 				client.sendCloseFrame();
 				onTextFrameCounter.incrementAndGet();
 			}
@@ -558,8 +558,8 @@ public class WebSocketTest {
 
 
 				@Override
-				public void onTextFrame(String payload, boolean finalFragment, int rsv) {
-					receivedText.set(payload);
+				public void onTextFrame(byte[] payload, boolean finalFragment, int rsv) {
+					receivedText.set(new String(payload, StandardCharsets.UTF_8));
 					client.sendCloseFrame();
 				}
 			});
@@ -610,8 +610,8 @@ public class WebSocketTest {
 				}
 
 				@Override
-				public void onTextFrame(String payload, boolean finalFragment, int rsv) {
-					receivedContent.set(payload);
+				public void onTextFrame(byte[] payload, boolean finalFragment, int rsv) {
+					receivedContent.set(new String(payload, StandardCharsets.UTF_8));
 					countDownLatch.countDown();
 				}
 			}).get();
@@ -803,8 +803,8 @@ public class WebSocketTest {
 			.build()
 			.execute(new WebSocketFrameListenerAdapter() {
 				@Override
-				public void onTextFrame(String payload, boolean finalFragment, int rsv) {
-					receivedMd5.set(payload);
+				public void onTextFrame(byte[] payload, boolean finalFragment, int rsv) {
+					receivedMd5.set(new String(payload, StandardCharsets.UTF_8));
 				}
 			})
 			.join();
@@ -847,8 +847,8 @@ public class WebSocketTest {
 			.build()
 			.execute(new WebSocketFrameListenerAdapter() {
 				@Override
-				public void onTextFrame(String payload, boolean finalFragment, int rsv) {
-					receivedContent.set(payload);
+				public void onTextFrame(byte[] payload, boolean finalFragment, int rsv) {
+					receivedContent.set(new String(payload, StandardCharsets.UTF_8));
 				}
 			})
 			.join();
@@ -1032,8 +1032,8 @@ public class WebSocketTest {
 			.maxOutgoingFrameSize(800)
 			.build().execute(new WebSocketFrameListenerAdapter() {
 				@Override
-				public void onTextFrame(String payload, boolean finalFragment, int rsv) {
-					receivedData.add(payload);
+				public void onTextFrame(byte[] payload, boolean finalFragment, int rsv) {
+					receivedData.add(new String(payload, StandardCharsets.UTF_8));
 					countDownLatch.countDown();
 				}
 			}).join();
@@ -1074,8 +1074,8 @@ public class WebSocketTest {
 			.maxOutgoingFrameSize(800)
 			.build().execute(new WebSocketFrameListenerAdapter() {
 				@Override
-				public void onTextFrame(String payload, boolean finalFragment, int rsv) {
-					receivedFrames.add(new ReceivedFrame(payload, finalFragment));
+				public void onTextFrame(byte[] payload, boolean finalFragment, int rsv) {
+					receivedFrames.add(new ReceivedFrame(new String(payload, StandardCharsets.UTF_8), finalFragment));
 					semaphore.countDown();
 				}
 			}).join();

@@ -96,13 +96,17 @@ public class WebSocketSender {
 	}
 
 	public CompletableFuture<Void> sendTextFrame(Channel channel, String text, boolean finalFragment, int rsv) {
+		ByteBuf binaryData = Unpooled.copiedBuffer(text, CharsetUtil.UTF_8);
+		return sendTextFrame(channel, binaryData, finalFragment, rsv);
+	}
+
+	public CompletableFuture<Void> sendTextFrame(Channel channel, ByteBuf binaryData, boolean finalFragment, int rsv) {
 		if (nextContiuationFrame != null && !nextContiuationFrame.allowedFrame(FrameType.TEXT)) {
 			CompletableFuture<Void> future = new CompletableFuture<>();
 			future.completeExceptionally(new IllegalStateException("Last sent continuation frame was of an different type!"));
 			return future;
 		}
 
-		ByteBuf binaryData = Unpooled.copiedBuffer(text, CharsetUtil.UTF_8);
 		if (binaryData.readableBytes() > maxOutgoingFrameSize) {
 			CompletableFuture<Void> future = new CompletableFuture<>();
 			future.completeExceptionally(new IllegalStateException("Frame payload is larger then maxOutgoingFrameSize"));
@@ -113,9 +117,6 @@ public class WebSocketSender {
 		if (nextContiuationFrame == null) {
 			nextContiuationFrame = NextContiuationFrame.TEXT;
 		}
-
-
-
 
 		WebSocketFrame webSocketFrame = nextContiuationFrame.create(finalFragment, rsv, binaryData);
 		if (finalFragment) {

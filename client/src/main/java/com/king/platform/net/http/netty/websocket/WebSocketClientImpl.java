@@ -19,9 +19,6 @@ import io.netty.util.concurrent.ScheduledFuture;
 import org.slf4j.Logger;
 
 import java.nio.charset.CharacterCodingException;
-import java.nio.charset.CharsetDecoder;
-import java.nio.charset.CodingErrorAction;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +32,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class WebSocketClientImpl implements WebSocketClient {
 	private final Logger logger = getLogger(getClass());
 
-	private final CharsetDecoder utf8Decoder = StandardCharsets.UTF_8.newDecoder().onMalformedInput(CodingErrorAction.REPLACE);
 
 	private final WebSocketListenerTrigger trigger;
 	private final WebSocketSender webSocketSender;
@@ -149,6 +145,19 @@ public class WebSocketClientImpl implements WebSocketClient {
 		}
 
 		return webSocketSender.sendTextFrame(channel, text, finalFragment, rsv);
+	}
+
+	@Override
+	public CompletableFuture<Void> sendTextFrame(byte[] text, boolean finalFragment, int rsv) {
+		Channel channel = this.channel;
+
+		if (!ready || channel == null || !channel.isOpen()) {
+			CompletableFuture<Void> future = new CompletableFuture<>();
+			future.completeExceptionally(new IllegalStateException("Not connected!"));
+			return future;
+		}
+
+		return webSocketSender.sendTextFrame(channel, Unpooled.copiedBuffer(text), finalFragment, rsv);
 	}
 
 	@Override
@@ -418,11 +427,11 @@ public class WebSocketClientImpl implements WebSocketClient {
 
 	private void handleTextFrame(WebSocketFrame webSocketFrame) {
 		try {
-			int size = webSocketFrame.content().readableBytes();
-			String text = utf8Decoder.decode(webSocketFrame.content().nioBuffer()).toString();
+
+			byte[] bytes = getBytes(webSocketFrame.content());
 			boolean finalFragment = webSocketFrame.isFinalFragment();
 			int rsv = webSocketFrame.rsv();
-			webSocketFrameHandler.handleTextFrame(size, text, finalFragment, rsv);
+			webSocketFrameHandler.handleTextFrame(bytes, finalFragment, rsv);
 
 		} catch (CharacterCodingException e) {
 			sendCloseFrame(1007, "Invalid UTF-8 encoding");

@@ -27,7 +27,7 @@ public interface WebSocketFrameListenerAdapter extends WebSocketFrameListener {
 	}
 
 	@Override
-	default void onTextFrame(String payload, boolean finalFragment, int rsv) {
+	default void onTextFrame(byte[] payload, boolean finalFragment, int rsv) {
 
 	}
 }

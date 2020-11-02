@@ -49,10 +49,19 @@ public class WebSocketListenerTrigger implements WebSocketFrameListener, WebSock
 	}
 
 	@Override
-	public void onTextFrame(String payload, boolean finalFragment, int rsv) {
+	public void onTextFrame(byte[] payload, boolean finalFragment, int rsv) {
 		executor.execute(() -> {
 			for (WebSocketFrameListener frameListener : frameListeners) {
 				frameListener.onTextFrame(payload, finalFragment, rsv);
+			}
+		});
+	}
+
+	@Override
+	public void onTextFrame(String payload, boolean finalFragment, int rsv) {
+		executor.execute(() -> {
+			for (WebSocketListener legacyListener : legacyListeners) {
+				legacyListener.onTextFrame(payload, finalFragment, rsv);
 			}
 		});
 	}

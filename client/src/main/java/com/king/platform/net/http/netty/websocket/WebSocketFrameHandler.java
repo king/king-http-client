@@ -4,12 +4,19 @@ import io.netty.handler.codec.TooLongFrameException;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CodingErrorAction;
+import java.nio.charset.StandardCharsets;
 
 public class WebSocketFrameHandler {
+	private final CharsetDecoder utf8Decoder = StandardCharsets.UTF_8.newDecoder().onMalformedInput(CodingErrorAction.REPORT);
+
 	private final WebSocketListenerTrigger trigger;
 	private final int maxAggregationSize;
 	private final boolean legacyAggregateFrames;
-	private final StringBuilder textBuffer = new StringBuilder();
+
 	private final ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 	private int currentSize = 0;
 
@@ -19,31 +26,35 @@ public class WebSocketFrameHandler {
 		this.legacyAggregateFrames = legacyAggregateFrames;
 	}
 
+	public void handleTextFrame(byte[] data, boolean finalFragment, int rsv) throws CharacterCodingException {
+		trigger.onTextFrame(data, finalFragment, rsv);
 
-	public void handleTextFrame(int byteSize, String text, boolean finalFragment, int rsv) {
-
-		trigger.onTextFrame(text, finalFragment, rsv);
 		if (!legacyAggregateFrames) {
-			trigger.onLegacyTextFrame(text, finalFragment, rsv);
+			String potentialPartialFrame = utf8Decoder.decode(ByteBuffer.wrap(data)).toString();
+			trigger.onLegacyTextFrame(potentialPartialFrame, finalFragment, rsv);
 		}
 
-		textBuffer.append(text);
-		currentSize += byteSize;
+		currentSize += data.length;
 
 		if (currentSize > maxAggregationSize) {
 			reset();
 			throw new TooLongFrameException();
 		}
 
+		try {
+			byteArrayOutputStream.write(data);
+		} catch (IOException ignored) {
+		}
 		if (finalFragment) {
-			String completeText = textBuffer.toString();
+			byte[] completeData = byteArrayOutputStream.toByteArray();
+			String content = utf8Decoder.decode(ByteBuffer.wrap(completeData)).toString();
 			reset();
-
-			trigger.onTextMessage(completeText);
+			trigger.onTextMessage(content);
 			if (legacyAggregateFrames) {
-				trigger.onLegacyTextFrame(completeText, true, 0);
+				trigger.onLegacyTextFrame(content, true, 0);
 			}
 		}
+
 	}
 
 	public void handleByteFrame(byte[] data, boolean finalFragment, int rsv) {
@@ -75,7 +86,6 @@ public class WebSocketFrameHandler {
 
 	private void reset() {
 		byteArrayOutputStream.reset();
-		textBuffer.setLength(0);
 		currentSize = 0;
 	}
 
