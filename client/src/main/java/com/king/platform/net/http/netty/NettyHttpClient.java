@@ -102,13 +102,14 @@ public class NettyHttpClient implements HttpClient {
 		HttpClientRequestHandler requestHandler = new HttpClientRequestHandler();
 		HttpClientHandler clientHandler = new HttpClientHandler(responseHandler, requestHandler);
 		WebSocketResponseHandler webSocketResponseHandler = new WebSocketResponseHandler();
-		WebSocketHandler webSocketHandler = new WebSocketHandler(webSocketResponseHandler,  requestHandler);
+		WebSocketHandler webSocketHandler = new WebSocketHandler(webSocketResponseHandler, requestHandler);
 
-		ChannelManager channelManager = new ChannelManager(group, clientHandler, webSocketHandler, cleanupTimer, timeProvider, channelPool, confMap, rootEventBus);
+		ChannelManager channelManager = new ChannelManager(group, clientHandler, webSocketHandler, cleanupTimer, timeProvider, channelPool, confMap);
+		channelManager.subscribeToRootBus(rootEventBus);
 
 		boolean executeOnCallingThread = confMap.get(ConfKeys.EXECUTE_ON_CALLING_THREAD);
 
-		httpClientCaller = new HttpClientCallerImpl(rootEventBus, executeOnCallingThread, channelManager, executionBackPressure, timeProvider);
+		httpClientCaller = new HttpClientCallerImpl(rootEventBus, executeOnCallingThread, executionBackPressure, timeProvider);
 	}
 
 	@Override

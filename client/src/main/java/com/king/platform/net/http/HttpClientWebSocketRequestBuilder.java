@@ -42,6 +42,7 @@ public interface HttpClientWebSocketRequestBuilder extends HttpClientRequestHead
 	 * @param maxFrameSize the max frame size
 	 * @return this builder
 	 */
+	@Deprecated
 	HttpClientWebSocketRequestBuilder maxFrameSize(int maxFrameSize);
 
 	/**
@@ -50,7 +51,18 @@ public interface HttpClientWebSocketRequestBuilder extends HttpClientRequestHead
 	 * @param aggregateFrames flag to indicate if frames should be aggregated
 	 * @return this builder
 	 */
+	@Deprecated
 	HttpClientWebSocketRequestBuilder aggregateFrames(boolean aggregateFrames);
+
+
+	/**
+	 * Specify if the client should automatically split outgoing frames if they are larger then {@link #maxFrameSize(int)}
+	 * This overrides the {@link ConfKeys#WEB_SOCKET_SPLIT_FRAMES}.
+	 * @param splitLargeFrames flag to indicate that the outgoing frame should be split
+	 * @return this builder
+	 */
+	@Deprecated
+	HttpClientWebSocketRequestBuilder splitLargeFrames(boolean splitLargeFrames);
 
 	/**
 	 * Specify the max size that the client will aggregate continuation frames. This is only used if {@link #aggregateFrames(boolean)} or {@link ConfKeys#WEB_SOCKET_AGGREGATE_FRAMES} is true.
@@ -60,13 +72,9 @@ public interface HttpClientWebSocketRequestBuilder extends HttpClientRequestHead
 	 */
 	HttpClientWebSocketRequestBuilder maxAggregateBufferSize(int maxAggregateBufferSize);
 
-	/**
-	 * Specify if the client should automatically split outgoing frames if they are larger then {@link #maxFrameSize(int)}
-	 * This overrides the {@link ConfKeys#WEB_SOCKET_SPLIT_FRAMES}.
-	 * @param splitLargeFrames flag to indicate that the outgoing frame should be split
-	 * @return this builder
-	 */
-	HttpClientWebSocketRequestBuilder splitLargeFrames(boolean splitLargeFrames);
+	HttpClientWebSocketRequestBuilder maxOutgoingFrameSize(int maxOutgoingFrameSize);
+
+	HttpClientWebSocketRequestBuilder maxIncomingFrameSize(int maxIncomingFrameSize);
 
 
 	/**

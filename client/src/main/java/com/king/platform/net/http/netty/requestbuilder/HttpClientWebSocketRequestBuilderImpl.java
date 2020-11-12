@@ -29,6 +29,8 @@ public class HttpClientWebSocketRequestBuilderImpl extends HttpClientRequestHead
 	private int maxFrameSize;
 	private boolean aggregateFrames;
 	private int maxAggregateBufferSize;
+	private int maxOutgoingFrameSize;
+	private int maxIncomingFrameSize;
 	private boolean splitLargeFrames;
 
 	public HttpClientWebSocketRequestBuilderImpl(HttpClientCaller httpClientCaller, String uri, ConfMap confMap,
@@ -37,10 +39,16 @@ public class HttpClientWebSocketRequestBuilderImpl extends HttpClientRequestHead
 		this.defaultCallbackExecutor = callbackExecutor;
 		autoPong(confMap.get(ConfKeys.WEB_SOCKET_AUTO_PONG));
 		autoCloseFrame(confMap.get(ConfKeys.WEB_SOCKET_AUTO_CLOSE_FRAME));
-		maxFrameSize(confMap.get(ConfKeys.WEB_SOCKET_MAX_FRAME_SIZE));
+
 		aggregateFrames(confMap.get(ConfKeys.WEB_SOCKET_AGGREGATE_FRAMES));
 		maxAggregateBufferSize(confMap.get(ConfKeys.WEB_SOCKET_MAX_AGGREGATE_BUFFER_SIZE));
+
+		maxOutgoingFrameSize(confMap.get(ConfKeys.WEB_SOCKET_MAX_OUTGOING_FRAME_SIZE));
+		maxIncomingFrameSize(confMap.get(ConfKeys.WEB_SOCKET_MAX_INCOMING_FRAME_SIZE));
+
+		maxFrameSize(confMap.get(ConfKeys.WEB_SOCKET_MAX_FRAME_SIZE));
 		splitLargeFrames(confMap.get(ConfKeys.WEB_SOCKET_SPLIT_FRAMES));
+
 	}
 
 	@Override
@@ -86,6 +94,18 @@ public class HttpClientWebSocketRequestBuilderImpl extends HttpClientRequestHead
 	}
 
 	@Override
+	public HttpClientWebSocketRequestBuilder maxOutgoingFrameSize(int maxOutgoingFrameSize) {
+		this.maxOutgoingFrameSize = maxOutgoingFrameSize;
+		return this;
+	}
+
+	@Override
+	public HttpClientWebSocketRequestBuilder maxIncomingFrameSize(int maxIncomingFrameSize) {
+		this.maxIncomingFrameSize = maxIncomingFrameSize;
+		return this;
+	}
+
+	@Override
 	public HttpClientWebSocketRequestBuilder splitLargeFrames(boolean splitLargeFrames) {
 		this.splitLargeFrames = splitLargeFrames;
 		return this;
@@ -96,7 +116,7 @@ public class HttpClientWebSocketRequestBuilderImpl extends HttpClientRequestHead
 
 		totalRequestTimeoutMillis(0); //disable total timeouts
 
-		WebSocketConf webSocketConf = new WebSocketConf(maxFrameSize, aggregateFrames, maxAggregateBufferSize, splitLargeFrames);
+		WebSocketConf webSocketConf = new WebSocketConf(maxFrameSize, aggregateFrames, maxAggregateBufferSize, splitLargeFrames, maxIncomingFrameSize, maxOutgoingFrameSize);
 
 		final BuiltNettyClientRequest<Void> builtNettyClientRequest = new BuiltNettyClientRequest<>(httpClientCaller, httpVersion, httpMethod, uri, defaultUserAgent,
 			idleTimeoutMillis, totalRequestTimeoutMillis, followRedirects, acceptCompressedResponse, keepAlive, automaticallyDecompressResponse, null, null, null, queryParameters,
@@ -107,13 +127,24 @@ public class HttpClientWebSocketRequestBuilderImpl extends HttpClientRequestHead
 
 			@Override
 			public CompletableFuture<WebSocketClient> execute(WebSocketListener webSocketListener) {
-
 				WebSocketClientImpl webSocketClient = create();
-
 				webSocketClient.addListener(webSocketListener);
-
 				return webSocketClient.connect();
 
+			}
+
+			@Override
+			public CompletableFuture<WebSocketClient> execute(WebSocketFrameListener webSocketFrameListener) {
+				WebSocketClientImpl webSocketClient = create();
+				webSocketClient.addListener(webSocketFrameListener);
+				return webSocketClient.connect();
+			}
+
+			@Override
+			public CompletableFuture<WebSocketClient> execute(WebSocketMessageListener webSocketMessageListener) {
+				WebSocketClientImpl webSocketClient = create();
+				webSocketClient.addListener(webSocketMessageListener);
+				return webSocketClient.connect();
 			}
 
 			@Override
@@ -129,7 +160,7 @@ public class HttpClientWebSocketRequestBuilderImpl extends HttpClientRequestHead
 					listenerExecutor = Runnable::run; //if no executor has been supplied (ie, still on default executor), run on calling thread
 				}
 
-				return new WebSocketClientImpl(builtNettyClientRequest, listenerExecutor, listenerExecutor, autoCloseFrame, splitLargeFrames, maxFrameSize, autoPong, pingEveryDuration);
+				return new WebSocketClientImpl(builtNettyClientRequest, listenerExecutor, listenerExecutor, autoCloseFrame, autoPong, pingEveryDuration, webSocketConf);
 			}
 
 

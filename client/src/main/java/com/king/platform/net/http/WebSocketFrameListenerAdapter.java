@@ -1,8 +1,6 @@
 package com.king.platform.net.http;
 
-
-@Deprecated
-public interface WebSocketListenerAdapter extends WebSocketListener {
+public interface WebSocketFrameListenerAdapter extends WebSocketFrameListener {
 	@Override
 	default void onConnect(WebSocketConnection connection) {
 
@@ -29,7 +27,7 @@ public interface WebSocketListenerAdapter extends WebSocketListener {
 	}
 
 	@Override
-	default void onTextFrame(String payload, boolean finalFragment, int rsv) {
+	default void onTextFrame(byte[] payload, boolean finalFragment, int rsv) {
 
 	}
 }

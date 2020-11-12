@@ -5,10 +5,27 @@ import java.util.concurrent.CompletableFuture;
 public interface BuiltWebSocketRequest {
 	/**
 	 * Builds and executes (connects) the web-socket connection.
+	 *
 	 * @param webSocketListener the listener
 	 * @return the future with the connected webSocketConnection
+	 * @deprecated Use {@link #execute(WebSocketFrameListener)} or {@link #execute(WebSocketMessageListener)} instead.
 	 */
+	@Deprecated
 	CompletableFuture<WebSocketClient> execute(WebSocketListener webSocketListener);
+
+	/**
+	 * Builds and executes (connects) the web-socket connection.
+	 * @param webSocketFrameListener the listener
+	 * @return the future with the connected webSocketConnection
+	 */
+	CompletableFuture<WebSocketClient> execute(WebSocketFrameListener webSocketFrameListener);
+
+	/**
+	 * Builds and executes (connects) the web-socket connection.
+	 * @param webSocketMessageListener the listener
+	 * @return the future with the connected webSocketConnection
+	 */
+	CompletableFuture<WebSocketClient> execute(WebSocketMessageListener webSocketMessageListener);
 
 
 	/**

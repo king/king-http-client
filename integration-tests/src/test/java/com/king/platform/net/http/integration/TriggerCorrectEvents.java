@@ -66,6 +66,7 @@ public class TriggerCorrectEvents {
 
 
 		List<Event> expectedEvents = new ArrayList<>();
+		expectedEvents.add(Event.EXECUTE_REQUEST);
 		expectedEvents.add(Event.onConnecting);
 		expectedEvents.add(Event.CREATED_CONNECTION);
 		expectedEvents.add(Event.onConnected);

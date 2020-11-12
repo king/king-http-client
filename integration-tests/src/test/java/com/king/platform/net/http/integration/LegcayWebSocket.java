@@ -42,13 +42,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
-public class WebSocket {
+public class LegcayWebSocket {
 	IntegrationServer integrationServer;
 	private HttpClient httpClient;
 	private int port;
@@ -165,7 +161,7 @@ public class WebSocket {
 	}
 
 	@Test
-	@org.junit.jupiter.api.Timeout(5000)
+	@Timeout(5000)
 	public void webSocketRequestEvents() throws Exception {
 
 		CountDownLatch countDownLatch = new CountDownLatch(1);
@@ -345,7 +341,7 @@ public class WebSocket {
 	}
 
 	@Test
-	@org.junit.jupiter.api.Timeout(5000)
+	@Timeout(5000)
 	public void reconnectShouldWork() throws Exception {
 		WebSocketClient client = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
 			.build()
@@ -400,7 +396,7 @@ public class WebSocket {
 	}
 
 	@Test
-	@org.junit.jupiter.api.Timeout(5000)
+	@Timeout(5000)
 	public void idleTimeout() throws Exception {
 		WebSocketClient client = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
 			.idleTimeoutMillis(500)
@@ -453,7 +449,7 @@ public class WebSocket {
 	}
 
 	@Test
-	@org.junit.jupiter.api.Timeout(5000)
+	@Timeout(5000)
 	public void idleTimeoutShouldNotHappenWhenAutoPingIsEnabled() throws Exception {
 		WebSocketClient client = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
 			.idleTimeoutMillis(500)
@@ -643,7 +639,7 @@ public class WebSocket {
 	}
 
 	@Test
-	@org.junit.jupiter.api.Timeout(5000)
+	@Timeout(5000)
 	public void webSocketShouldCallOnConnectBeforeItReturns() throws Exception {
 
 		AtomicBoolean onConnect = new AtomicBoolean();
@@ -700,11 +696,12 @@ public class WebSocket {
 	}
 
 	@Test
-	public void tooLargeFrameShouldTriggerIllegalStateException() {
+	public void tooLargeBinaryFrameShouldTriggerIllegalStateException() {
 		byte[] content = new byte[1000];
 		try {
 			WebSocketClient client = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
 				.maxFrameSize(800)
+				.maxOutgoingFrameSize(800)
 				.splitLargeFrames(false)
 				.build()
 				.execute(new WebSocketListenerAdapter() {
@@ -712,6 +709,27 @@ public class WebSocket {
 				.join();
 
 			client.sendBinaryFrame(content).join();
+			fail("Should have thrown exception!");
+		} catch (CompletionException ce) {
+			assertTrue(ce.getCause() instanceof IllegalStateException);
+		}
+	}
+
+	@Test
+	public void tooLargeTextFrameShouldTriggerIllegalStateException() {
+		String content = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam eleifend turpis in risus tristique";
+
+		try {
+			WebSocketClient client = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
+				.maxFrameSize(40)
+				.maxOutgoingFrameSize(40)
+				.splitLargeFrames(false)
+				.build()
+				.execute(new WebSocketListenerAdapter() {
+				})
+				.join();
+
+			client.sendTextFrame(content).join();
 			fail("Should have thrown exception!");
 		} catch (CompletionException ce) {
 			assertTrue(ce.getCause() instanceof IllegalStateException);
@@ -807,7 +825,7 @@ public class WebSocket {
 	public void sendingPartialTextThenFullTextShouldThrowIllegalState() {
 		WebSocketClient client = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
 			.maxFrameSize(1024)
-			.splitLargeFrames(false)
+			.splitLargeFrames(true)
 			.build()
 			.execute(new WebSocketListenerAdapter() {
 
@@ -842,7 +860,7 @@ public class WebSocket {
 	public void sendingPartialBinaryThenFullTextShouldThrowIllegalState() {
 		WebSocketClient client = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
 			.maxFrameSize(1024)
-			.splitLargeFrames(false)
+			.splitLargeFrames(true)
 			.build()
 			.execute(new WebSocketListenerAdapter() {
 
@@ -937,6 +955,29 @@ public class WebSocket {
 
 	}
 
+	@Test
+	void clientSendingCloseShouldCloseConnectionAfterReceivingCloseResponseFromServer() throws InterruptedException {
+		AtomicReference<String> reasonRef = new AtomicReference<>();
+		AtomicInteger codeRef = new AtomicInteger();
+		WebSocketClient webSocketClient = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
+			.autoCloseFrame(false)
+			.build().execute(new WebSocketListenerAdapter() {
+				@Override
+				public void onCloseFrame(int code, String reason) {
+					codeRef.set(code);
+					reasonRef.set(reason);
+				}
+			}).join();
+
+
+		webSocketClient.sendCloseFrame(1002, "client-closing");
+
+		webSocketClient.awaitClose();
+
+		assertEquals("client-closing", reasonRef.get());
+		assertEquals(1002, codeRef.get());
+
+	}
 
 	@AfterEach
 	public void tearDown() throws Exception {

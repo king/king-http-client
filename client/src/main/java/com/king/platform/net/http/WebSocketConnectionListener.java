@@ -1,7 +1,6 @@
 package com.king.platform.net.http;
 
-@Deprecated
-public interface WebSocketListener {
+public interface WebSocketConnectionListener {
 	/**
 	 * Callback for when the web-socket is connected
 	 *
@@ -30,25 +29,6 @@ public interface WebSocketListener {
 	 * @param reason the close reason
 	 */
 	void onCloseFrame(int code, String reason);
-
-	/**
-	 * Callback for when the server has sent an binary frame to the client.
-	 *
-	 * @param payload       the payload
-	 * @param finalFragment Flag to indicate if this frame is the final fragment in a message. The first fragment (frame) may also be the final fragment.
-	 * @param rsv           Bits used for extensions to the standard.
-	 */
-	void onBinaryFrame(byte[] payload, boolean finalFragment, int rsv);
-
-	/**
-	 * Callback for when the server has sent an text frame to the client.
-	 *
-	 * @param payload       the payload
-	 * @param finalFragment Flag to indicate if this frame is the final fragment in a message. The first fragment (frame) may also be the final fragment.
-	 * @param rsv           Bits used for extensions to the standard.
-	 */
-	void onTextFrame(String payload, boolean finalFragment, int rsv);
-
 
 	/**
 	 * Callback for when the server has sent an ping frame to the client.
