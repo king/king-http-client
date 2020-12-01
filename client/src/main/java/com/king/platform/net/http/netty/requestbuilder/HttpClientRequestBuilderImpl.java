@@ -12,6 +12,7 @@ import com.king.platform.net.http.ResponseBodyConsumer;
 import com.king.platform.net.http.StringResponseBody;
 import com.king.platform.net.http.netty.ConfMap;
 import com.king.platform.net.http.netty.HttpClientCaller;
+import com.king.platform.net.http.netty.ServerInfoValidator;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpVersion;
 
@@ -33,6 +34,6 @@ public class HttpClientRequestBuilderImpl extends HttpClientRequestHeaderBuilder
 	@Override
 	public <T> BuiltClientRequest<T> build(Supplier<ResponseBodyConsumer<T>> responseBodyConsumer) {
 		return new BuiltNettyClientRequest<T>(httpClientCaller, httpVersion, httpMethod, uri, defaultUserAgent, idleTimeoutMillis, totalRequestTimeoutMillis,
-			followRedirects, acceptCompressedResponse, keepAlive, automaticallyDecompressResponse, null, null, null, queryParameters, headerParameters, callbackExecutor, responseBodyConsumer, null);
+			followRedirects, acceptCompressedResponse, keepAlive, automaticallyDecompressResponse, null, null, null, queryParameters, headerParameters, callbackExecutor, responseBodyConsumer, null, ServerInfoValidator.HTTP);
 	}
 }

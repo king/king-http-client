@@ -345,8 +345,17 @@ public class WebSocketClientImpl implements WebSocketClient {
 
 			if (!ready) {
 				connectionFuture = new CompletableFuture<>();
-				builtNettyClientRequest.execute();
-				return connectionFuture;
+				CompletableFuture<WebSocketClient> cf = connectionFuture;
+				CompletableFuture<HttpResponse<Void>> httpConnection = builtNettyClientRequest.execute();
+
+				httpConnection.whenComplete((voidHttpResponse, throwable) -> {
+					if (throwable != null) {
+						connectionFuture = null;
+						cf.completeExceptionally(throwable);
+					}
+				});
+
+				return cf;
 			} else {
 				throw new IllegalStateException("Already connected");
 			}

@@ -30,6 +30,9 @@ public final class ServerInfo {
 	}
 
 	public static ServerInfo buildFromUri(String uriString) throws URISyntaxException {
+
+		validateScheme(uriString);
+
 		URI uri = new URI(uriString);
 
 		makeUriUnderscoreCompatible(uri);
@@ -38,12 +41,12 @@ public final class ServerInfo {
 		String scheme = uri.getScheme();
 		int port = uri.getPort();
 
-		if (host == null) {
-			throw new URISyntaxException(uriString, "Host is null");
-		}
-
 		if (scheme == null) {
 			throw new URISyntaxException(uriString, "Scheme is null");
+		}
+
+		if (host == null) {
+			throw new URISyntaxException(uriString, "Host is null");
 		}
 
 		scheme = scheme.toLowerCase();
@@ -69,6 +72,14 @@ public final class ServerInfo {
 
 
 		return new ServerInfo(scheme, host, port, isSecure, isWebSocket);
+	}
+
+	private static void validateScheme(String uriString) throws URISyntaxException {
+		uriString = uriString.toLowerCase();
+		if (uriString.startsWith("http:") || uriString.startsWith("https:") || uriString.startsWith("ws:") || uriString.startsWith("wss:")) {
+			return;
+		}
+		throw new URISyntaxException(uriString, "Invalid schema");
 	}
 
 	private static void makeUriUnderscoreCompatible(final URI uri) throws URISyntaxException {

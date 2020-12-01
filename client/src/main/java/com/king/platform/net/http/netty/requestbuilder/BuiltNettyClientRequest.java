@@ -6,16 +6,16 @@
 package com.king.platform.net.http.netty.requestbuilder;
 
 
-import com.king.platform.net.http.*;
 import com.king.platform.net.http.HttpResponse;
+import com.king.platform.net.http.*;
 import com.king.platform.net.http.netty.*;
 import com.king.platform.net.http.netty.eventbus.ExternalEventTrigger;
 import com.king.platform.net.http.netty.request.HttpBody;
 import com.king.platform.net.http.netty.request.NettyHttpClientRequest;
 import com.king.platform.net.http.util.Param;
 import com.king.platform.net.http.util.UriUtil;
-import io.netty.handler.codec.http.*;
 import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.*;
 
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
@@ -52,6 +52,7 @@ public class BuiltNettyClientRequest<T> implements BuiltClientRequest<T>, BuiltC
 	private final Executor callbackExecutor;
 	private final Supplier<ResponseBodyConsumer<T>> responseBodyConsumer;
 	private final WebSocketConf webSocketConf;
+	private final ServerInfoValidator serverInfoValidator;
 
 	private HttpCallback<T> httpCallback;
 	private NioCallback nioCallback;
@@ -66,7 +67,7 @@ public class BuiltNettyClientRequest<T> implements BuiltClientRequest<T>, BuiltC
 	private CustomCallbackSubscriber customCallbackSubscriber;
 
 
-	public BuiltNettyClientRequest(HttpClientCaller httpClientCaller, HttpVersion httpVersion, HttpMethod httpMethod, String uri, String defaultUserAgent, int idleTimeoutMillis, int totalRequestTimeoutMillis, boolean followRedirects, boolean acceptCompressedResponse, boolean keepAlive, boolean automaticallyDecompressResponse, RequestBodyBuilder requestBodyBuilder, String contentType, Charset bodyCharset, List<Param> queryParameters, List<Param> headerParameters, Executor callbackExecutor, Supplier<ResponseBodyConsumer<T>> responseBodyConsumer, WebSocketConf webSocketConf) {
+	public BuiltNettyClientRequest(HttpClientCaller httpClientCaller, HttpVersion httpVersion, HttpMethod httpMethod, String uri, String defaultUserAgent, int idleTimeoutMillis, int totalRequestTimeoutMillis, boolean followRedirects, boolean acceptCompressedResponse, boolean keepAlive, boolean automaticallyDecompressResponse, RequestBodyBuilder requestBodyBuilder, String contentType, Charset bodyCharset, List<Param> queryParameters, List<Param> headerParameters, Executor callbackExecutor, Supplier<ResponseBodyConsumer<T>> responseBodyConsumer, WebSocketConf webSocketConf, ServerInfoValidator serverInfoValidator) {
 		this.httpClientCaller = httpClientCaller;
 		this.httpVersion = httpVersion;
 		this.httpMethod = httpMethod;
@@ -86,6 +87,7 @@ public class BuiltNettyClientRequest<T> implements BuiltClientRequest<T>, BuiltC
 		this.callbackExecutor = callbackExecutor;
 		this.responseBodyConsumer = responseBodyConsumer;
 		this.webSocketConf = webSocketConf;
+		this.serverInfoValidator = serverInfoValidator;
 	}
 
 
@@ -162,6 +164,10 @@ public class BuiltNettyClientRequest<T> implements BuiltClientRequest<T>, BuiltC
 			serverInfo = ServerInfo.buildFromUri(completeUri);
 		} catch (URISyntaxException e) {
 			return dispatchError(httpCallback, e);
+		}
+
+		if (!serverInfoValidator.isValid(serverInfo)) {
+			return dispatchError(httpCallback, new KingHttpException("Invalid server url for this connection!"));
 		}
 
 		String relativePath = UriUtil.getRelativeUri(completeUri);

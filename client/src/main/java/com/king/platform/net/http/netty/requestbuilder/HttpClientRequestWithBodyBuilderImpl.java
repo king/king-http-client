@@ -9,6 +9,7 @@ package com.king.platform.net.http.netty.requestbuilder;
 import com.king.platform.net.http.*;
 import com.king.platform.net.http.netty.ConfMap;
 import com.king.platform.net.http.netty.HttpClientCaller;
+import com.king.platform.net.http.netty.ServerInfoValidator;
 import com.king.platform.net.http.netty.request.HttpBody;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpVersion;
@@ -167,7 +168,7 @@ public class HttpClientRequestWithBodyBuilderImpl extends HttpClientRequestHeade
 		}
 
 		return new BuiltNettyClientRequest<T>(httpClientCaller, httpVersion, httpMethod, uri, defaultUserAgent, idleTimeoutMillis, totalRequestTimeoutMillis, followRedirects,
-			acceptCompressedResponse, keepAlive, automaticallyDecompressResponse, immutableBodyBuilder, contentType, bodyCharset, queryParameters, headerParameters, callbackExecutor, responseBodyConsumer, null);
+			acceptCompressedResponse, keepAlive, automaticallyDecompressResponse, immutableBodyBuilder, contentType, bodyCharset, queryParameters, headerParameters, callbackExecutor, responseBodyConsumer, null, ServerInfoValidator.HTTP);
 	}
 
 

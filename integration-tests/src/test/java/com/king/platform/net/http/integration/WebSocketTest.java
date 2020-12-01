@@ -935,6 +935,38 @@ public class WebSocketTest {
 	}
 
 	@Test
+	public void connectToHttpShouldFail() throws Exception {
+		WebSocketClient client = httpClient.createWebSocket("http://localhost:" + port + "/websocket/test")
+			.build()
+			.build();
+
+		try {
+			client.connect().join();
+			fail("Should have failed!");
+		} catch (Exception exception) {
+			Throwable cause = exception.getCause();
+			assertTrue(cause.getMessage().contains("Invalid server url"));
+		}
+
+	}
+
+	@Test
+	public void connectWithoutProtocolShouldFail() throws Exception {
+		WebSocketClient client = httpClient.createWebSocket("localhost:" + port + "/websocket/test")
+			.build()
+			.build();
+
+		try {
+			client.connect().join();
+			fail("Should have failed!");
+		} catch (Exception exception) {
+			Throwable cause = exception.getCause();
+			assertTrue(cause.getMessage().contains("Invalid schema"));
+		}
+
+	}
+
+	@Test
 	public void sendingPartialTextThenFullTextShouldThrowIllegalState() {
 		WebSocketClient client = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
 			.maxOutgoingFrameSize(1024)

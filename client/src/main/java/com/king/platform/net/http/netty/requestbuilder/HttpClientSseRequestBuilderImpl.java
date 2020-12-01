@@ -12,6 +12,7 @@ import com.king.platform.net.http.SseClient;
 import com.king.platform.net.http.SseClientCallback;
 import com.king.platform.net.http.netty.ConfMap;
 import com.king.platform.net.http.netty.HttpClientCaller;
+import com.king.platform.net.http.netty.ServerInfoValidator;
 import com.king.platform.net.http.netty.sse.SseClientImpl;
 import com.king.platform.net.http.netty.sse.VoidResponseConsumer;
 import io.netty.handler.codec.http.HttpMethod;
@@ -32,7 +33,7 @@ public class HttpClientSseRequestBuilderImpl extends HttpClientRequestHeaderBuil
 
 		final BuiltNettyClientRequest<Void> builtNettyClientRequest = new BuiltNettyClientRequest<>(httpClientCaller, httpVersion, httpMethod, uri, defaultUserAgent,
 			idleTimeoutMillis, totalRequestTimeoutMillis, followRedirects, acceptCompressedResponse, keepAlive, automaticallyDecompressResponse, null, null, null, queryParameters,
-			headerParameters, callbackExecutor, VoidResponseConsumer::new, null);
+			headerParameters, callbackExecutor, VoidResponseConsumer::new, null, ServerInfoValidator.HTTP);
 
 
 		return new BuiltSseClientRequest() {

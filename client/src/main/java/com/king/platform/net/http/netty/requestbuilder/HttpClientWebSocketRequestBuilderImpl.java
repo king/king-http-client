@@ -9,6 +9,7 @@ package com.king.platform.net.http.netty.requestbuilder;
 import com.king.platform.net.http.*;
 import com.king.platform.net.http.netty.ConfMap;
 import com.king.platform.net.http.netty.HttpClientCaller;
+import com.king.platform.net.http.netty.ServerInfoValidator;
 import com.king.platform.net.http.netty.WebSocketConf;
 import com.king.platform.net.http.netty.sse.VoidResponseConsumer;
 import com.king.platform.net.http.netty.websocket.WebSocketClientImpl;
@@ -120,7 +121,7 @@ public class HttpClientWebSocketRequestBuilderImpl extends HttpClientRequestHead
 
 		final BuiltNettyClientRequest<Void> builtNettyClientRequest = new BuiltNettyClientRequest<>(httpClientCaller, httpVersion, httpMethod, uri, defaultUserAgent,
 			idleTimeoutMillis, totalRequestTimeoutMillis, followRedirects, acceptCompressedResponse, keepAlive, automaticallyDecompressResponse, null, null, null, queryParameters,
-			headerParameters, callbackExecutor, VoidResponseConsumer::new, webSocketConf);
+			headerParameters, callbackExecutor, VoidResponseConsumer::new, webSocketConf, ServerInfoValidator.WEB_SOCKET);
 
 
 		return new BuiltWebSocketRequest() {
