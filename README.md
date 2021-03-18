@@ -1,6 +1,16 @@
 # king-http-client
-## 'com.king.king-http-client:king-http-client:3.0.18'
+## 'com.king.king-http-client:king-http-client:3.0.21'
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.king.king-http-client/king-http-client/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.king.king-http-client/king-http-client)
+
+## New in version 3.0.21
+* Fixed a bug that could lead to a memory leak 
+* Added new api for websocket where sending frames and sending messages are separated
+
+## New in version 3.0.20
+ * Made it possible to specify a custom dns resolver using ConfKeys.
+ 
+## New in version 3.0.19
+* Minor bugfixes
 
 ## New in version 3.0.18
 * Fixed a bug related to returned content-type containing quoted charset
