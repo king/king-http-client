@@ -123,52 +123,53 @@ public class HttpClientResponseHandler implements ResponseHandler {
 				httpRequestContext.getTimeRecorder().responseBodyStart();
 
 			} else if (msg instanceof HttpContent) {
-				logger.trace("read HttpContent");
-				requestEventBus.triggerEvent(Event.TOUCH);
+				try {
+					logger.trace("read HttpContent");
+					requestEventBus.triggerEvent(Event.TOUCH);
 
 
-				HttpResponseStatus httpResponseStatus = nettyHttpClientResponse.getHttpResponseStatus();
+					HttpResponseStatus httpResponseStatus = nettyHttpClientResponse.getHttpResponseStatus();
 
-				if (httpResponseStatus == null || (httpRequestContext.isFollowRedirects() && HttpRedirector.isRedirectResponse(httpResponseStatus))) {
-					httpRequestContext.setRedirecting(true);
-					return;
-				}
-
-				if (msg == LastHttpContent.EMPTY_LAST_CONTENT && nettyHttpClientResponse.getHttpResponseStatus().code() == 100) {
-					logger.trace("read EMPTY_LAST_CONTENT with status code 100");
-					return;
-				}
-
-
-				HttpContent chunk = (HttpContent) msg;
-
-				ByteBuf content = chunk.content();
-
-				content.resetReaderIndex();
-
-				int readableBytes = content.readableBytes();
-
-				if (readableBytes > 0) {
-					ByteBuffer byteBuffer = content.nioBuffer();
-
-					responseBodyConsumer.onReceivedContentPart(byteBuffer);
-					requestEventBus.triggerEvent(Event.onReceivedContentPart, readableBytes, content);
-					httpRequestContext.addReadBytes(readableBytes);
-				}
-
-
-				content.release();
-
-				requestEventBus.triggerEvent(Event.TOUCH);
-
-
-				if (chunk instanceof LastHttpContent) {
-					if (incomnpleteReadOfData(httpRequestContext)) {
-						triggerServerClosedException(httpRequestContext, requestEventBus, "Connection closed before all response data was read!");
+					if (httpResponseStatus == null || (httpRequestContext.isFollowRedirects() && HttpRedirector.isRedirectResponse(httpResponseStatus))) {
+						httpRequestContext.setRedirecting(true);
 						return;
 					}
-					logger.trace("Got LastHttpContent, completing request");
-					handleCompletedTransfer(httpRequestContext, requestEventBus, nettyHttpClientResponse);
+
+					if (msg == LastHttpContent.EMPTY_LAST_CONTENT && nettyHttpClientResponse.getHttpResponseStatus().code() == 100) {
+						logger.trace("read EMPTY_LAST_CONTENT with status code 100");
+						return;
+					}
+
+
+					HttpContent chunk = (HttpContent) msg;
+
+					ByteBuf content = chunk.content();
+
+					content.resetReaderIndex();
+
+					int readableBytes = content.readableBytes();
+
+					if (readableBytes > 0) {
+						ByteBuffer byteBuffer = content.nioBuffer();
+
+						responseBodyConsumer.onReceivedContentPart(byteBuffer);
+						requestEventBus.triggerEvent(Event.onReceivedContentPart, readableBytes, content);
+						httpRequestContext.addReadBytes(readableBytes);
+					}
+
+					requestEventBus.triggerEvent(Event.TOUCH);
+
+
+					if (chunk instanceof LastHttpContent) {
+						if (incomnpleteReadOfData(httpRequestContext)) {
+							triggerServerClosedException(httpRequestContext, requestEventBus, "Connection closed before all response data was read!");
+							return;
+						}
+						logger.trace("Got LastHttpContent, completing request");
+						handleCompletedTransfer(httpRequestContext, requestEventBus, nettyHttpClientResponse);
+					}
+				} finally {
+					((HttpContent) msg).release();
 				}
 			}
 		} catch (Throwable e) {
