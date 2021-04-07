@@ -6,10 +6,7 @@
 package com.king.platform.net.http.integration;
 
 
-import com.king.platform.net.http.HttpClient;
-import com.king.platform.net.http.HttpResponse;
-import com.king.platform.net.http.NioCallbackAdapter;
-import com.king.platform.net.http.ResponseBodyConsumer;
+import com.king.platform.net.http.*;
 import com.king.platform.net.http.netty.request.HttpBody;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
@@ -26,6 +23,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
@@ -174,6 +172,56 @@ public class Exceptions {
 		assertNotNull(nioException.get());
 		assertEquals(nioException.get().getMessage(), exceptionMessage);
 
+	}
+
+
+	@Test
+	void connectingToClosedServerShouldThrowException() {
+		AtomicReference<Throwable> callbackException = new AtomicReference<>();
+		try {
+			httpClient.createGet("http://localhost:" + (port - 2) + "/fail").build().withHttpCallback(new HttpCallback<String>() {
+				@Override
+				public void onCompleted(HttpResponse<String> httpResponse) {
+
+				}
+
+				@Override
+				public void onError(Throwable throwable) {
+					callbackException.set(throwable);
+				}
+			}).execute().join();
+			fail("should have thrown ConnectException");
+		} catch (CompletionException ce) {
+			Throwable cause = ce.getCause();
+			assertTrue(cause instanceof java.net.ConnectException);
+		}
+
+		assertNotNull(callbackException.get());
+		assertTrue(callbackException.get() instanceof java.net.ConnectException);
+
+
+	}
+
+	@Test
+	void connectingToFailingSSLShouldThrowException() {
+		try {
+			httpClient.createGet("https://localhost:" + port + "/fail").build().execute().join();
+			fail("should have thrown ConnectException");
+		} catch (CompletionException ce) {
+			Throwable cause = ce.getCause();
+			assertTrue(cause instanceof java.net.ConnectException);
+		}
+	}
+
+	@Test
+	void connectingToClosedServerWithSSLShouldThrowException() {
+		try {
+			httpClient.createGet("https://localhost:" + (port - 2) + "/fail").build().execute().join();
+			fail("should have thrown ConnectException");
+		} catch (CompletionException ce) {
+			Throwable cause = ce.getCause();
+			assertTrue(cause instanceof java.net.ConnectException);
+		}
 	}
 
 	@AfterEach

@@ -34,6 +34,7 @@ import io.netty.util.concurrent.FutureListener;
 import org.slf4j.Logger;
 
 import javax.net.ssl.SSLException;
+import java.net.ConnectException;
 import java.util.concurrent.TimeUnit;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -206,7 +207,7 @@ public class ChannelManager {
 		ChannelFuture channelFuture = channel.writeAndFlush(httpRequestContext);
 		channelFuture.addListener(future -> {
             if (!future.isSuccess()) {
-                requestEventBus.triggerEvent(Event.ERROR, httpRequestContext, future.cause());
+                requestEventBus.triggerEvent(Event.ERROR, httpRequestContext, unrollNettyException(future.cause()));
             }
         });
 
@@ -280,8 +281,11 @@ public class ChannelManager {
                             sendOnChannel(channel, httpRequestContext, requestEventBus);
                         } else {
                             logger.error("Failed to do ssl handshake");
-                            Throwable cause = sslHandshakeFuture.cause();
-                            requestEventBus.triggerEvent(Event.ERROR, httpRequestContext, cause);
+                            Throwable cause = unrollNettyException(sslHandshakeFuture.cause());
+                            if (cause != null) {
+                            	cause = new ConnectException(cause.getMessage());
+							}
+							requestEventBus.triggerEvent(Event.ERROR, httpRequestContext, cause);
                         }
                     });
 
@@ -292,10 +296,25 @@ public class ChannelManager {
 
             } else {
                 logger.trace("Failed to opened a new channel for request {}", httpRequestContext);
-                Throwable cause = future.cause();
+                Throwable cause = unrollNettyException(future.cause());
                 requestEventBus.triggerEvent(Event.ERROR, httpRequestContext, cause);
             }
         });
+	}
+
+	private Throwable unrollNettyException(Throwable cause) {
+		if (cause != null) {
+			String packageString = cause.getClass().getPackage().getName();
+			if (packageString.startsWith("io.netty")) {
+				if (cause.getCause() == null) {
+					return cause;
+				}
+				return unrollNettyException(cause.getCause());
+			} else {
+				return cause;
+			}
+		}
+		return cause;
 	}
 
 
