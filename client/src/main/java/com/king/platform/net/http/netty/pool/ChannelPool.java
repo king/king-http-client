@@ -12,7 +12,7 @@ import io.netty.channel.Channel;
 public interface ChannelPool {
 	Channel get(ServerInfo serverInfo);
 
-	void offer(ServerInfo serverInfo, Channel channel);
+	void offer(ServerInfo serverInfo, Channel channel, int keepAliveTimeoutMillis);
 
 	void discard(ServerInfo serverInfo, Channel channel);
 

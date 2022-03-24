@@ -39,6 +39,7 @@ public abstract class HttpClientRequestHeaderBuilderImpl<T extends HttpClientReq
 	protected boolean followRedirects;
 	protected boolean acceptCompressedResponse;
 	protected boolean keepAlive;
+	protected int keepAliveTimeoutMillis;
 	protected  boolean automaticallyDecompressResponse;
 	protected Executor callbackExecutor;
 
@@ -61,6 +62,7 @@ public abstract class HttpClientRequestHeaderBuilderImpl<T extends HttpClientReq
 		automaticallyDecompressResponse = confMap.get(ConfKeys.AUTOMATICALLY_DECOMPRESS_RESPONSE);
 
 		keepAlive = confMap.get(ConfKeys.KEEP_ALIVE);
+		keepAliveTimeoutMillis = confMap.get(ConfKeys.KEEP_ALIVE_TIMEOUT_MILLIS);
 
 		defaultUserAgent = confMap.get(ConfKeys.USER_AGENT);
 
@@ -88,6 +90,12 @@ public abstract class HttpClientRequestHeaderBuilderImpl<T extends HttpClientReq
 	@Override
 	public T keepAlive(boolean keepAlive) {
 		this.keepAlive = keepAlive;
+		return implClass.cast(this);
+	}
+
+	@Override
+	public T keepAliveTimeout(int keepAliveTimeoutMillis) {
+		this.keepAliveTimeoutMillis = keepAliveTimeoutMillis;
 		return implClass.cast(this);
 	}
 

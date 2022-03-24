@@ -41,6 +41,7 @@ public class BuiltNettyClientRequest<T> implements BuiltClientRequest<T>, BuiltC
 	private final boolean followRedirects;
 	private final boolean acceptCompressedResponse;
 	private final boolean keepAlive;
+	private final int keepAliveTimeoutMillis;
 	private final boolean automaticallyDecompressResponse;
 
 	private final RequestBodyBuilder requestBodyBuilder;
@@ -67,7 +68,7 @@ public class BuiltNettyClientRequest<T> implements BuiltClientRequest<T>, BuiltC
 	private CustomCallbackSubscriber customCallbackSubscriber;
 
 
-	public BuiltNettyClientRequest(HttpClientCaller httpClientCaller, HttpVersion httpVersion, HttpMethod httpMethod, String uri, String defaultUserAgent, int idleTimeoutMillis, int totalRequestTimeoutMillis, boolean followRedirects, boolean acceptCompressedResponse, boolean keepAlive, boolean automaticallyDecompressResponse, RequestBodyBuilder requestBodyBuilder, String contentType, Charset bodyCharset, List<Param> queryParameters, List<Param> headerParameters, Executor callbackExecutor, Supplier<ResponseBodyConsumer<T>> responseBodyConsumer, WebSocketConf webSocketConf, ServerInfoValidator serverInfoValidator) {
+	public BuiltNettyClientRequest(HttpClientCaller httpClientCaller, HttpVersion httpVersion, HttpMethod httpMethod, String uri, String defaultUserAgent, int idleTimeoutMillis, int totalRequestTimeoutMillis, boolean followRedirects, boolean acceptCompressedResponse, boolean keepAlive, int keepAliveTimeoutMillis, boolean automaticallyDecompressResponse, RequestBodyBuilder requestBodyBuilder, String contentType, Charset bodyCharset, List<Param> queryParameters, List<Param> headerParameters, Executor callbackExecutor, Supplier<ResponseBodyConsumer<T>> responseBodyConsumer, WebSocketConf webSocketConf, ServerInfoValidator serverInfoValidator) {
 		this.httpClientCaller = httpClientCaller;
 		this.httpVersion = httpVersion;
 		this.httpMethod = httpMethod;
@@ -78,6 +79,7 @@ public class BuiltNettyClientRequest<T> implements BuiltClientRequest<T>, BuiltC
 		this.followRedirects = followRedirects;
 		this.acceptCompressedResponse = acceptCompressedResponse;
 		this.keepAlive = keepAlive;
+		this.keepAliveTimeoutMillis = keepAliveTimeoutMillis;
 		this.automaticallyDecompressResponse = automaticallyDecompressResponse;
 		this.requestBodyBuilder = requestBodyBuilder;
 		this.contentType = contentType;
@@ -231,7 +233,7 @@ public class BuiltNettyClientRequest<T> implements BuiltClientRequest<T>, BuiltC
 
 		return httpClientCaller.execute(httpMethod, nettyHttpClientRequest, httpCallback, getNioCallback(), getUploadCallback(), responseBodyConsumer.get(),
 			callbackExecutor, getExternalEventTrigger(), customCallbackSubscriber, idleTimeoutMillis, totalRequestTimeoutMillis,
-			followRedirects, keepAlive, automaticallyDecompressResponse, webSocketConf);
+			followRedirects, keepAlive, keepAliveTimeoutMillis, automaticallyDecompressResponse, webSocketConf);
 	}
 
 

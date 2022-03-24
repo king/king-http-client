@@ -37,6 +37,15 @@ public interface HttpClientRequestHeaderBuilder<T extends HttpClientRequestHeade
 	T keepAlive(boolean keepAlive);
 
 	/**
+	 * Set the timeout for how long the idle socket should be kept around if keepAlive is used.
+	 * By default, this is controlled by {@link com.king.platform.net.http.netty.NettyHttpClientBuilder#setKeepAliveTimeoutMs(int)}
+	 * This is only set on newly opened connections. If a connection is reused, the idle timeout on it will not be changed.
+	 * @param keepAliveTimeoutMillis  the time after which the connection will be closed (in ms)
+	 * @return the builder
+	 */
+	T keepAliveTimeout(int keepAliveTimeoutMillis);
+
+	/**
 	 * Set if the client should accept compressed responses from the server <br>
 	 * Overrides {@link ConfKeys#ACCEPT_COMPRESSED_RESPONSE}
 	 * @param acceptCompressedResponse true if the client accepts compressed responses

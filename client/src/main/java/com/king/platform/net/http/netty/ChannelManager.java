@@ -379,7 +379,8 @@ public class ChannelManager {
 
 			if (keepAlive) {
 				if (channel != null) {
-					channelPool.offer(serverInfo, channel);
+					int keepAliveTimeoutMillis = httpRequestContext.getKeepAliveTimeoutMillis();
+					channelPool.offer(serverInfo, channel, keepAliveTimeoutMillis);
 					requestEventBus.triggerEvent(Event.POOLED_CONNECTION, serverInfo);
 				}
 

@@ -17,7 +17,7 @@ public class NoChannelPool implements ChannelPool {
 	}
 
 	@Override
-	public void offer(ServerInfo serverInfo, Channel channel) {
+	public void offer(ServerInfo serverInfo, Channel channel, int keepAliveTimeoutMillis) {
 		channel.close();
 	}
 

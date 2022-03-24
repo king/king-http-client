@@ -120,7 +120,7 @@ public class HttpClientWebSocketRequestBuilderImpl extends HttpClientRequestHead
 		WebSocketConf webSocketConf = new WebSocketConf(maxFrameSize, aggregateFrames, maxAggregateBufferSize, splitLargeFrames, maxIncomingFrameSize, maxOutgoingFrameSize);
 
 		final BuiltNettyClientRequest<Void> builtNettyClientRequest = new BuiltNettyClientRequest<>(httpClientCaller, httpVersion, httpMethod, uri, defaultUserAgent,
-			idleTimeoutMillis, totalRequestTimeoutMillis, followRedirects, acceptCompressedResponse, keepAlive, automaticallyDecompressResponse, null, null, null, queryParameters,
+			idleTimeoutMillis, totalRequestTimeoutMillis, followRedirects, acceptCompressedResponse, keepAlive, keepAliveTimeoutMillis, automaticallyDecompressResponse, null, null, null, queryParameters,
 			headerParameters, callbackExecutor, VoidResponseConsumer::new, webSocketConf, ServerInfoValidator.WEB_SOCKET);
 
 

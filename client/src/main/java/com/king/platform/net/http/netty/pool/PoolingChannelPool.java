@@ -17,18 +17,16 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 public class PoolingChannelPool implements ChannelPool {
-	private final long maxTtl;
 
 	private final ConcurrentHashMap<ServerInfo, ServerPool> serverPoolMap = new ConcurrentHashMap<>();
 
 	private final TimeProvider timeProvider;
 	private final MetricCallback metricCallback;
 
-	public PoolingChannelPool(final Timer cleanupTimer, TimeProvider timeProvider, long timeoutInMilliseconds, final MetricCallback metricCallback) {
+	public PoolingChannelPool(final Timer cleanupTimer, TimeProvider timeProvider, final MetricCallback metricCallback) {
 		this.timeProvider = timeProvider;
 		this.metricCallback = metricCallback;
 
-		maxTtl = timeoutInMilliseconds;
 
 		cleanupTimer.newTimeout(timeout -> {
 
@@ -46,9 +44,9 @@ public class PoolingChannelPool implements ChannelPool {
 
 			}
 
-			cleanupTimer.newTimeout(timeout.task(), maxTtl, TimeUnit.MILLISECONDS);
+			cleanupTimer.newTimeout(timeout.task(), 1000, TimeUnit.MILLISECONDS);
 
-		}, maxTtl, TimeUnit.MILLISECONDS);
+		}, 1000, TimeUnit.MILLISECONDS);
 	}
 
 
@@ -63,10 +61,10 @@ public class PoolingChannelPool implements ChannelPool {
 	}
 
 	@Override
-	public void offer(ServerInfo serverInfo, Channel channel) {
+	public void offer(ServerInfo serverInfo, Channel channel, int keepAliveTimeoutMillis) {
 		ServerPool serverPool = serverPoolMap.get(serverInfo);
 		if (serverPool == null) {
-			serverPool = new ServerPool(serverInfo, maxTtl, TimeUnit.MILLISECONDS, timeProvider, metricCallback);
+			serverPool = new ServerPool(serverInfo, timeProvider, metricCallback);
 			ServerPool old = serverPoolMap.putIfAbsent(serverInfo, serverPool);
 			if (old != null) {
 				serverPool = old;
@@ -76,7 +74,7 @@ public class PoolingChannelPool implements ChannelPool {
 			}
 		}
 
-		serverPool.offer(channel);
+		serverPool.offer(channel, keepAliveTimeoutMillis);
 	}
 
 	@Override

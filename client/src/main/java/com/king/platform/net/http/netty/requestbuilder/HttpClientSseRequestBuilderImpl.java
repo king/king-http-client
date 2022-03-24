@@ -32,7 +32,7 @@ public class HttpClientSseRequestBuilderImpl extends HttpClientRequestHeaderBuil
 		addHeader("Accept", "text/event-stream");
 
 		final BuiltNettyClientRequest<Void> builtNettyClientRequest = new BuiltNettyClientRequest<>(httpClientCaller, httpVersion, httpMethod, uri, defaultUserAgent,
-			idleTimeoutMillis, totalRequestTimeoutMillis, followRedirects, acceptCompressedResponse, keepAlive, automaticallyDecompressResponse, null, null, null, queryParameters,
+			idleTimeoutMillis, totalRequestTimeoutMillis, followRedirects, acceptCompressedResponse, keepAlive, keepAliveTimeoutMillis, automaticallyDecompressResponse, null, null, null, queryParameters,
 			headerParameters, callbackExecutor, VoidResponseConsumer::new, null, ServerInfoValidator.HTTP);
 
 

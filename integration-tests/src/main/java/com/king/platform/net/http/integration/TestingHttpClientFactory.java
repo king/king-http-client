@@ -96,7 +96,7 @@ public class TestingHttpClientFactory {
 	public TestingHttpClientFactory useChannelPool() {
 		HashedWheelTimer cleanupTimer = new HashedWheelTimer();
 		SystemTimeProvider timeProvider = new SystemTimeProvider();
-		nettyHttpClientBuilder.setChannelPool(new PoolingChannelPool(cleanupTimer, timeProvider, 15000, new MetricCallback() {
+		nettyHttpClientBuilder.setChannelPool(new PoolingChannelPool(cleanupTimer, timeProvider,  new MetricCallback() {
 			@Override
 			public void onClosedConnectionTo(String host) {
 

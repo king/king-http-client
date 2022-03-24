@@ -101,9 +101,14 @@ public class ConfKeys<T> {
 	public static final ConfKeys<Boolean> AUTOMATICALLY_DECOMPRESS_RESPONSE = new ConfKeys<>(true);
 
 	/**
-	 * Should the client keep the connections alive between reqCuests, defaults to true
+	 * Should the client keep the connections alive between requests, defaults to true
 	 */
 	public static final ConfKeys<Boolean> KEEP_ALIVE = new ConfKeys<>(true);
+
+	/**
+	 * How long should the connection be kept in the pool for, defaults to 30_000 millis
+	 */
+	public static final ConfKeys<Integer> KEEP_ALIVE_TIMEOUT_MILLIS = new ConfKeys<>(30_000);
 
 	/**
 	 * Set default request body charset, defaults to iso-8859-1

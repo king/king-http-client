@@ -28,6 +28,7 @@ public class HttpRequestContext<T> {
 	private final TimeStampRecorder timeStampRecorder;
 	private final ResponseBodyConsumer<T> responseBodyConsumer;
 	private final RequestEventBus requestEventBus;
+	private final int keepAliveTimeoutMillis;
 
 
 	private NettyHttpClientResponse<T> nettyHttpClientResponse;
@@ -43,7 +44,7 @@ public class HttpRequestContext<T> {
 	private WebSocketConf webSocketConf;
 	private HttpResponse httpResponse;
 
-	public HttpRequestContext(HttpMethod httpMethod, NettyHttpClientRequest<T> nettyHttpClientRequest, RequestEventBus requestEventBus, ResponseBodyConsumer<T> responseBodyConsumer, int idleTimeoutMillis, int totalRequestTimeoutMillis, boolean followRedirects, boolean keepAlive, TimeStampRecorder timeStampRecorder, boolean automaticallyDecompressResponse, WebSocketConf webSocketConf) {
+	public HttpRequestContext(HttpMethod httpMethod, NettyHttpClientRequest<T> nettyHttpClientRequest, RequestEventBus requestEventBus, ResponseBodyConsumer<T> responseBodyConsumer, int idleTimeoutMillis, int totalRequestTimeoutMillis, boolean followRedirects, boolean keepAlive, int keepAliveTimeoutMillis, TimeStampRecorder timeStampRecorder, boolean automaticallyDecompressResponse, WebSocketConf webSocketConf) {
 		this.httpMethod = httpMethod;
 		this.nettyHttpClientRequest = nettyHttpClientRequest;
 		this.requestEventBus = requestEventBus;
@@ -52,6 +53,7 @@ public class HttpRequestContext<T> {
 		this.totalRequestTimeoutMillis = totalRequestTimeoutMillis;
 		this.followRedirects = followRedirects;
 		this.keepAlive = keepAlive;
+		this.keepAliveTimeoutMillis = keepAliveTimeoutMillis;
 		this.timeStampRecorder = timeStampRecorder;
 		this.automaticallyDecompressResponse = automaticallyDecompressResponse;
 		this.webSocketConf = webSocketConf;
@@ -61,7 +63,7 @@ public class HttpRequestContext<T> {
 	public HttpRequestContext createRedirectRequest(ServerInfo redirectServerInfo, String redirectLocation) {
 		NettyHttpClientRequest redirectRequest = nettyHttpClientRequest.createRedirectRequest(redirectServerInfo, redirectLocation);
 		HttpRequestContext httpRequestContext = new HttpRequestContext(httpMethod, redirectRequest, requestEventBus, responseBodyConsumer,
-			idleTimeoutMillis, totalRequestTimeoutMillis, followRedirects, keepAlive, timeStampRecorder, automaticallyDecompressResponse, webSocketConf);
+			idleTimeoutMillis, totalRequestTimeoutMillis, followRedirects, keepAlive, keepAliveTimeoutMillis, timeStampRecorder, automaticallyDecompressResponse, webSocketConf);
 		httpRequestContext.redirectionCount = this.redirectionCount + 1;
 
 		nettyHttpClientRequest.setKeepAlive(keepAlive);
@@ -179,5 +181,9 @@ public class HttpRequestContext<T> {
 
 	public HttpResponse getHttpResponse() {
 		return httpResponse;
+	}
+
+	public int getKeepAliveTimeoutMillis() {
+		return keepAliveTimeoutMillis;
 	}
 }

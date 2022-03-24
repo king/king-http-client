@@ -34,6 +34,6 @@ public class HttpClientRequestBuilderImpl extends HttpClientRequestHeaderBuilder
 	@Override
 	public <T> BuiltClientRequest<T> build(Supplier<ResponseBodyConsumer<T>> responseBodyConsumer) {
 		return new BuiltNettyClientRequest<T>(httpClientCaller, httpVersion, httpMethod, uri, defaultUserAgent, idleTimeoutMillis, totalRequestTimeoutMillis,
-			followRedirects, acceptCompressedResponse, keepAlive, automaticallyDecompressResponse, null, null, null, queryParameters, headerParameters, callbackExecutor, responseBodyConsumer, null, ServerInfoValidator.HTTP);
+			followRedirects, acceptCompressedResponse, keepAlive, keepAliveTimeoutMillis, automaticallyDecompressResponse, null, null, null, queryParameters, headerParameters, callbackExecutor, responseBodyConsumer, null, ServerInfoValidator.HTTP);
 	}
 }

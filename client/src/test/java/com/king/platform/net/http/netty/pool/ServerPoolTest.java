@@ -15,7 +15,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -25,17 +24,17 @@ import static org.mockito.Mockito.*;
 public class ServerPoolTest {
 	private ServerPool serverPool;
 	private TimeProviderForTesting timeProvider;
-
+	private int keepAliveTimeoutMillis = 100*1000;
 	@BeforeEach
 	public void setUp() throws Exception {
 		timeProvider = new TimeProviderForTesting();
-		serverPool = new ServerPool(ServerInfo.buildFromUri("http://localhost/"), 100, TimeUnit.SECONDS, timeProvider, mock(MetricCallback.class));
+		serverPool = new ServerPool(ServerInfo.buildFromUri("http://localhost/"),  timeProvider, mock(MetricCallback.class));
 
 	}
 
 	@Test
 	public void offerOfValidChannelShouldStoreIt() throws Exception {
-		serverPool.offer(createStateFullChannel());
+		serverPool.offer(createStateFullChannel(), keepAliveTimeoutMillis);
 		assertEquals(1, serverPool.getChannelSize());
 		assertEquals(1, serverPool.getPoolSize());
 	}
@@ -44,7 +43,7 @@ public class ServerPoolTest {
 	public void offerOfClosedChannelShouldNotStoreIt() throws Exception {
 		Channel channel = createStateFullChannel();
 		channel.close();
-		serverPool.offer(channel);
+		serverPool.offer(channel, keepAliveTimeoutMillis);
 		assertEquals(0, serverPool.getChannelSize());
 		assertEquals(0, serverPool.getPoolSize());
 	}
@@ -52,7 +51,7 @@ public class ServerPoolTest {
 	@Test
 	public void discardingAChannelShouldRemoveAndCloseIt() throws Exception {
 		Channel validChannel = createStateFullChannel();
-		serverPool.offer(validChannel);
+		serverPool.offer(validChannel, keepAliveTimeoutMillis);
 		serverPool.discard(validChannel);
 
 		assertEquals(0, serverPool.getChannelSize());
@@ -63,7 +62,7 @@ public class ServerPoolTest {
 	@Test
 	public void cleanShouldRemoveDiscardedConnections() throws Exception {
 		Channel validChannel = createStateFullChannel();
-		serverPool.offer(validChannel);
+		serverPool.offer(validChannel, keepAliveTimeoutMillis);
 		serverPool.discard(validChannel);
 		serverPool.cleanExpiredConnections();
 		assertEquals(0, serverPool.getPoolSize()); //the pool is now empty since it was explicitly cleaned
@@ -72,7 +71,7 @@ public class ServerPoolTest {
 	@Test
 	public void cleanShouldRemoveToOldChannels() throws Exception {
 		Channel validChannel = createStateFullChannel();
-		serverPool.offer(validChannel);
+		serverPool.offer(validChannel, keepAliveTimeoutMillis);
 		timeProvider.forwardSeconds(120);
 		serverPool.cleanExpiredConnections();
 		assertEquals(0, serverPool.getChannelSize());
@@ -84,7 +83,7 @@ public class ServerPoolTest {
 	@Test
 	public void cleanShouldNotRemoveWorkingChannels() throws Exception {
 		Channel channel = createStateFullChannel();
-		serverPool.offer(channel);
+		serverPool.offer(channel, keepAliveTimeoutMillis);
 		serverPool.cleanExpiredConnections();
 		assertEquals(1, serverPool.getChannelSize());
 		assertEquals(1, serverPool.getPoolSize());
@@ -95,7 +94,7 @@ public class ServerPoolTest {
 	@Test
 	public void cleanShouldNotRemovePolledChannelIfTheyAreNotOverMaxTTL() throws Exception {
 		Channel channel = createStateFullChannel();
-		serverPool.offer(channel);
+		serverPool.offer(channel, keepAliveTimeoutMillis);
 		serverPool.poll();
 		assertEquals(1, serverPool.getChannelSize());
 		assertEquals(0, serverPool.getPoolSize());
@@ -110,7 +109,7 @@ public class ServerPoolTest {
 	@Test
 	public void cleanShouldNotRemovePolledChannelIfTheyAreOverMaxTTLButTheyArePolled() throws Exception {
 		Channel channel = createStateFullChannel();
-		serverPool.offer(channel);
+		serverPool.offer(channel, keepAliveTimeoutMillis);
 		serverPool.poll();
 		assertEquals(1, serverPool.getChannelSize());
 		assertEquals(0, serverPool.getPoolSize());
@@ -125,7 +124,7 @@ public class ServerPoolTest {
 	@Test
 	public void cleanShouldRemovePolledChannelIfTheyAreOverMaxTTL() throws Exception {
 		Channel channel = createStateFullChannel();
-		serverPool.offer(channel);
+		serverPool.offer(channel, keepAliveTimeoutMillis);
 		assertEquals(1, serverPool.getChannelSize());
 		assertEquals(1, serverPool.getPoolSize());
 
@@ -139,7 +138,7 @@ public class ServerPoolTest {
 	@Test
 	public void pollShouldReturnOpenChannel() throws Exception {
 		Channel stateFullChannel = createStateFullChannel();
-		serverPool.offer(stateFullChannel);
+		serverPool.offer(stateFullChannel, keepAliveTimeoutMillis);
 		Channel channel = serverPool.poll();
 		assertSame(stateFullChannel, channel);
 	}
@@ -147,7 +146,7 @@ public class ServerPoolTest {
 	@Test
 	public void pollShouldReturnNotReturnClosedChannel() throws Exception {
 		Channel stateFullChannel = createStateFullChannel();
-		serverPool.offer(stateFullChannel);
+		serverPool.offer(stateFullChannel, keepAliveTimeoutMillis);
 		stateFullChannel.close();
 		Channel channel = serverPool.poll();
 		assertNull(channel);

@@ -17,7 +17,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.slf4j.LoggerFactory.getLogger;
@@ -25,8 +24,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 public class ServerPool {
 	private final Logger logger = getLogger(getClass());
 	private final ServerInfo server;
-	private final long maxTTL;
-	private final TimeUnit ttlTimeUnit;
 
 	private final AtomicInteger idGenerator = new AtomicInteger();
 	private final ConcurrentLinkedDeque<PooledChannel> pooledChannels = new ConcurrentLinkedDeque<>();
@@ -36,13 +33,11 @@ public class ServerPool {
 
 	private volatile long lastOfferedConnectionTime;
 
-	public ServerPool(ServerInfo server, long maxTTL, TimeUnit ttlTimeUnit, TimeProvider timeProvider, MetricCallback metricCallback) {
+	public ServerPool(ServerInfo server,TimeProvider timeProvider, MetricCallback metricCallback) {
 		this.timeProvider = timeProvider;
 		this.metricCallback = metricCallback;
 		lastOfferedConnectionTime = timeProvider.currentTimeInMillis();
 		this.server = server;
-		this.maxTTL = maxTTL;
-		this.ttlTimeUnit = ttlTimeUnit;
 	}
 
 	public Channel poll() {
@@ -72,7 +67,7 @@ public class ServerPool {
 		Channel channel = pooledChannel.channel;
 		long currentTime = timeProvider.currentTimeInMillis();
 
-		if (pooledChannel.lastUsedTimeStamp + maxTTL <= currentTime) {  //TTL for this connection has expired
+		if (pooledChannel.lastUsedTimeStamp + pooledChannel.maxTTL <= currentTime) {  //TTL for this connection has expired
 			return false;
 		}
 
@@ -83,7 +78,7 @@ public class ServerPool {
 		return false;
 	}
 
-	public void offer(Channel channel) {
+	public void offer(Channel channel, int keepAliveTimeoutMillis) {
 		if (channel == null) {
 			return;
 		}
@@ -100,7 +95,7 @@ public class ServerPool {
 		}
 
 		if (pooledChannel == null) {
-			pooledChannel = new PooledChannel(idGenerator.incrementAndGet(), timeProvider.currentTimeInMillis(), channel);
+			pooledChannel = new PooledChannel(idGenerator.incrementAndGet(), timeProvider.currentTimeInMillis(), channel, keepAliveTimeoutMillis);
 			PooledChannel oldValue = channelsMap.putIfAbsent(channel, pooledChannel);
 			if (oldValue == null) {
 				logger.trace("Adding new active channel for server {} with id {} created at {}", server, pooledChannel.id, pooledChannel.creationTimeStamp);
@@ -166,7 +161,7 @@ public class ServerPool {
 
 
 	public boolean shouldRemovePool() {
-		return pooledChannels.isEmpty() && lastOfferedConnectionTime + ttlTimeUnit.toMillis(maxTTL) <= timeProvider.currentTimeInMillis();
+		return pooledChannels.isEmpty() && lastOfferedConnectionTime + 10_000 <= timeProvider.currentTimeInMillis();  //keep the object around for 10s after the last connection has been closed
 	}
 
 	public int getPoolSize() {
@@ -189,11 +184,13 @@ public class ServerPool {
 		private long creationTimeStamp;
 		private long lastUsedTimeStamp;
 		private Channel channel;
+		private int maxTTL;
 
-		public PooledChannel(int id, long creationTimeStamp, Channel channel) {
+		public PooledChannel(int id, long creationTimeStamp, Channel channel, int maxTTL) {
 			this.id = id;
 			this.creationTimeStamp = creationTimeStamp;
 			this.channel = channel;
+			this.maxTTL = maxTTL;
 		}
 	}
 }

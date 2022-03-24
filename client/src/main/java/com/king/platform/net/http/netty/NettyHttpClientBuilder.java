@@ -252,7 +252,8 @@ public class NettyHttpClientBuilder {
 		}
 
 		if (channelPool == null) {
-			channelPool = new PoolingChannelPool(cleanupTimer, timeProvider, keepAliveTimeoutMS, metricCallback);
+			optionsMap.putIfAbsent(ConfKeys.KEEP_ALIVE_TIMEOUT_MILLIS, keepAliveTimeoutMS);
+			channelPool = new PoolingChannelPool(cleanupTimer, timeProvider, metricCallback);
 		}
 
 		if (executionBackPressure == null) {

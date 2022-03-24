@@ -35,6 +35,8 @@ public class PoolingChannelPoolTest {
 	private Channel inactiveChannel;
 	private Channel closedChannel;
 
+	private int keepAliveTimeoutMillis = 15*1000;
+
 	@BeforeEach
 	public void setUp() throws Exception {
 		activeChannel = getActiveChannelMock();
@@ -49,7 +51,7 @@ public class PoolingChannelPoolTest {
 		timeProvider = new TimeProviderForTesting();
 		timer = new TestTimer();
 
-		poolingChannelPool = new PoolingChannelPool(timer, timeProvider, 15*1000, mock(MetricCallback.class));
+		poolingChannelPool = new PoolingChannelPool(timer, timeProvider, mock(MetricCallback.class));
 
 		serverInfo = ServerInfo.buildFromUri("http://somehost:8081/foo/bar");
 
@@ -65,15 +67,15 @@ public class PoolingChannelPoolTest {
 	@Test
 	public void offerOfAnChannel() throws Exception {
 
-		poolingChannelPool.offer(serverInfo, activeChannel);
+		poolingChannelPool.offer(serverInfo, activeChannel, keepAliveTimeoutMillis);
 
 		assertEquals(1, poolingChannelPool.getPoolSize(serverInfo));
 	}
 
 	@Test
 	public void offerOfTwoChannels() throws Exception {
-		poolingChannelPool.offer(ServerInfo.buildFromUri("http://somehost:8081/foo1/bar1"), getActiveChannelMock());
-		poolingChannelPool.offer(ServerInfo.buildFromUri("http://somehost:8081/foo2/bar2"), getActiveChannelMock());
+		poolingChannelPool.offer(ServerInfo.buildFromUri("http://somehost:8081/foo1/bar1"), getActiveChannelMock(), keepAliveTimeoutMillis);
+		poolingChannelPool.offer(ServerInfo.buildFromUri("http://somehost:8081/foo2/bar2"), getActiveChannelMock(), keepAliveTimeoutMillis);
 
 		assertEquals(2, poolingChannelPool.getPoolSize(ServerInfo.buildFromUri("http://somehost:8081/foo3/bar3")));
 	}
@@ -82,14 +84,14 @@ public class PoolingChannelPoolTest {
 	@Test
 	public void offerOfAnInactiveChannelShouldNotPool() throws Exception {
 
-		poolingChannelPool.offer(serverInfo, inactiveChannel);
+		poolingChannelPool.offer(serverInfo, inactiveChannel, keepAliveTimeoutMillis);
 
 		assertEquals(0, poolingChannelPool.getPoolSize(serverInfo));
 	}
 
 	@Test
 	public void offerOfAnClosedChannelShouldNotPool() throws Exception {
-		poolingChannelPool.offer(serverInfo, closedChannel);
+		poolingChannelPool.offer(serverInfo, closedChannel, keepAliveTimeoutMillis);
 		assertEquals(0, poolingChannelPool.getPoolSize(serverInfo));
 	}
 
@@ -101,7 +103,7 @@ public class PoolingChannelPoolTest {
 
 	@Test
 	public void getOfAnOfferedChannel() throws Exception {
-		poolingChannelPool.offer(serverInfo, activeChannel);
+		poolingChannelPool.offer(serverInfo, activeChannel, keepAliveTimeoutMillis);
 
 		Channel channel = poolingChannelPool.get(serverInfo);
 		assertSame(activeChannel, channel);
@@ -114,8 +116,8 @@ public class PoolingChannelPoolTest {
 		Channel channel1 = getActiveChannelMock();
 		Channel channel2 = getActiveChannelMock();
 
-		poolingChannelPool.offer(serverInfo, channel1);
-		poolingChannelPool.offer(serverInfo, channel2);
+		poolingChannelPool.offer(serverInfo, channel1, keepAliveTimeoutMillis);
+		poolingChannelPool.offer(serverInfo, channel2, keepAliveTimeoutMillis);
 
 		Channel fetchedChannel1 = poolingChannelPool.get(serverInfo);
 		Channel fetchedChannel2 = poolingChannelPool.get(serverInfo);
@@ -128,7 +130,7 @@ public class PoolingChannelPoolTest {
 
 	@Test
 	public void getOfAnInactiveChannel() throws Exception {
-		poolingChannelPool.offer(serverInfo, activeChannel);
+		poolingChannelPool.offer(serverInfo, activeChannel, keepAliveTimeoutMillis);
 		assertEquals(1, poolingChannelPool.getPoolSize(serverInfo));
 
 		when(activeChannel.isActive()).thenReturn(false);
@@ -140,7 +142,7 @@ public class PoolingChannelPoolTest {
 
 	@Test
 	public void getOfAnClosedChannel() throws Exception {
-		poolingChannelPool.offer(serverInfo, activeChannel);
+		poolingChannelPool.offer(serverInfo, activeChannel, keepAliveTimeoutMillis);
 		assertEquals(1, poolingChannelPool.getPoolSize(serverInfo));
 
 		when(activeChannel.isOpen()).thenReturn(false);
@@ -153,7 +155,7 @@ public class PoolingChannelPoolTest {
 
 	@Test
 	public void getOfAnExpiredChannel() throws Exception {
-		poolingChannelPool.offer(serverInfo, activeChannel);
+		poolingChannelPool.offer(serverInfo, activeChannel, keepAliveTimeoutMillis);
 		assertEquals(1, poolingChannelPool.getPoolSize(serverInfo));
 
 		timeProvider.forwardSeconds(14);
@@ -171,12 +173,12 @@ public class PoolingChannelPoolTest {
 
 	@Test
 	public void timerShouldRemoveExpireChannels() throws Exception {
-		poolingChannelPool.offer(serverInfo, getActiveChannelMock());
+		poolingChannelPool.offer(serverInfo, getActiveChannelMock(), keepAliveTimeoutMillis);
 		timeProvider.forwardSeconds(10);
 		timer.invoke();
 		assertEquals(1, poolingChannelPool.getPoolSize(serverInfo));
 
-		poolingChannelPool.offer(serverInfo, getActiveChannelMock());
+		poolingChannelPool.offer(serverInfo, getActiveChannelMock(), keepAliveTimeoutMillis);
 		assertEquals(2, poolingChannelPool.getPoolSize(serverInfo));
 
 		timeProvider.forwardSeconds(5);
