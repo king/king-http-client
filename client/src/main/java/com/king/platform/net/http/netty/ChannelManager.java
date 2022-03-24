@@ -36,6 +36,7 @@ import org.slf4j.Logger;
 import javax.net.ssl.SSLException;
 import java.net.ConnectException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.slf4j.LoggerFactory.getLogger;
 
@@ -164,11 +165,14 @@ public class ChannelManager {
 			(ConfKeys.HTTP_CODEC_MAX_CHUNK_SIZE));
 	}
 
-	public void sendOnChannel(final HttpRequestContext httpRequestContext, RequestEventBus requestEventBus) {
+	public void sendHttpRequest(final HttpRequestContext httpRequestContext, RequestEventBus requestEventBus) {
 
 		ServerInfo serverInfo = httpRequestContext.getServerInfo();
 
+
 		logger.trace("Sending request {} to server {}", httpRequestContext, serverInfo);
+
+		scheduleTimeOutTasks(requestEventBus, httpRequestContext, httpRequestContext.getTotalRequestTimeoutMillis(), httpRequestContext.getIdleTimeoutMillis());
 
 		requestEventBus.triggerEvent(Event.onConnecting);
 
@@ -198,9 +202,6 @@ public class ChannelManager {
 
 		httpRequestContext.attachedToChannel(channel);
 		requestEventBus.triggerEvent(Event.onAttachedToChannel, channel);
-
-		scheduleTimeOutTasks(requestEventBus, httpRequestContext, httpRequestContext.getTotalRequestTimeoutMillis(), httpRequestContext.getIdleTimeoutMillis
-			());
 
 		requestEventBus.subscribe(Event.CLOSE, (payload) -> channel.close());
 
@@ -260,45 +261,56 @@ public class ChannelManager {
 		final ServerInfo serverInfo = httpRequestContext.getServerInfo();
 
 		ChannelFuture channelFuture = getBootstrap(serverInfo).connect(serverInfo.getHost(), serverInfo.getPort());
+		AtomicBoolean errorHappened = new AtomicBoolean();
+		requestEventBus.subscribe(Event.ERROR, (payload1, payload2) -> errorHappened.set(true));
 
 		channelFuture.addListener((ChannelFutureListener) future -> {
-            if (future.isSuccess()) {
+			if (errorHappened.get()) { //we have already triggered an error while we waited for the connection to happen
+				if (future.isSuccess()) {
+					future.channel().close();
+				}
+				return;
+			}
 
-                requestEventBus.triggerEvent(Event.CREATED_CONNECTION, serverInfo);
-                requestEventBus.triggerEvent(Event.onConnected);
+			requestEventBus.triggerEvent(Event.TOUCH);
+			if (future.isSuccess()) {
+				requestEventBus.triggerEvent(Event.CREATED_CONNECTION, serverInfo);
+				requestEventBus.triggerEvent(Event.onConnected);
 
-                Channel channel = future.channel();
+				Channel channel = future.channel();
 				logger.trace("Opened a new channel {}, for request {}", channel, httpRequestContext);
 				channel.attr(ServerInfo.ATTRIBUTE_KEY).set(serverInfo);
 
-                if (serverInfo.isSecure()) {
+				if (serverInfo.isSecure()) {
 					SslHandler sslHandler = sslContext.newHandler(channel.alloc(), serverInfo.getHost(), serverInfo.getPort());
 					channel.pipeline().addFirst("ssl", sslHandler);
 
 					sslHandler.handshakeFuture().addListener((FutureListener<Channel>) sslHandshakeFuture -> {
-                        if (sslHandshakeFuture.isSuccess()) {
+						requestEventBus.triggerEvent(Event.TOUCH);
+						if (sslHandshakeFuture.isSuccess()) {
 							logger.trace("SSL handshake successful, sending on channel {}, for request {}", channel, httpRequestContext);
-                            sendOnChannel(channel, httpRequestContext, requestEventBus);
-                        } else {
-                            logger.error("Failed to do ssl handshake");
-                            Throwable cause = unrollNettyException(sslHandshakeFuture.cause());
-                            if (cause != null) {
-                            	cause = new ConnectException(cause.getMessage());
+							sendOnChannel(channel, httpRequestContext, requestEventBus);
+						} else {
+							logger.error("Failed to do ssl handshake");
+							Throwable cause = unrollNettyException(sslHandshakeFuture.cause());
+							if (cause != null) {
+								cause = new ConnectException(cause.getMessage());
 							}
 							requestEventBus.triggerEvent(Event.ERROR, httpRequestContext, cause);
-                        }
-                    });
+						}
+					});
 
 				} else {
 					logger.trace("Sending over clear channel channel {}, for request {}", channel, httpRequestContext);
 					sendOnChannel(channel, httpRequestContext, requestEventBus);
 				}
 
-            } else {
-                logger.trace("Failed to opened a new channel for request {}", httpRequestContext);
-                Throwable cause = unrollNettyException(future.cause());
-                requestEventBus.triggerEvent(Event.ERROR, httpRequestContext, cause);
-            }
+			} else {
+				logger.trace("Failed to opened a new channel for request {}", httpRequestContext);
+				Throwable cause = unrollNettyException(future.cause());
+				requestEventBus.triggerEvent(Event.ERROR, httpRequestContext, cause);
+			}
+
         });
 	}
 
@@ -386,7 +398,7 @@ public class ChannelManager {
 		@Override
 		public void onEvent(HttpRequestContext httpRequestContext) {
 			try {
-				sendOnChannel(httpRequestContext, httpRequestContext.getRequestEventBus());
+				sendHttpRequest(httpRequestContext, httpRequestContext.getRequestEventBus());
 			} catch (Throwable throwable) {
 				httpRequestContext.getRequestEventBus().triggerEvent(Event.ERROR, httpRequestContext, throwable);
 			}
