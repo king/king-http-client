@@ -203,7 +203,7 @@ public class WebSocketSender {
 		return convert(channel.writeAndFlush(webSocketFrame));
 	}
 
-	public CompletableFuture<Void> sendBinaryFrame(Channel channel, byte[] payload, int offset, int length, int rsv) {
+	public CompletableFuture<Void> sendBinaryFrame(Channel channel, byte[] payload, boolean finalFragment, int offset, int length, int rsv) {
 		if (payload.length > maxOutgoingFrameSize) {
 			CompletableFuture<Void> future = new CompletableFuture<>();
 			future.completeExceptionally(new IllegalStateException("Frame payload is larger then maxOutgoingFrameSize"));
@@ -222,7 +222,6 @@ public class WebSocketSender {
 		}
 
 		WebSocketFrame webSocketFrame;
-		boolean finalFragment = (offset + length) >= payload.length;
 		if (finalFragment) {
 			webSocketFrame = nextContiuationFrame.create(finalFragment, rsv, Unpooled.copiedBuffer(payload, offset, payload.length - offset));
 			nextContiuationFrame = null;
