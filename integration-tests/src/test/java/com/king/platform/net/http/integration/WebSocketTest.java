@@ -875,6 +875,45 @@ public class WebSocketTest {
 		assertEquals(sentData.toString(), receivedContent.get());
 	}
 
+	
+	@Test
+	public void sendBinaryIteratingByOffset() throws NoSuchAlgorithmException, InterruptedException {
+		CountDownLatch countDownLatch = new CountDownLatch(1);
+		AtomicReference<String> receivedMd5 = new AtomicReference<>();
+
+		WebSocketClient client = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
+			.maxOutgoingFrameSize(1024)
+			.build()
+			.execute(new WebSocketFrameListenerAdapter() {
+				@Override
+				public void onTextFrame(byte[] payload, boolean finalFragment, int rsv) {
+					receivedMd5.set(new String(payload, StandardCharsets.UTF_8));
+				}
+			})
+			.join();
+
+		MessageDigest md = MessageDigest.getInstance("MD5");
+
+		Random random = new Random();
+		byte[] frames = new byte[10];
+
+		random.nextBytes(frames);
+		md.update(frames, 0, frames.length);
+
+		String totalMd5Sum = Md5Util.hexStringFromBytes(md.digest());
+
+		int length = 3;
+		for (int i = 0; i < frames.length; i += length) {
+			client.sendBinaryFrame(frames, i, length, 0);
+		}
+
+		countDownLatch.await(1, TimeUnit.SECONDS);
+
+		client.close();
+
+		assertEquals(totalMd5Sum, receivedMd5.get());
+	}
+
 
 	@Test
 	void clientSendingCloseShouldCloseConnectionAfterReceivingCloseResponseFromServer() throws InterruptedException {

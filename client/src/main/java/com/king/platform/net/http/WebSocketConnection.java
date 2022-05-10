@@ -104,6 +104,17 @@ public interface WebSocketConnection {
 	 */
 	CompletableFuture<Void> sendBinaryFrame(byte[] payload, boolean finalFragment, int rsv);
 
+	/**
+	 * Send a binary frame to the server
+	 *
+	 * @param payload the final payload to send
+	 * @param offset  the position within the payload to start from
+	 * @param length  the number of bytes to include into the sending frame
+	 * @param rsv     reserved bits used for protocol extensions
+	 * @return the resulting future
+	 */
+	CompletableFuture<Void> sendBinaryFrame(byte[] payload, int offset, int length, int rsv);
+
 
 	/**
 	 * Send a ping frame to the server

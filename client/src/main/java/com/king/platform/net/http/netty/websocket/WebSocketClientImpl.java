@@ -205,8 +205,17 @@ public class WebSocketClientImpl implements WebSocketClient {
 		return webSocketSender.sendBinaryFrame(channel, payload, finalFragment, rsv);
 	}
 
+	@Override
+	public CompletableFuture<Void> sendBinaryFrame(byte[] payload, int offset, int length, int rsv) {
+		Channel channel = this.channel;
 
-
+		if (!ready || channel == null || !channel.isOpen()) {
+			CompletableFuture<Void> future = new CompletableFuture<>();
+			future.completeExceptionally(new IllegalStateException("Not connected!"));
+			return future;
+		}
+		return webSocketSender.sendBinaryFrame(channel, payload, offset, length, rsv);
+	}
 
 	private CompletableFuture<Void> convert(ChannelFuture f) {
 		CompletableFuture<Void> completableFuture = new CompletableFuture<>();
