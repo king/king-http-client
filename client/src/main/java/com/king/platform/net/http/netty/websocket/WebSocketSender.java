@@ -221,12 +221,10 @@ public class WebSocketSender {
 			nextContiuationFrame = NextContiuationFrame.BINARY;
 		}
 
-		WebSocketFrame webSocketFrame;
+		WebSocketFrame webSocketFrame = nextContiuationFrame.create(finalFragment, rsv, Unpooled.copiedBuffer(payload, offset, length));
 		if (finalFragment) {
-			webSocketFrame = nextContiuationFrame.create(finalFragment, rsv, Unpooled.copiedBuffer(payload, offset, payload.length - offset));
 			nextContiuationFrame = null;
 		} else {
-			webSocketFrame = nextContiuationFrame.create(finalFragment, rsv, Unpooled.copiedBuffer(payload, offset, length));
 			nextContiuationFrame = NextContiuationFrame.CONTINUATION_BINARY;
 		}
 
