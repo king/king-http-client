@@ -19,7 +19,9 @@ import java.nio.charset.CoderResult;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Stream;
 
 public class WebSocketSender {
 	private final int maxOutgoingFrameSize;
@@ -137,7 +139,7 @@ public class WebSocketSender {
 		}
 
 		if (payload == null || payload.length <= maxOutgoingFrameSize) {
-			return sendBinaryFrame(channel, payload, true, 0);
+			return sendBinaryFrame(channel, payload, true, Optional.empty(), Optional.empty(), 0);
 		}
 
 		ByteBuf buffer = Unpooled.copiedBuffer(payload);
@@ -175,7 +177,7 @@ public class WebSocketSender {
 		return CompletableFuture.allOf(cf);
 	}
 
-	public CompletableFuture<Void> sendBinaryFrame(Channel channel, byte[] payload, boolean finalFragment, int rsv) {
+	public CompletableFuture<Void> sendBinaryFrame(Channel channel, byte[] payload, boolean finalFragment, Optional<Integer> offset, Optional<Integer> length, int rsv) {
 		if (payload.length > maxOutgoingFrameSize) {
 			CompletableFuture<Void> future = new CompletableFuture<>();
 			future.completeExceptionally(new IllegalStateException("Frame payload is larger then maxOutgoingFrameSize"));
@@ -193,35 +195,10 @@ public class WebSocketSender {
 			nextContiuationFrame = NextContiuationFrame.BINARY;
 		}
 
-		WebSocketFrame webSocketFrame = nextContiuationFrame.create(finalFragment, rsv, Unpooled.copiedBuffer(payload));
-		if (finalFragment) {
-			nextContiuationFrame = null;
-		} else {
-			nextContiuationFrame = NextContiuationFrame.CONTINUATION_BINARY;
-		}
-
-		return convert(channel.writeAndFlush(webSocketFrame));
-	}
-
-	public CompletableFuture<Void> sendBinaryFrame(Channel channel, byte[] payload, boolean finalFragment, int offset, int length, int rsv) {
-		if (payload.length > maxOutgoingFrameSize) {
-			CompletableFuture<Void> future = new CompletableFuture<>();
-			future.completeExceptionally(new IllegalStateException("Frame payload is larger then maxOutgoingFrameSize"));
-			return future;
-		}
-
-
-		if (nextContiuationFrame != null && !nextContiuationFrame.allowedFrame(FrameType.BINARY)) {
-			CompletableFuture<Void> future = new CompletableFuture<>();
-			future.completeExceptionally(new IllegalStateException("Last sent continuation frame was of an different type!"));
-			return future;
-		}
-
-		if (nextContiuationFrame == null) {
-			nextContiuationFrame = NextContiuationFrame.BINARY;
-		}
-
-		WebSocketFrame webSocketFrame = nextContiuationFrame.create(finalFragment, rsv, Unpooled.copiedBuffer(payload, offset, length));
+		WebSocketFrame webSocketFrame = Stream.of(offset, length).allMatch(Optional::isPresent) 
+				? nextContiuationFrame.create(finalFragment, rsv, Unpooled.copiedBuffer(payload, offset.get(), length.get()))
+				: nextContiuationFrame.create(finalFragment, rsv, Unpooled.copiedBuffer(payload));
+		
 		if (finalFragment) {
 			nextContiuationFrame = null;
 		} else {
