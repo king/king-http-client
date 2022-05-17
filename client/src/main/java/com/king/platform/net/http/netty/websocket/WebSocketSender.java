@@ -178,7 +178,7 @@ public class WebSocketSender {
 	}
 
 	public CompletableFuture<Void> sendBinaryFrame(Channel channel, byte[] payload, int offset, int length, boolean finalFragment, int rsv) {
-		if (payload.length > maxOutgoingFrameSize) {
+		if (length > maxOutgoingFrameSize) {
 			CompletableFuture<Void> future = new CompletableFuture<>();
 			future.completeExceptionally(new IllegalStateException("Frame payload is larger then maxOutgoingFrameSize"));
 			return future;
