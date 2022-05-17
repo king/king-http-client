@@ -113,7 +113,7 @@ public interface WebSocketConnection {
 	 * @param rsv     reserved bits used for protocol extensions
 	 * @return the resulting future
 	 */
-	CompletableFuture<Void> sendBinaryFrame(byte[] payload, boolean finalFragment, int offset, int length, int rsv);
+	CompletableFuture<Void> sendBinaryFrame(byte[] payload, int offset, int length, boolean finalFragment, int rsv);
 
 
 	/**

@@ -139,7 +139,7 @@ public class WebSocketSender {
 		}
 
 		if (payload == null || payload.length <= maxOutgoingFrameSize) {
-			return sendBinaryFrame(channel, payload, true, Optional.empty(), Optional.empty(), 0);
+			return sendBinaryFrame(channel, payload, 0, payload.length, true, 0);
 		}
 
 		ByteBuf buffer = Unpooled.copiedBuffer(payload);
@@ -177,7 +177,7 @@ public class WebSocketSender {
 		return CompletableFuture.allOf(cf);
 	}
 
-	public CompletableFuture<Void> sendBinaryFrame(Channel channel, byte[] payload, boolean finalFragment, Optional<Integer> offset, Optional<Integer> length, int rsv) {
+	public CompletableFuture<Void> sendBinaryFrame(Channel channel, byte[] payload, int offset, int length, boolean finalFragment, int rsv) {
 		if (payload.length > maxOutgoingFrameSize) {
 			CompletableFuture<Void> future = new CompletableFuture<>();
 			future.completeExceptionally(new IllegalStateException("Frame payload is larger then maxOutgoingFrameSize"));
@@ -195,10 +195,7 @@ public class WebSocketSender {
 			nextContiuationFrame = NextContiuationFrame.BINARY;
 		}
 
-		WebSocketFrame webSocketFrame = Stream.of(offset, length).allMatch(Optional::isPresent) 
-				? nextContiuationFrame.create(finalFragment, rsv, Unpooled.copiedBuffer(payload, offset.get(), length.get()))
-				: nextContiuationFrame.create(finalFragment, rsv, Unpooled.copiedBuffer(payload));
-		
+		WebSocketFrame webSocketFrame = nextContiuationFrame.create(finalFragment, rsv, Unpooled.copiedBuffer(payload, offset, length));
 		if (finalFragment) {
 			nextContiuationFrame = null;
 		} else {

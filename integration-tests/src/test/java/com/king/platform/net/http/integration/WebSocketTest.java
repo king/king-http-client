@@ -906,9 +906,9 @@ public class WebSocketTest {
 		String totalMd5Sum = Md5Util.hexStringFromBytes(md.digest());
 
 		for (int i = 0; (i + length) <= frames.length; i += length) {
-			client.sendBinaryFrame(frames, false, i, length, 0);
+			client.sendBinaryFrame(frames, i, length, false, 0);
 		}
-		client.sendBinaryFrame(frames, true, frames.length - frames.length % length, frames.length % length, 0);
+		client.sendBinaryFrame(frames,  frames.length - frames.length % length, frames.length % length, true, 0);
 
 		countDownLatch.await(1, TimeUnit.SECONDS);
 

@@ -186,7 +186,7 @@ public class WebSocketClientImpl implements WebSocketClient {
 		if (legacySplitLargeFrames) {
 			return webSocketSender.sendBinaryMessage(channel, payload);
 		} else {
-			return webSocketSender.sendBinaryFrame(channel, payload, true, Optional.empty(), Optional.empty(), 0);
+			return webSocketSender.sendBinaryFrame(channel, payload, 0, payload.length, true, 0);
 		}
 	}
 
@@ -214,11 +214,11 @@ public class WebSocketClientImpl implements WebSocketClient {
 			return future;
 		}
 
-		return webSocketSender.sendBinaryFrame(channel, payload, finalFragment, Optional.empty(), Optional.empty(), rsv);
+		return webSocketSender.sendBinaryFrame(channel, payload, 0, payload.length, finalFragment, rsv);
 	}
 
 	@Override
-	public CompletableFuture<Void> sendBinaryFrame(byte[] payload, boolean finalFragment, int offset, int length, int rsv) {
+	public CompletableFuture<Void> sendBinaryFrame(byte[] payload, int offset, int length, boolean finalFragment, int rsv) {
 		Channel channel = this.channel;
 
 		if (!ready || channel == null || !channel.isOpen()) {
@@ -226,7 +226,7 @@ public class WebSocketClientImpl implements WebSocketClient {
 			future.completeExceptionally(new IllegalStateException("Not connected!"));
 			return future;
 		}
-		return webSocketSender.sendBinaryFrame(channel, payload, finalFragment, Optional.of(offset), Optional.of(length), rsv);
+		return webSocketSender.sendBinaryFrame(channel, payload, offset, length, finalFragment, rsv);
 	}
 
 	private CompletableFuture<Void> convert(ChannelFuture f) {
