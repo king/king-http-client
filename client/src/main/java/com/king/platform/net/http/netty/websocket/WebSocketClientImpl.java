@@ -1,6 +1,11 @@
 package com.king.platform.net.http.netty.websocket;
 
-import com.king.platform.net.http.*;
+import com.king.platform.net.http.Headers;
+import com.king.platform.net.http.HttpResponse;
+import com.king.platform.net.http.WebSocketClient;
+import com.king.platform.net.http.WebSocketFrameListener;
+import com.king.platform.net.http.WebSocketListener;
+import com.king.platform.net.http.WebSocketMessageListener;
 import com.king.platform.net.http.netty.HttpRequestContext;
 import com.king.platform.net.http.netty.NettyHeaders;
 import com.king.platform.net.http.netty.WebSocketConf;
@@ -14,7 +19,13 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.handler.codec.http.EmptyHttpHeaders;
 import io.netty.handler.codec.http.HttpHeaderNames;
-import io.netty.handler.codec.http.websocketx.*;
+import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.ContinuationWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.PingWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.PongWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import io.netty.util.concurrent.ScheduledFuture;
 import org.slf4j.Logger;
 
@@ -22,6 +33,7 @@ import java.nio.charset.CharacterCodingException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
@@ -174,7 +186,7 @@ public class WebSocketClientImpl implements WebSocketClient {
 		if (legacySplitLargeFrames) {
 			return webSocketSender.sendBinaryMessage(channel, payload);
 		} else {
-			return webSocketSender.sendBinaryFrame(channel, payload, true, 0);
+			return webSocketSender.sendBinaryFrame(channel, payload, 0, payload.length, true, 0);
 		}
 	}
 
@@ -202,11 +214,20 @@ public class WebSocketClientImpl implements WebSocketClient {
 			return future;
 		}
 
-		return webSocketSender.sendBinaryFrame(channel, payload, finalFragment, rsv);
+		return webSocketSender.sendBinaryFrame(channel, payload, 0, payload.length, finalFragment, rsv);
 	}
 
+	@Override
+	public CompletableFuture<Void> sendBinaryFrame(byte[] payload, int offset, int length, boolean finalFragment, int rsv) {
+		Channel channel = this.channel;
 
-
+		if (!ready || channel == null || !channel.isOpen()) {
+			CompletableFuture<Void> future = new CompletableFuture<>();
+			future.completeExceptionally(new IllegalStateException("Not connected!"));
+			return future;
+		}
+		return webSocketSender.sendBinaryFrame(channel, payload, offset, length, finalFragment, rsv);
+	}
 
 	private CompletableFuture<Void> convert(ChannelFuture f) {
 		CompletableFuture<Void> completableFuture = new CompletableFuture<>();

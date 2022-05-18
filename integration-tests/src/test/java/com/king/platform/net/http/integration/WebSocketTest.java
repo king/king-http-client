@@ -23,6 +23,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -41,6 +43,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -873,6 +876,49 @@ public class WebSocketTest {
 		client.close();
 
 		assertEquals(sentData.toString(), receivedContent.get());
+	}
+
+	@ParameterizedTest
+	@MethodSource("length")
+	public void sendBinaryIteratingByOffset(int length) throws NoSuchAlgorithmException, InterruptedException {
+		CountDownLatch countDownLatch = new CountDownLatch(1);
+		AtomicReference<String> receivedMd5 = new AtomicReference<>();
+
+		WebSocketClient client = httpClient.createWebSocket("ws://localhost:" + port + "/websocket/test")
+			.maxOutgoingFrameSize(1024)
+			.build()
+			.execute(new WebSocketFrameListenerAdapter() {
+				@Override
+				public void onTextFrame(byte[] payload, boolean finalFragment, int rsv) {
+					receivedMd5.set(new String(payload, StandardCharsets.UTF_8));
+				}
+			})
+			.join();
+
+		MessageDigest md = MessageDigest.getInstance("MD5");
+
+		Random random = new Random();
+		byte[] frames = new byte[10];
+
+		random.nextBytes(frames);
+		md.update(frames, 0, frames.length);
+
+		String totalMd5Sum = Md5Util.hexStringFromBytes(md.digest());
+
+		for (int i = 0; (i + length) <= frames.length; i += length) {
+			client.sendBinaryFrame(frames, i, length, false, 0);
+		}
+		client.sendBinaryFrame(frames,  frames.length - frames.length % length, frames.length % length, true, 0);
+
+		countDownLatch.await(1, TimeUnit.SECONDS);
+
+		client.close();
+
+		assertEquals(totalMd5Sum, receivedMd5.get());
+	}
+
+	private static IntStream length() {
+		return IntStream.range(1, 11);
 	}
 
 
