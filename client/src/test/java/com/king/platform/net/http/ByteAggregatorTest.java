@@ -8,12 +8,20 @@ package com.king.platform.net.http;
 
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class ByteAggregatorTest {
 
 	@Test
-	public void constructorShouldNotThrowExceptionWhenSuppliedWithNegativeLength() throws Exception {
-		assertNotNull(new ByteAggregator(-100));
+	public void constructorShouldNotThrowExceptionWhenSuppliedWithNegativeLength() {
+		assertDoesNotThrow(() -> new ByteAggregator(-100));
+	}
+
+
+	@Test
+	@SuppressWarnings("deprecation")
+	public void constructorShouldThrowExceptionWhenSuppliedWithABigLongNumber() {
+		assertThrows(ArithmeticException.class, () -> new ByteAggregator((long) Integer.MAX_VALUE + 3));
 	}
 }
