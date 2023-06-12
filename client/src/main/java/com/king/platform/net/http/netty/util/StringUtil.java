@@ -48,4 +48,63 @@ public class StringUtil {
 	private static boolean isQuoteMark(char c) {
 		return c == '\"' || c == '\'';
 	}
+
+
+	public static String substringKeyValue(String keyToFind, String src, char delimiter, boolean stripQuoteMarks) {
+		if (keyToFind == null) {
+			return null;
+		}
+
+		if (src ==  null) {
+			return null;
+		}
+
+		int srcLength = src.length();
+
+		int startPosOfKey = src.indexOf(keyToFind);
+		if (startPosOfKey == -1) {
+			return null;
+		}
+
+		int endPosOfKey = startPosOfKey + keyToFind.length();
+
+		while(endPosOfKey != srcLength && src.charAt(endPosOfKey) == ' ') {  //trim whitespace between key and delimiter
+			endPosOfKey++;
+		}
+
+		if (endPosOfKey == srcLength) { //no key was found for this value
+			return  "";
+		}
+
+		if (src.charAt(endPosOfKey) != '=') {
+			return "";
+		}
+
+		int startOfValue = endPosOfKey + 1;
+
+		while(src.charAt(startOfValue) == ' ') {  //trim whitespace between delimiter and value
+			startOfValue++;
+		}
+
+		int endOfValue = src.indexOf(delimiter, startOfValue);
+		if (endOfValue == -1) {
+
+			endOfValue = srcLength;
+		}
+
+
+		while(src.charAt(endOfValue-1) == ' ') { //trim whitespace between value and next delimiter
+			endOfValue--;
+		}
+
+
+		if (stripQuoteMarks && isQuoteMark(src.charAt(startOfValue))) {
+			startOfValue++;
+			endOfValue--;
+		}
+
+		return src.substring(startOfValue, endOfValue);
+
+
+	}
 }
