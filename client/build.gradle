@@ -3,97 +3,90 @@
 // Author: Magnus Gustafsson
 // License: Apache 2.0, https://raw.github.com/king/king-http-client/LICENSE-APACHE
 
-apply plugin: 'java-library'
-apply plugin: 'maven'
-apply plugin: 'signing'
-
+plugins {
+	id 'java'
+	id 'java-library'
+	id 'net.ltgt.errorprone'
+	id 'jacoco'
+	id 'maven-publish'
+	id 'signing'
+}
 
 group 'com.king.king-http-client'
 version '3.0.24'
 
 ext.isReleaseVersion = !version.endsWith("SNAPSHOT")
+ext.admin = hasProperty('sonatypeUsername')
 
 archivesBaseName = 'king-http-client'
 
-
 dependencies {
 	api "io.netty:netty-all:$nettyVersion"
-
 	testImplementation 'ch.qos.logback:logback-classic:1.3.0-alpha5'
-
 }
 
-
-
-task generateJavadoc(type: Javadoc) {
-	source = sourceSets.main.allJava
-}
-
-task sourcesJar(type: Jar) {
-	classifier = 'sources'
-	from sourceSets.main.allSource
-}
-
-task javadocJar(type: Jar) {
-	classifier = 'javadoc'
-	from javadoc
-}
-
-artifacts {
-	archives javadocJar, sourcesJar
-}
-
-signing {
-	required { isReleaseVersion && gradle.taskGraph.hasTask("uploadArchives") }
-	sign configurations.archives
-}
-
-
-if (properties.containsKey('ossrhUsername')) {
-
-	uploadArchives {
-		repositories {
-			mavenDeployer {
-				beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-
-				repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-					authentication(userName: ossrhUsername, password: ossrhPassword)
-				}
-
-				snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
-					authentication(userName: ossrhUsername, password: ossrhPassword)
-				}
-
-				pom.project {
-					name 'King Http Client'
-					packaging 'jar'
-					// optionally artifactId can be defined here
-					description 'A asyncronous http client built ontop of netty.'
-					url 'https://github.com/king/king-http-client'
-
-					scm {
-						connection 'scm:git:https://github.com/king/king-http-client.git'
-						developerConnection 'scm:svn:https://github.com/king/king-http-client.git'
-						url 'https://github.com/king/king-http-client'
-					}
-
-					licenses {
-						license {
-							name 'The Apache License, Version 2.0'
-							url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-						}
-					}
-
-					developers {
-						developer {
-							id 'magnus-gustafsson'
-							name 'Magnus Gustafsson'
-							email 'magnus.gustafsson@king.com'
-						}
-					}
-				}
+publishing {
+	repositories {
+		mavenLocal()
+		maven {
+			url "https://oss.sonatype.org/service/local/staging/deploy/maven2"
+			credentials {
+				username sonatypeUsername
+				password sonatypePassword
 			}
 		}
 	}
+	publications {
+		mavenJava(MavenPublication) {
 
+			artifactId = 'king-http-client'
+
+			from components.java
+
+			pom {
+				name = 'King Http Client'
+				description = 'A asyncronous http client built ontop of netty.'
+
+				url = 'https://github.com/king/king-http-client'
+
+				scm {
+					connection =  'scm:git:https://github.com/king/king-http-client.git'
+					developerConnection = 'scm:svn:https://github.com/king/king-http-client.git'
+					url = 'https://github.com/king/king-http-client'
+				}
+
+				licenses {
+					license {
+						name = 'The Apache License, Version 2.0'
+						url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+					}
+				}
+
+				developers {
+					developer {
+						id = 'magnus-gustafsson'
+						name = 'Magnus Gustafsson'
+						email = 'magnus.gustafsson@king.com'
+					}
+				}
+
+			}
+		}
+	}
+}
+
+java {
+	withJavadocJar()
+	withSourcesJar()
+}
+
+javadoc {
+	if(JavaVersion.current().isJava9Compatible()) {
+		options.addBooleanOption('html5', true)
+	}
+}
+
+signing {
+	required { admin }
+	sign publishing.publications.mavenJava
 }

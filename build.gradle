@@ -24,11 +24,8 @@ allprojects {
 	apply plugin: "net.ltgt.errorprone"
 	apply plugin: 'jacoco'
 
-
-
 	sourceCompatibility = JavaVersion.VERSION_1_8
 	targetCompatibility = JavaVersion.VERSION_1_8
-
 
 	repositories {
 		mavenCentral()
@@ -66,28 +63,25 @@ allprojects {
 				events "failed"
 				exceptionFormat "full"
 			}
+			finalizedBy jacocoTestReport
 		}
 	}
 
-}
-
-task codeCoverageReport(type: JacocoReport) {
-
-	executionData fileTree(project.rootDir.absolutePath).include("**/build/jacoco/*.exec")
-
-	subprojects.each {
-		sourceSets it.sourceSets.main
+	jacocoTestReport {
+		reports {
+			xml.required = true
+			csv.required = false
+			html.required = true
+			xml.destination = file("${buildDir}/reports/jacoco/report.xml")
+		}
 	}
 
-	reports {
-		xml.enabled true
-		xml.destination file("${buildDir}/reports/jacoco/report.xml")
-
-		html.enabled false
-		csv.enabled false
+	jacocoTestReport {
+		dependsOn test
 	}
+
+
+
 }
 
-codeCoverageReport.dependsOn {
-	subprojects*.test
-}
+

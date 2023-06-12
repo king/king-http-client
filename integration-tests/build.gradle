@@ -3,7 +3,14 @@
 // Author: Magnus Gustafsson
 // License: Apache 2.0, https://raw.github.com/king/king-http-client/LICENSE-APACHE
 
-apply plugin: 'java-library'
+plugins {
+	id 'java'
+	id 'java-library'
+	id 'net.ltgt.errorprone'
+	id 'jacoco'
+
+}
+
 
 
 dependencies {
