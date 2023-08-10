@@ -186,4 +186,8 @@ public class HttpRequestContext<T> {
 	public int getKeepAliveTimeoutMillis() {
 		return keepAliveTimeoutMillis;
 	}
+
+	public String getUri() {
+		return getNettyHttpClientRequest().getNettyRequest().uri();
+	}
 }

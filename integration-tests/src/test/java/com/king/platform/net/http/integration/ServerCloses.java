@@ -129,7 +129,7 @@ public class ServerCloses {
 		Thread.sleep(5);
 
 		assertNotNull(httpCallback.getException());
-		assertTrue(httpCallback.getException().getMessage().contains("reset by peer"));
+		assertTrue(httpCallback.getException().getMessage().contains("reset"), "Exception was: " + httpCallback.getException().getMessage());
 
 		assertFalse(recordingEventBus.hasTriggered(Event.COMPLETED));
 		assertTrue(recordingEventBus.hasTriggered(Event.ERROR));

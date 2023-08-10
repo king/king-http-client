@@ -90,6 +90,67 @@ public class HttpGetWithRedirect {
 	}
 
 	@Test
+	public void getWithRelativeUrlAbsolutRedirect() throws Exception {
+
+		integrationServer.addServlet(new HttpServlet() {
+			@Override
+			protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+				//we cant use resp.sendRedirect("/archive/2023/travel"); because that forces jetty to write the full url
+				resp.setHeader("Location", "/archive/2023/travel");
+				resp.setStatus(302);
+			}
+		}, "/archive/latest");
+
+
+		integrationServer.addServlet(new HttpServlet() {
+			@Override
+			protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+				resp.getWriter().write(okBody);
+				resp.getWriter().flush();
+			}
+		}, "/archive/2023/travel");
+
+		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
+		httpClient.createGet("http://localhost:" + port + "/archive/latest").build().withHttpCallback(httpCallback).execute();
+		httpCallback.waitForCompletion();
+
+		assertEquals(okBody, httpCallback.getBody());
+		assertEquals(200, httpCallback.getStatusCode());
+
+	}
+
+	@Test
+	public void getWithRelativeUrlRelativeRedirect() throws Exception {
+
+		integrationServer.addServlet(new HttpServlet() {
+			@Override
+			protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+				resp.setHeader("Location", "2023/travel");
+				resp.setStatus(302);
+			}
+		}, "/archive/latest");
+
+
+		integrationServer.addServlet(new HttpServlet() {
+			@Override
+			protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+				resp.getWriter().write(okBody);
+				resp.getWriter().flush();
+			}
+		}, "/archive/2023/travel");
+
+		BlockingHttpCallback httpCallback = new BlockingHttpCallback();
+		httpClient.createGet("http://localhost:" + port + "/archive/latest").build().withHttpCallback(httpCallback).execute();
+		httpCallback.waitForCompletion();
+
+		assertEquals(okBody, httpCallback.getBody());
+		assertEquals(200, httpCallback.getStatusCode());
+
+	}
+
+
+
+	@Test
 	public void getWithRedirectUsingFuture() throws Exception {
 
 		integrationServer.addServlet(new HttpServlet() {
