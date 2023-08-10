@@ -75,12 +75,15 @@ public final class ServerInfo {
 	}
 
 	private static void validateScheme(String uriString) throws URISyntaxException {
-		uriString = uriString.toLowerCase();
-		if (uriString.startsWith("http:") || uriString.startsWith("https:") || uriString.startsWith("ws:") || uriString.startsWith("wss:")) {
-			return;
+		if (!containsSchema(uriString)) {
+			throw new URISyntaxException(uriString, "Invalid schema");
 		}
-		throw new URISyntaxException(uriString, "Invalid schema");
 	}
+
+	public static boolean containsSchema(String uriString) {
+		uriString = uriString.toLowerCase();
+        return uriString.startsWith("http:") || uriString.startsWith("https:") || uriString.startsWith("ws:") || uriString.startsWith("wss:");
+    }
 
 	private static void makeUriUnderscoreCompatible(final URI uri) throws URISyntaxException {
 		String uriString = uri.toString();

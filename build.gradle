@@ -5,13 +5,13 @@
 
 plugins {
 	id 'java-library'
-	id("net.ltgt.errorprone") version "1.1.1"
+	id("net.ltgt.errorprone") version "3.0.1"
 }
 
 
 ext {
 	nettyVersion = "4.1.49.Final"
-	errorProneCoreVersion = "2.3.4"
+	errorProneCoreVersion = "2.21.1"
 	mockitoVersion = '3.3.3'
 	assertjVersion = '3.13.2'
 	junitVersion = '5.6.2'

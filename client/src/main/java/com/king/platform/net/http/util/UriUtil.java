@@ -54,4 +54,25 @@ public class UriUtil {
 	}
 
 
+	public static String getRelativeAbsolutUri(String uri, String relativePath) {
+		if (relativePath.startsWith("/")) {
+			return relativePath;
+		}
+
+		if (uri == null) {
+			uri = "";
+		}
+
+		int paramIndex = uri.indexOf("?");
+		if (paramIndex != -1) {
+			uri = uri.substring(0, paramIndex);
+		}
+
+		int i = uri.lastIndexOf("/");
+		if (i != -1) {
+			return uri.substring(0, i + 1) + relativePath;
+		} else  {
+			return "/" + relativePath;
+		}
+	}
 }

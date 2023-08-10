@@ -11,6 +11,7 @@ import com.king.platform.net.http.netty.HttpRequestContext;
 import com.king.platform.net.http.netty.ServerInfo;
 import com.king.platform.net.http.netty.eventbus.Event;
 import com.king.platform.net.http.netty.eventbus.RequestEventBus;
+import com.king.platform.net.http.util.UriUtil;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -49,8 +50,14 @@ public class HttpRedirector {
 		try {
 
 			String redirectLocation = responseHttpHeaders.get(HttpHeaderNames.LOCATION);
-
-			ServerInfo redirectServerInfo = ServerInfo.buildFromUri(redirectLocation);
+			ServerInfo redirectServerInfo;
+			if (ServerInfo.containsSchema(redirectLocation)) {
+				redirectServerInfo = ServerInfo.buildFromUri(redirectLocation);
+			} else {
+				redirectServerInfo = originalRequestContext.getServerInfo();
+				String originalUri = originalRequestContext.getUri();
+				redirectLocation = UriUtil.getRelativeAbsolutUri(originalUri, redirectLocation);
+			}
 
 			HttpRequestContext redirectHttpRequestContext = originalRequestContext.createRedirectRequest(redirectServerInfo, redirectLocation);
 

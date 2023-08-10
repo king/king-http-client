@@ -7,6 +7,8 @@ package com.king.platform.net.http.util;
 
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -88,4 +90,23 @@ public class UriUtilTest {
 		String uri = UriUtil.getUriWithParameters("http://www.king.com", parameters);
 		assertEquals("http://www.king.com?key=value&key2=a%20b", uri);
 	}
+
+
+	@ParameterizedTest
+	@CsvSource(value = {
+		"/archive/latest:2023/travel:/archive/2023/travel",
+		"/archive/latest/:2023/travel:/archive/latest/2023/travel",
+		"/:2023/travel:/2023/travel",
+		":2023/travel:/2023/travel",
+		"/archive/latest:/blog/2023/travel:/blog/2023/travel",
+		"/archive/latest?query=foo:2023/travel:/archive/2023/travel",
+		"/archive/latest?query=foo/bar:2023/travel:/archive/2023/travel",
+		"/archive/latest/?query=foo/bar:2023/travel:/archive/latest/2023/travel",
+		"?query=foo/bar:2023/travel:/2023/travel",
+	}, delimiter = ':')
+	public void getRelativeAbsolutUri(String originalUri, String relativePath, String expectedAbsolutUri) throws Exception {
+		String absolutUri = UriUtil.getRelativeAbsolutUri(originalUri, relativePath);
+		assertEquals(expectedAbsolutUri, absolutUri);
+	}
+
 }
