@@ -202,6 +202,9 @@ public class KURI {
 	private static final long L_DASH = lowMask("-");
 	private static final long H_DASH = highMask("-");
 
+	private static final long L_UDASH = lowMask("_");
+	private static final long H_UDASH = highMask("_");
+
 	// Dot, for use in hostnames
 	private static final long L_DOT = lowMask(".");
 	private static final long H_DOT = highMask(".");
@@ -785,14 +788,14 @@ public class KURI {
 			int l = -1;                 // Start of last parsed label
 
 			do {
-				// domainlabel = alphanum [ *( alphanum | "-" ) alphanum ]
-				q = scan(p, n, L_ALPHANUM, H_ALPHANUM);
+				// domainlabel = alphanum [ *( alphanum | "-" ) alphanum | "_" ]
+				q = scan(p, n, L_ALPHANUM | L_UDASH, H_ALPHANUM | H_UDASH);
 				if (q <= p)
 					break;
 				l = p;
 				if (q > p) {
 					p = q;
-					q = scan(p, n, L_ALPHANUM | L_DASH, H_ALPHANUM | H_DASH);
+					q = scan(p, n, L_ALPHANUM | L_DASH | L_UDASH, H_ALPHANUM | H_DASH | H_UDASH);
 					if (q > p) {
 						if (charAt(q - 1) == '-')
 							fail("Illegal character in hostname", q - 1);
@@ -800,7 +803,6 @@ public class KURI {
 					}
 				}
 				q = scan(p, n, '.');  //skip forward to next part
-				q = scan(p, n, '_');  //skip forward to ignore underscore
 				if (q <= p)
 					break;
 				p = q;

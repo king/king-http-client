@@ -8,6 +8,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class KURITest {
 	@ParameterizedTest
 	@ValueSource(strings = {
+		"http://a-b",
+		"http://_host",
 		"http://host",
 		"http://host:8080",
 		"http://host/",
@@ -15,6 +17,9 @@ public class KURITest {
 		"http://host/foo/bar",
 		"http://host_name/foo/bar",
 		"http://host_name:8081/foo/bar",
+		"http://www.google.com/foo/bar",
+		"http://_jabber._tcp.gmail.com/foo/bar",
+		"http://__www__.some.wi___erd_name.fun_ky.c_o_m__/foo/bar",
 		"http://host:8081/foo/bar?foo=bar&param=value",
 		"http://host:8081/foo/bar?foo=bar&param=value#fragment1",
 		"http://foo@host:8081/foo/bar?foo=bar&param=value#fragment1",
