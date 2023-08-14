@@ -8,8 +8,6 @@ package com.king.platform.net.http.util;
 
 import com.king.platform.net.http.netty.util.ParameterEncoder;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 
 public class UriQueryBuilder {
 	private final ParameterEncoder parameterEncoder = new ParameterEncoder();
@@ -38,8 +36,5 @@ public class UriQueryBuilder {
 		return completeUrl.substring(0, completeUrl.length() - 1);
 	}
 
-	public URI buildUri() throws URISyntaxException {
-		return new URI(build());
-	}
 
 }
