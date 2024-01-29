@@ -8,6 +8,4 @@ package com.king.platform.net.http.netty.util;
 
 public interface TimeProvider {
 	long currentTimeInMillis();
-
-	long currentTimeInNanos();
 }

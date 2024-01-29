@@ -12,10 +12,4 @@ public class SystemTimeProvider implements TimeProvider {
 	public long currentTimeInMillis() {
 		return System.currentTimeMillis();
 	}
-
-
-	@Override
-	public long currentTimeInNanos() {
-		return System.nanoTime();
-	}
 }
