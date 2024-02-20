@@ -23,5 +23,5 @@ You generally only need to submit a CLA once, so if you've already submitted
 one (even if it was for a different project), you probably don't need to do it
 again.
 
-[individual CLA]: http://company.king.com/cla-individual
-[corporate CLA]: http://company.king.com/cla-corporate
+[individual CLA]: https://www.king.com/corporate-and-media/compliance/contributor-license-individual
+[corporate CLA]: https://www.king.com/corporate-and-media/compliance/contributor-license-corporate

@@ -25,9 +25,4 @@ public class TimeProviderForTesting implements TimeProvider {
 	public long currentTimeInMillis() {
 		return now;
 	}
-
-	@Override
-	public long currentTimeInNanos() {
-		return now * 1000 * 1000;
-	}
 }
