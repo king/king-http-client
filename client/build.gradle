@@ -13,7 +13,7 @@ plugins {
 }
 
 group 'com.king.king-http-client'
-version '3.0.25'
+version '3.0.26'
 
 ext.isReleaseVersion = !version.endsWith("SNAPSHOT")
 ext.admin = hasProperty('sonatypeUsername')
