@@ -16,14 +16,22 @@ public class ByteAggregator {
 	private final ByteArrayOutputStream byteArrayOutputStream;
 	private final WritableByteChannel channel;
 
-	public ByteAggregator(long contentLength) {
+	public ByteAggregator(int contentLength) {
 		if (contentLength < 0) {
 			contentLength = 1024;
 		}
 
-		byteArrayOutputStream = new ByteArrayOutputStream((int) contentLength);
+		byteArrayOutputStream = new ByteArrayOutputStream(contentLength);
 		channel = Channels.newChannel(byteArrayOutputStream);
 
+	}
+
+	/**
+	 * @deprecated Use the {@link ByteAggregator#ByteAggregator(int)} constructor instead
+	 */
+	@Deprecated
+	public ByteAggregator(long contentLength) {
+		this(Math.toIntExact(contentLength));
 	}
 
 	public void write(ByteBuffer buffer) throws IOException {
